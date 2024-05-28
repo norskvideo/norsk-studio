@@ -1,0 +1,47 @@
+import type Registration from "norsk-studio/lib/extension/registration"
+import type { SilenceConfig } from "./runtime";
+
+export default function({ defineComponent, Audio }: Registration) {
+  return defineComponent<SilenceConfig>({
+    identifier: 'input.silence',
+    category: 'input',
+    name: "Silence Generator",
+    subscription: {
+      produces: {
+        type: "single-stream",
+        media: Audio
+      }
+    },
+    display: (desc) => {
+      return {
+        sampleRate: desc.config.sampleRate.toString() + "khz",
+        channelLayout: desc.config.channelLayout.toString()
+      }
+    },
+    configForm: {
+      form: {
+        sampleRate: {
+          help: "Samplerate in khz of the generated audio",
+          hint: {
+            type: 'select', options: [
+              { value: 48000, display: "48000" },
+              { value: 44100, display: "44100" }
+            ],
+            defaultValue: 48000,
+          }
+        },
+        channelLayout: {
+          help: "Channel layout of the generated audio",
+          hint: {
+            type: 'select', options: [
+              { value: "mono", display: "Mono" },
+              { value: "stereo", display: "Stereo" }
+            ],
+            defaultValue: "stereo"
+          }
+        },
+      }
+    }
+  });
+}
+

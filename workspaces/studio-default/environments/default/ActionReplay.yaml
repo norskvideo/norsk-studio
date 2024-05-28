@@ -1,0 +1,66 @@
+__layout:
+  - id: srtlistener-0
+    x: 528
+    y: 240
+  - id: actionreplay-0
+    x: 1056
+    y: 240
+  - id: preview-0
+    x: 1584
+    y: 224
+  - id: whep-0
+    x: 1584
+    y: 448
+nodes:
+  - type: input.srt-listener
+    config:
+      port: 5001
+      ip: 0.0.0.0
+      passphrase: ""
+      sourceNames: permissive
+      streamIds:
+        - camera1
+      displayName: srt-listener
+      id: srtlistener-0
+    subscriptions: []
+  - type: processor.transform.actionReplay
+    config:
+      displayName: actionReplay
+      id: actionreplay-0
+    subscriptions:
+      - source: srtlistener-0
+        streams:
+          type: take-specific-stream
+          select:
+            - video
+            - audio
+          filter: camera1
+  - type: output.preview
+    config:
+      iceServers:
+        - stun:stun.l.google.com:19302
+      bufferDelayMs: 500
+      intervalMs: 1000
+      displayName: preview
+      id: preview-0
+    subscriptions:
+      - source: actionreplay-0
+        streams:
+          type: take-first-stream
+          select:
+            - video
+            - audio
+  - type: output.whep
+    config:
+      iceServers:
+        - stun:stun.l.google.com:19302
+      bufferDelayMs: 500
+      displayName: whep
+      id: whep-0
+    subscriptions:
+      - source: actionreplay-0
+        streams:
+          type: take-first-stream
+          select:
+            - video
+            - audio

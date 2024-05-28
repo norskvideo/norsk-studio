@@ -1,0 +1,18 @@
+{
+  "name": "norsk-studio-demo",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "clean": "echo nothing to do",
+    "build": "echo nothing to do",
+    "test": "echo nothing to do",
+    "server": "npx studio-editor"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "norsk-studio": "^1.0.0",
+    "norsk-studio.built-ins": "^1.0.0",
+    "norsk-studio.vision-director": "^1.0.0"
+  }
+}

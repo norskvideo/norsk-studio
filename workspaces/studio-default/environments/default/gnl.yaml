@@ -1,0 +1,104 @@
+__layout:
+  - id: multiencodeladder-0
+    x: 848
+    y: 272
+  - id: channeloverlay-0
+    x: 448
+    y: 272
+  - id: decklink-0
+    x: 48
+    y: 112
+  - id: autocmaf-0
+    x: 1520
+    y: 112
+  - id: gridmosaicthing-0
+    x: 848
+    y: 480
+nodes:
+  - type: processor.transform.fixedLadder
+    config:
+      displayName: MultiEncodeLadder
+      rungs:
+        - h264_640x360
+        - h264_320x180
+      id: multiencodeladder-0
+    subscriptions:
+      - source: channeloverlay-0
+        streams:
+          type: take-first-stream
+          select:
+            - video
+  - type: processor.transform.browserOverlay
+    config:
+      displayName: ChannelOverlay
+      url: http://fuckoff.com
+      id: channeloverlay-0
+    subscriptions:
+      - source: decklink-0
+        streams:
+          type: take-specific-stream
+          select:
+            - video
+          filter: camera1
+  - type: input.srt-listener
+    config:
+      displayName: Decklink
+      port: 5001
+      ip: 0.0.0.0
+      passphrase: ""
+      socketOptions: {}
+      sourceNames: permissive
+      streamIds:
+        - camera1
+        - camera2
+        - camera3
+        - camera4
+        - camera5
+        - camera6
+      id: decklink-0
+    subscriptions: []
+  - type: output.autoCmaf
+    config:
+      displayName: autoCmaf
+      name: default
+      sessionId: false
+      segments:
+        retentionPeriod: 60
+        defaultSegmentCount: 0
+        targetSegmentDuration: 4
+        targetPartDuration: 1
+      s3Destinations: []
+      id: autocmaf-0
+    subscriptions:
+      - source: multiencodeladder-0
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+          filter:
+            - h264_640x360
+            - h264_320x180
+      - source: decklink-0
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+            - audio
+          filter:
+            - camera1
+            - camera2
+            - camera3
+            - camera4
+            - camera5
+            - camera6
+  - type: output.preview
+    config:
+      displayName: GridMosaicThing
+      bufferDelayMs: 500
+      id: gridmosaicthing-0
+    subscriptions:
+      - source: channeloverlay-0
+        streams:
+          type: take-first-stream
+          select:
+            - video

@@ -1,0 +1,249 @@
+.audio-mixer {
+    height: 100%;
+}
+
+.channel-container {
+    height: 100%;
+    width: 150px;
+    grid-template-rows: 2em 35% 3em 1fr 2em;
+    grid-template-columns: 100px;
+}
+
+.mixer-level-db {
+    justify-content: space-evenly;
+}
+
+.mixer-gain-db {
+    height: calc(55vh - 15px);
+    right: -10px;
+}
+
+.mute-icon {
+    cursor: pointer;
+}
+
+.level-muted {
+    border: 2px solid;
+    border-color: #ff3366;
+}
+
+.audio-mixer-fader-container {
+    height: 55vh;
+}
+
+.audio-mixer-fader {
+    width: 55vh;
+    height: 1em;
+}
+
+.audio-level-container {
+    height: 210px;
+    width: 200px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 150px 40px 25px;
+}
+
+.audio-level-container-inline {
+    height: 108px;
+    width: 180px;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.audio-level-container div {
+    float: left;
+}
+
+.preview-levels-mixer {
+    width: 30px;
+    background-color: #333;
+    border-radius: 2px;
+    display: grid;
+    grid-template-columns: 30px 30px;
+    padding: 4px 3px;
+    margin: auto;
+    margin-top: 0px;
+    grid-column-gap: 5px;
+    height: 100%;
+}
+
+/* paint not glowing LEDs */
+.preview-level-mixer {
+    position: relative;
+    margin: 0 2px;
+    flex-grow: 1;
+    z-index: 3;
+    background-color: transparent;
+    background-repeat: repeat-y;
+    background-image: linear-gradient(to bottom, #666 3px, transparent 1px);
+    background-size: 100% 4px;
+}
+
+/* paint glowing LEDs */
+.preview-level-mixer:before {
+    width: 100%;
+    height: 100%;
+    content: ' ';
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 1;
+    background-repeat: no-repeat;
+    background-image: linear-gradient(to top, green 0%, yellow 80%, red 100%);
+    background-size: 100% 100%;
+}
+
+.clip-0:before {
+    clip-path: inset(0% 0 0 0);
+    -webkit-clip-path: inset(100% 0 0 0);
+}
+
+.clip-10:before {
+    clip-path: inset(10% 0 0 0);
+    -webkit-clip-path: inset(90% 0 0 0);
+}
+
+.clip-20:before {
+    clip-path: inset(80% 0 0 0);
+    -webkit-clip-path: inset(80% 0 0 0);
+}
+
+.clip-30:before {
+    clip-path: inset(70% 0 0 0);
+    -webkit-clip-path: inset(70% 0 0 0);
+}
+
+.clip-40:before {
+    clip-path: inset(60% 0 0 0);
+    -webkit-clip-path: inset(60% 0 0 0);
+}
+
+.clip-50:before {
+    clip-path: inset(50% 0 0 0);
+    -webkit-clip-path: inset(50% 0 0 0);
+}
+
+.clip-60:before {
+    clip-path: inset(40% 0 0 0);
+    -webkit-clip-path: inset(40% 0 0 0);
+}
+
+.clip-70:before {
+    clip-path: inset(30% 0 0 0);
+    -webkit-clip-path: inset(30% 0 0 0);
+}
+
+
+.clip-80:before {
+    clip-path: inset(20% 0 0 0);
+    -webkit-clip-path: inset(20% 0 0 0);
+}
+
+.clip-90:before {
+    clip-path: inset(10% 0 0 0);
+    -webkit-clip-path: inset(10% 0 0 0);
+}
+
+.clip-100:before {
+    clip-path: inset(0% 0 0 0);
+    -webkit-clip-path: inset(0% 0 0 0);
+}
+
+
+
+/* paint gap lines of LEDs */
+.preview-level::after {
+    width: 100%;
+    height: 100%;
+    content: ' ';
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 2;
+    margin-top: 3px;
+    background-image: linear-gradient(to bottom, #333 1px
+            /* space between leds*/
+            , transparent 1px);
+    background-repeat: repeat-y;
+    background-size: 100% 4px;
+    /* 4px LED height */
+    background-color: transparent;
+}
+
+#audio-slider {
+    width: 150px;
+}
+
+#db-level-max {
+    right: 36px;
+    top: 0;
+}
+
+#db-level-min {
+    right: 23px;
+    bottom: 26px;
+}
+
+#node-gain-level {
+    align-self: end;
+}
+
+#mixer-level-container-inline {
+    grid-template-columns: 60px 60px 60px 60px;
+    grid-row-gap: 10px;
+}
+
+.preview-levels {
+    height: 100%;
+    width: 30px;
+    background-color: #333;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: row;
+    padding: 4px 3px;
+    margin: auto;
+    margin-top: 0px;
+    writing-mode: vertical-rl;
+}
+
+/* paint not glowing LEDs */
+.preview-level {
+    position: relative;
+    margin: 0 2px;
+    flex-grow: 1;
+    z-index: 3;
+    background-color: transparent;
+    background-repeat: repeat-y;
+    background-image: linear-gradient(to bottom, #666 3px, transparent 1px);
+    background-size: 100% 4px;
+}
+
+/* paint glowing LEDs */
+.preview-level:before {
+    width: 100%;
+    height: 100%;
+    content: ' ';
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 1;
+    background-repeat: no-repeat;
+    background-image: linear-gradient(to top, green 0%, yellow 80%, red 100%);
+    background-size: 100% 100%;
+}
+
+.inline-channel-name {
+    left: 27px;
+}
+
+.inline-master-channel {
+    grid-row-start: 1;
+    grid-column-start: 4;
+    grid-row-end: 5;
+    height: 108px;
+}
+
+.inline-master-border {
+    border: 1px solid;
+    border-color: cyan;
+}

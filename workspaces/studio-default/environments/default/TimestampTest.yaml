@@ -1,0 +1,34 @@
+__layout:
+  - id: timestamps-0
+    x: 1376
+    y: 256
+  - id: srtlistener-0
+    x: 768
+    y: 128
+__globalConfig: {}
+nodes:
+  - type: util.timestamps
+    config:
+      displayName: timestamps
+      id: timestamps-0
+    subscriptions:
+      - source: srtlistener-0
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+            - audio
+          filter:
+            - camera1
+  - type: input.srt-listener
+    config:
+      displayName: srt-listener
+      port: 5001
+      ip: 0.0.0.0
+      passphrase: ""
+      socketOptions: {}
+      sourceNames: permissive
+      streamIds:
+        - camera1
+      id: srtlistener-0
+    subscriptions: []

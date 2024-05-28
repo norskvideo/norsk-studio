@@ -1,0 +1,36 @@
+__layout:
+  - id: videotestcard-0
+    x: 416
+    y: 176
+  - id: browseroverlay-0
+    x: 896
+    y: 176
+__globalConfig:
+  ice-servers:
+    - stun:stun.l.google.com:19302
+  hardware-acceleration: quadra
+nodes:
+  - type: input.videoTestCard
+    config:
+      displayName: videoTestCard
+      resolution:
+        width: 1280
+        height: 720
+      frameRate:
+        frames: 25
+        seconds: 1
+      sourceName: video
+      pattern: black
+      id: videotestcard-0
+    subscriptions: []
+  - type: processor.transform.browserOverlay
+    config:
+      displayName: browserOverlay
+      url: https://app.singular.live/output/6CTPhPRe7yc5lkxgUixA5q/Default?aspect=9:5
+      id: browseroverlay-0
+    subscriptions:
+      - source: videotestcard-0
+        streams:
+          type: take-first-stream
+          select:
+            - video

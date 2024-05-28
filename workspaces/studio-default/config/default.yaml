@@ -1,0 +1,13 @@
+server:
+  port: 8000
+  working_directory: 'environments/default'
+  logs: 'logs'
+  library:
+    - 'norsk-studio.built-ins'
+    - 'norsk-studio.vision-director'
+  developer_mode: true
+
+norsk:
+  host: '127.0.0.1'
+  api_port: 6790
+  support_port: 6791

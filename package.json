@@ -1,0 +1,21 @@
+{
+  "name": "norsk-studio-public",
+  "scripts": {
+    "clean": "npm run --workspaces clean",
+    "build": "npm run --workspaces build",
+    "server": "npm run --workspace studio-default server",
+    "test": "npm run --workspaces test",
+    "support:start": "docker compose down && docker compose up -d",
+    "support:stop": "docker compose down"
+  },
+  "workspaces": [
+    "workspaces/built-ins",
+    "workspaces/vision-director",
+    "workspaces/studio-default"
+  ],
+  "dependencies": {
+    "@norskvideo/norsk-api": "file:../norsk/client/workspaces/api",
+    "@norskvideo/norsk-sdk": "file:../norsk/client/workspaces/sdk",
+    "norsk-studio": "file:../norsk-studio"
+  }
+}

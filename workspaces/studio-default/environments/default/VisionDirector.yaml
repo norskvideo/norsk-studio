@@ -1,0 +1,202 @@
+__layout:
+  - id: srt_cameras-0
+    x: 48
+    y: 384
+  - id: camera_1-0
+    x: 384
+    y: -48
+  - id: camera_2-0
+    x: 640
+    y: -48
+  - id: live_camera-0
+    x: 912
+    y: 640
+  - id: lower_third-0
+    x: 912
+    y: 224
+  - id: camera_3-0
+    x: 896
+    y: -48
+  - id: abr_ladder-0
+    x: 1280
+    y: 224
+  - id: webrtc-0
+    x: 1696
+    y: 560
+  - id: vision_dir-1
+    x: 496
+    y: 384
+  - id: hls_anddash-1
+    x: 1696
+    y: 384
+nodes:
+  - type: input.srt-listener
+    config:
+      port: 5001
+      ip: 0.0.0.0
+      passphrase: ""
+      sourceNames: strict
+      streamIds:
+        - camera1
+        - camera2
+        - camera3
+      displayName: SRT Cameras
+      id: srt_cameras-0
+    subscriptions: []
+  - type: output.preview
+    config:
+      iceServers:
+        - stun:stun.l.google.com:19302
+      bufferDelayMs: 500
+      intervalMs: 1000
+      displayName: Camera 1
+      id: camera_1-0
+    subscriptions:
+      - source: srt_cameras-0
+        streams:
+          type: take-specific-stream
+          select:
+            - video
+            - audio
+          filter: camera1
+  - type: output.preview
+    config:
+      iceServers:
+        - stun:stun.l.google.com:19302
+      bufferDelayMs: 500
+      intervalMs: 1000
+      displayName: Camera 2
+      id: camera_2-0
+    subscriptions:
+      - source: srt_cameras-0
+        streams:
+          type: take-specific-stream
+          select:
+            - audio
+            - video
+          filter: camera2
+  - type: output.preview
+    config:
+      iceServers:
+        - stun:stun.l.google.com:19302
+      bufferDelayMs: 500
+      intervalMs: 1000
+      displayName: Live Camera
+      id: live_camera-0
+    subscriptions:
+      - source: vision_dir-1
+        streams:
+          type: take-first-stream
+          select:
+            - video
+            - audio
+  - type: processor.transform.browserOverlay
+    config:
+      url: https://app.singular.live/output/6CTPhPRe7yc5lkxgUixA5q/Default?aspect=9:5
+      displayName: Lower Third
+      id: lower_third-0
+    subscriptions:
+      - source: vision_dir-1
+        streams:
+          type: take-first-stream
+          select:
+            - video
+  - type: output.preview
+    config:
+      iceServers:
+        - stun:stun.l.google.com:19302
+      bufferDelayMs: 500
+      intervalMs: 1000
+      displayName: Camera 3
+      id: camera_3-0
+    subscriptions:
+      - source: srt_cameras-0
+        streams:
+          type: take-specific-stream
+          select:
+            - audio
+            - video
+          filter: camera3
+  - type: processor.transform.fixedLadder
+    config:
+      rungs:
+        - h264_1280x720
+        - h264_640x360
+      displayName: ABR Ladder
+      id: abr_ladder-0
+    subscriptions:
+      - source: lower_third-0
+        streams:
+          type: take-first-stream
+          select:
+            - video
+  - type: output.whep
+    config:
+      iceServers:
+        - stun:stun.l.google.com:19302
+      bufferDelayMs: 500
+      displayName: WebRTC
+      id: webrtc-0
+    subscriptions:
+      - source: abr_ladder-0
+        streams:
+          type: take-specific-stream
+          select:
+            - video
+          filter: h264_1280x720
+      - source: vision_dir-1
+        streams:
+          type: take-first-stream
+          select:
+            - audio
+  - type: processor.control.multiCameraSelect
+    config:
+      resolution:
+        width: 1280
+        height: 720
+      frameRate:
+        frames: 25
+        seconds: 1
+      sampleRate: 48000
+      channelLayout: stereo
+      iceServers:
+        - stun:stun.l.google.com:19302
+      displayName: Vision Dir
+      id: vision_dir-1
+    subscriptions:
+      - source: srt_cameras-0
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+            - audio
+          filter:
+            - camera1
+            - camera2
+            - camera3
+  - type: output.autoCmaf
+    config:
+      displayName: HLS and DASH
+      name: default
+      sessionId: false
+      segments:
+        retentionPeriod: 60
+        defaultSegmentCount: 0
+        targetSegmentDuration: 2
+        targetPartDuration: 0.5
+      s3Destinations: []
+      id: hls_anddash-1
+    subscriptions:
+      - source: abr_ladder-0
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+          filter:
+            - h264_1280x720
+            - h264_640x360
+      - source: vision_dir-1
+        streams:
+          type: take-first-stream
+          select:
+            - audio
