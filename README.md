@@ -11,7 +11,7 @@ npm run build
 npm run server
 ```
 
-Will launch a default instance of Norsk Studio with the built-in components and vision director. It is assumed Norsk is running on localhost on the standard ports. 
+Will launch a default instance of Norsk Studio on port 8000 (http://localhost:8000) with the built-in components and vision director. It is assumed Norsk is running on localhost on the standard ports. 
 
 That can be changed under workspaces/studio-default/config.yaml
 
