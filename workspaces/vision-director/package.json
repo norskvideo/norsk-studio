@@ -8,6 +8,7 @@
     "build:server": "npx tsc",
     "build:client": "npx tsc -p tsconfig-client.json && npx studio-bundle build/info.js client/info.js",
     "build:css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
+    "build:tailwind": "npx tailwindcss -i lib/tailwind.css -o client/tailwind.css",
     "build:eslint": "npx eslint src",
     "test": "mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
   },
@@ -38,6 +39,7 @@
     "@types/chai": "^4.3.11",
     "@types/hls-parser": "^0.8.7",
     "chai": "^4.3.10",
+    "tailwindcss": "^3.4.1",
     "yaml": "^2.3.3",
     "chart.js": "^4.4.2",
     "hls-parser": "^0.10.8",

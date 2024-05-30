@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { type MultiCameraSelectState, type MultiCameraSelectConfig, type MultiCameraSelectCommand, type MultiCameraSource } from "./runtime";
+import interact from 'interactjs';
 
-import { WhepClient } from '@norskvideo/webrtc-client'
+import { WhepClient, WhepClientConfig } from '@norskvideo/webrtc-client'
 
 type CreatedClient = {
   source: MultiCameraSource,
-  client: WhepClient
+  client: MyWhepClient
 }
 
 type State = {
@@ -13,13 +14,107 @@ type State = {
   livePreviewSource: CreatedClient | undefined;
 }
 
+class MyWhepClient extends WhepClient {
+  started: Promise<MediaStream>;
+  resolveStartedPromise?: (value: MediaStream | PromiseLike<MediaStream>) => void;
+  mediaStream?: MediaStream;
+  streamId: string;
+  streamKey?: string;
+
+  constructor(config: { streamId: string, streamKey?: string } & WhepClientConfig) {
+    super(config)
+    this.streamId = config.streamId;
+    this.streamKey = config.streamKey;
+    this.started = new Promise<MediaStream>((resolve, _reject) => {
+      this.resolveStartedPromise = resolve;
+      if (this.mediaStream) {
+        this.resolveStartedPromise = undefined;
+        resolve(this.mediaStream);
+      }
+    })
+  }
+  override async handleGotTrack(ev: RTCTrackEvent): Promise<void> {
+    if (ev.track.kind == 'video' && ev.streams.length > 0) {
+      this.outputVideoTracks.push(ev.track);
+    }
+    if (ev.track.kind == 'audio') {
+      this.outputAudioTrack = ev.track;
+    }
+    if (this.outputAudioTrack && this.outputVideoTracks.length > this.videoElements.length) {
+      for (let i = 0; i < this.outputVideoTracks.length; i++) {
+        if (this.videoElements[i]) continue;
+        let stream = undefined;
+        if (i == 0) {
+          stream = new MediaStream([this.outputAudioTrack, this.outputVideoTracks[i]]);
+        } else {
+          stream = new MediaStream([this.outputVideoTracks[i]]);
+        }
+        if (this.container) {
+          const e = createPlayerElement(stream, this.container);
+          this.mediaStream = stream;
+          this.videoElements.push(e);
+          this.resolveStartedPromise?.(stream);
+          e.style.userSelect = 'none';
+          e.style.touchAction = 'none';
+
+          e.setAttribute('data-streamid', this.streamId);
+          if (this.streamKey)
+            e.setAttribute('data-streamkey', this.streamKey);
+
+          let element = undefined as (undefined | HTMLVideoElement);
+          let target = undefined as (undefined | HTMLVideoElement);
+          interact(e).draggable({
+            listeners: {
+              start: (e) => {
+                element = document.createElement("video");
+                element.controls = false;
+                element.style.position = 'absolute';
+                element.style.left = `${e.page.x}px`
+                element.style.top = `${e.page.y}px`
+                element.style.width = '100px';
+                document.body.appendChild(element);
+                element.muted = true;
+                element.autoplay = true;
+                element.srcObject = stream;
+                return true;
+              },
+              move: (e) => {
+                if (element) {
+                  element.style.left = `${e.page.x}px`
+                  element.style.top = `${e.page.y}px`
+                }
+                if (e.dragEnter) {
+                  target = e.dragEnter;
+                }
+                if (e.dragLeave && target) {
+                  target = undefined;
+                }
+              }
+            }
+          }).on('dragend', () => {
+            // Can forget about this, it was just a UI thing
+            element?.remove();
+          })
+        }
+      }
+    }
+  }
+}
+
+function createPlayerElement(stream: MediaStream, container: HTMLElement) {
+  const element = document.createElement("video");
+  element.controls = true;
+  container.appendChild(element);
+  element.muted = true;
+  element.autoplay = true;
+  element.srcObject = stream;
+  return element;
+}
+
 async function maybeCreatePlayer(created: CreatedClient[], source: MultiCameraSource, url: string): Promise<CreatedClient[]> {
   if (!created.find((c) => c.source.id == source.id && c.source.key == source.key)) {
     const container = document.getElementById(mkContainerId(source)) || undefined; // TODO Could pass an HTMLElement or what have you to the function
-    const client = new WhepClient({ url, container })
-    client.videoElements.forEach((e) => {
-      e.muted = true;
-    })
+    const client = new MyWhepClient({ url, container, streamId: source.id, streamKey: source.key })
     await client.start();
     const next = [...created];
     next.push({
@@ -55,40 +150,61 @@ function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: Mu
       setState({ ...state, createdClient: nextCreated, livePreviewSource: initialLivePreviewSource })
 
       for (const c of nextCreated) {
+        // TODO: what is this?
         if (!multiCamera.state.players.find((s) => s.source.id == c.source.id && s.source.key == s.source.key)) {
           c.client.videoElements.forEach((e) => {
             e.remove();
           });
           // needs removing from the array!??
         }
-        else {
-          c.client.videoElements.forEach((e) => {
-            console.log("Muting video");
-            e.muted = true;
-            void e.play();
+      }
+
+      if (refLivePreviewVideo.current) {
+        interact(refLivePreviewVideo.current)
+          .dropzone({
+            accept: 'video',
+            ondrop: (e) => {
+              const video = e.relatedTarget as HTMLVideoElement;
+              const streamId = video.getAttribute('data-streamid');
+              const streamKey = video.getAttribute('data-streamkey');
+              console.log("Dragged and dropped stream", { streamId, streamKey }, e.dragEvent.page.x, e.dragEvent.page.y)
+
+              const targetRect = refLivePreviewVideo.current?.getBoundingClientRect();
+
+              if (targetRect) {
+                const relativeX = e.dragEvent.page.x - targetRect?.left;
+                const relativeY = e.dragEvent.page.y - targetRect?.top;
+
+                console.log("Relative is ", relativeX, relativeY)
+                // Look up the video by the keys
+                // create a new element with those details
+                // new element will be draggable/droppable/resizeable
+                // and control the current model
+              }
+            }
           })
-        }
       }
     }
     void promise().catch((e) => {
       console.error(e);
     })
-
-    // This isn't right, but we don't have a good thing to depend on
-    // props change constantly because state gets updated
-    // even though the data is the same
-    // and we cannot run more than one of these at a time because ooft it goes so so wrong
-    // I guess I just need to set pending..
   }, [])
 
   useEffect(() => {
-    if (!state.livePreviewSource) return
-    const stream = capture(state.livePreviewSource.client.videoElements[0]); // TODO multiple video elements?
-    if (refLivePreviewVideo.current) {
-      refLivePreviewVideo.current.srcObject = stream;
-      refLivePreviewVideo.current.autoplay = true;
-      refLivePreviewVideo.current.controls = false;
-    }
+    const promise = async () => {
+      if (!state.livePreviewSource) return
+      await state.livePreviewSource.client.started;
+      if (refLivePreviewVideo.current && state.livePreviewSource.client.mediaStream) {
+        const ele = refLivePreviewVideo.current;
+        refLivePreviewVideo.current.autoplay = true;
+        refLivePreviewVideo.current.controls = false;
+        refLivePreviewVideo.current.srcObject = state.livePreviewSource.client.mediaStream;
+        refLivePreviewVideo.current.oncanplaythrough = () => {
+          void ele.play();
+        }
+      }
+    };
+    void promise();
   }, [state.livePreviewSource])
 
   const takeButtonClasses = "text-gray-900 bg-white border border-gray-300 focus:outline-none focus:ring-0 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:border-gray-600 dark:focus:ring-gray-700 w-full dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:border-gray-600"
@@ -126,7 +242,10 @@ function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: Mu
       </div>
       <div id="live-views" className="grid grid-cols-2 gap-4 mb-6">
         <div id="video-live-preview" className="h-full relative 2xl:w-8/12 lg:w-10/12 justify-self-end">
-          <video id="video-live" ref={refLivePreviewVideo}></video>
+
+          {/* I think this is where we be dragging and dropping onto */}
+          <video id="video-live" muted autoPlay ref={refLivePreviewVideo}></video>
+
           <button
             className={takeButtonClasses}
             onClick={(_e) => {
@@ -158,26 +277,6 @@ function sortSource(a: MultiCameraSource, b: MultiCameraSource) {
   if (aKey > bKey) return 1
   if (aKey < bKey) return -1
   return 0
-}
-
-// TODO Fix the `any` here
-// TypeScript didn't play nice with the types
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-function capture(video: any) {
-  if (!video) {
-    return
-  }
-  let stream;
-  //  Cannot read properties of undefined (reading 'captureStream')
-  if (video.captureStream) {
-    stream = video.captureStream(0);
-  } else if (video.mozCaptureStream) {
-    stream = video.mozCaptureStream(0);
-  } else {
-    console.error("Stream capture is not supported");
-    stream = null;
-  }
-  return stream;
 }
 
 function isMultiCameraSourceEqual(a: MultiCameraSource, b: MultiCameraSource) {

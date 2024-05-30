@@ -45,7 +45,8 @@ export default function(R: Registration) {
       }
     },
     css: [
-      "style.css"
+      "style.css",
+      "tailwind.css"
     ],
     runtime: {
       initialState: () => ({

@@ -5,6 +5,7 @@ server:
   library:
     - 'norsk-studio.built-ins'
     - 'norsk-studio.vision-director'
+  library_root: '/Users/robashton/src/norsk-studio-defaults/node_modules/'
   developer_mode: true
 
 norsk:
