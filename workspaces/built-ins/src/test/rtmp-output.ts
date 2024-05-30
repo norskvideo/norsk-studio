@@ -11,7 +11,7 @@ import RtmpInfo from "../output.rtmp/info";
 import { Av, RegistrationConsts } from "norsk-studio/lib/extension/client-types";
 import { SimpleSinkWrapper } from "norsk-studio/lib/extension/base-nodes";
 import { StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
-import { getStreams } from "norsk-studio/lib/test/_util/sinks";
+import { FfprobeStream, getStreams } from "norsk-studio/lib/test/_util/sinks";
 import { expect } from "chai";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
@@ -40,12 +40,14 @@ describe("RTMP Output", () => {
   }
 
   let norsk: Norsk | undefined = undefined;
+  let ffprobe: Promise<FfprobeStream[]> = undefined!;
 
   after(async () => {
     await norsk?.close();
   })
 
   before(async () => {
+    ffprobe = getStreams('rtmp://127.0.0.1:5001/norsk/output');
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();
     const result = await go(norsk, compiled);
@@ -59,7 +61,6 @@ describe("RTMP Output", () => {
   })
 
   it("Should be running an RTMP output", async () => {
-    const ffprobe = getStreams('rtmp://127.0.0.1:5001/norsk/output');
     const streams = await ffprobe;
     expect(streams ?? []).lengthOf(2);
   })
