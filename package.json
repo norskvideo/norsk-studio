@@ -12,10 +12,5 @@
     "workspaces/built-ins",
     "workspaces/vision-director",
     "workspaces/studio-default"
-  ],
-  "dependencies": {
-    "@norskvideo/norsk-sdk": "^1.0.360",
-    "interactjs": "^1.10.27",
-    "norsk-studio": "file:../norsk-studio"
-  }
+  ]
 }
