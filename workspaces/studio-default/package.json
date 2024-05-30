@@ -8,8 +8,7 @@
     "test": "echo nothing to do",
     "server": "npx studio-editor"
   },
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@norskvideo/norsk-studio": "^1.0.0",
     "norsk-studio": "^1.0.0",

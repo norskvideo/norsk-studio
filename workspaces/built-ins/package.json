@@ -12,12 +12,11 @@
     "build:eslint": "npx eslint src",
     "test": "mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
   },
-  "author": "",
   "files": [
     "client/*",
     "lib/*"
   ],
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-mediaconnect": "^3.499.0",
     "@aws-sdk/client-medialive": "^3.499.0",
