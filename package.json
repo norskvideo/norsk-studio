@@ -14,10 +14,8 @@
     "workspaces/studio-default"
   ],
   "dependencies": {
-    "@norskvideo/norsk-api": "file:../norsk/client/workspaces/api",
-    "@norskvideo/norsk-sdk": "file:../norsk/client/workspaces/sdk",
-    "norsk-studio": "file:../norsk-studio",
-    "interactjs": "^1.10.27"
-    
+    "@norskvideo/norsk-sdk": "^1.0.360",
+    "interactjs": "^1.10.27",
+    "norsk-studio": "file:../norsk-studio"
   }
 }
