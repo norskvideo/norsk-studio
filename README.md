@@ -1,9 +1,6 @@
 # Norsk Studio Defaults
 
-This repository is awaiting a Norsk release and is not usable in its present state.
-==
-
-To work with it
+To work with this repo
 
 ```
 npm install --include=dev
