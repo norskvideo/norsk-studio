@@ -7,6 +7,11 @@ npm install --include=dev
 npm run build
 npm run server
 ```
+NB: This assumes you have sensible versions of NodeJS and NPM present. If you are using nix, you can bring them into your shell along with language servers,etc with
+
+```
+nix-shell shell.nix
+```
 
 Will launch a default instance of Norsk Studio on port 8000 (http://localhost:8000) with the built-in components and vision director. It is assumed Norsk is running on localhost on the standard ports. 
 
