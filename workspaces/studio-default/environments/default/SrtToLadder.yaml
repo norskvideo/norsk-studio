@@ -1,0 +1,67 @@
+__layout:
+  - id: srtlistener-0
+    x: 352
+    y: 544
+  - id: fixedladder-0
+    x: 848
+    y: 176
+  - id: autocmaf-0
+    x: 1344
+    y: 544
+nodes:
+  - type: input.srt-listener
+    config:
+      displayName: srt-listener
+      port: 5001
+      ip: 0.0.0.0
+      passphrase: ""
+      socketOptions: {}
+      sourceNames: permissive
+      streamIds:
+        - camera1
+      id: srtlistener-0
+    subscriptions: []
+  - type: processor.transform.fixedLadder
+    config:
+      displayName: fixedLadder
+      rungs:
+        - h264_1920x1080
+        - h264_1280x720
+        - h264_640x360
+      id: fixedladder-0
+    subscriptions:
+      - source: srtlistener-0
+        streams:
+          type: take-specific-stream
+          select:
+            - video
+          filter: camera1
+  - type: output.autoCmaf
+    config:
+      displayName: autoCmaf
+      name: default
+      sessionId: false
+      segments:
+        retentionPeriod: 60
+        defaultSegmentCount: 0
+        targetSegmentDuration: 4
+        targetPartDuration: 1
+      s3Destinations: []
+      id: autocmaf-0
+    subscriptions:
+      - source: fixedladder-0
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+          filter:
+            - h264_1920x1080
+            - h264_1280x720
+            - h264_640x360
+      - source: srtlistener-0
+        streams:
+          type: take-specific-streams
+          select:
+            - audio
+          filter:
+            - camera1

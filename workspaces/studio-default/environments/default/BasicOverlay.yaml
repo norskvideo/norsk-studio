@@ -1,0 +1,56 @@
+__layout:
+  - id: browseroverlay-0
+    x: 848
+    y: 48
+  - id: srtlistener-0
+    x: 400
+    y: 336
+  - id: preview-0
+    x: 1392
+    y: 336
+__globalConfig:
+  ice-servers:
+    - stun:stun.l.google.com:19302
+  hardware-acceleration: quadra
+nodes:
+  - type: processor.transform.browserOverlay
+    config:
+      displayName: browserOverlay
+      url: https://app.singular.live/output/6CTPhPRe7yc5lkxgUixA5q/Default?aspect=9:5
+      id: browseroverlay-0
+    subscriptions:
+      - source: srtlistener-0
+        streams:
+          type: take-specific-stream
+          select:
+            - video
+          filter: camera1
+  - type: input.srt-listener
+    config:
+      displayName: srt-listener
+      port: 5001
+      ip: 0.0.0.0
+      passphrase: ""
+      socketOptions: {}
+      sourceNames: permissive
+      streamIds:
+        - camera1
+      id: srtlistener-0
+    subscriptions: []
+  - type: output.preview
+    config:
+      displayName: preview
+      bufferDelayMs: 500
+      id: preview-0
+    subscriptions:
+      - source: browseroverlay-0
+        streams:
+          type: take-first-stream
+          select:
+            - video
+      - source: srtlistener-0
+        streams:
+          type: take-specific-stream
+          select:
+            - audio
+          filter: camera1
