@@ -68,11 +68,23 @@ describe("WHEP Output", () => {
       headless: 'new',
       executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
     });
+
     page = await browser.newPage();
-    await page?.goto('http://localhost:8080/whep/whep/whep.html');
-    // Video only appears if SDP and stuff negotiate properly so..
-    const video = await page.waitForSelector('video');
-    expect(video).exist;
+
+    await new Promise<void>((r) => {
+      async function doIt() {
+        await page?.goto('http://localhost:8080/whep/whep/whep.html');
+        // Video only appears if SDP and stuff negotiate properly so..
+        await page?.waitForSelector('video', { timeout: 100.0 })
+          .catch(() => {
+            setTimeout(doIt, 100.0);
+          }).then((v) => {
+            expect(v).exist;
+            r();
+          });
+      }
+      void doIt();
+    })
   })
 });
 
