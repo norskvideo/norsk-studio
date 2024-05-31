@@ -9,10 +9,8 @@ type CreatedClient = {
   client: MyWhepClient
 }
 
-type State = {
-  createdClient: CreatedClient[];
-  livePreviewSource: CreatedClient | undefined;
-}
+const DEFAULT_OVERLAY_WIDTH = 100;
+
 
 class MyWhepClient extends WhepClient {
   started: Promise<MediaStream>;
@@ -71,7 +69,7 @@ class MyWhepClient extends WhepClient {
                 element.style.position = 'absolute';
                 element.style.left = `${e.page.x}px`
                 element.style.top = `${e.page.y}px`
-                element.style.width = '100px';
+                element.style.width = `${DEFAULT_OVERLAY_WIDTH}px`;
                 document.body.appendChild(element);
                 element.muted = true;
                 element.autoplay = true;
@@ -92,7 +90,6 @@ class MyWhepClient extends WhepClient {
               }
             }
           }).on('dragend', () => {
-            // Can forget about this, it was just a UI thing
             element?.remove();
           })
         }
@@ -127,8 +124,24 @@ async function maybeCreatePlayer(created: CreatedClient[], source: MultiCameraSo
   }
 }
 
+
+type Overlay = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  source: CreatedClient;
+}
+
+type State = {
+  createdClient: CreatedClient[];
+  overlays: Overlay[];
+  livePreviewSource: CreatedClient | undefined;
+}
+
 function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: MultiCameraSelectConfig, sendCommand: (cmd: MultiCameraSelectCommand) => void }) {
-  const [state, setState] = useState<State>({ createdClient: [], livePreviewSource: undefined });
+  const [state, setState] = useState<State>({ createdClient: [], livePreviewSource: undefined, overlays: [] });
+  const overlayRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const refLivePreviewVideo = useRef<HTMLVideoElement>(null)
   useEffect(() => {
     const promise = async () => {
@@ -151,6 +164,7 @@ function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: Mu
 
       for (const c of nextCreated) {
         // TODO: what is this?
+        // What are we checking here?
         if (!multiCamera.state.players.find((s) => s.source.id == c.source.id && s.source.key == s.source.key)) {
           c.client.videoElements.forEach((e) => {
             e.remove();
@@ -167,19 +181,40 @@ function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: Mu
               const video = e.relatedTarget as HTMLVideoElement;
               const streamId = video.getAttribute('data-streamid');
               const streamKey = video.getAttribute('data-streamkey');
-              console.log("Dragged and dropped stream", { streamId, streamKey }, e.dragEvent.page.x, e.dragEvent.page.y)
 
-              const targetRect = refLivePreviewVideo.current?.getBoundingClientRect();
+              // This was an existing overlay item
+              if (!streamId) {
+                // The model was already updated directly
+                // So there is no action here
+              } else {
+                const targetRect = refLivePreviewVideo.current?.getBoundingClientRect();
 
-              if (targetRect) {
-                const relativeX = e.dragEvent.page.x - targetRect?.left;
-                const relativeY = e.dragEvent.page.y - targetRect?.top;
+                if (targetRect) {
+                  const relativeX = e.dragEvent.page.x - targetRect?.left;
+                  const relativeY = e.dragEvent.page.y - targetRect?.top;
 
-                console.log("Relative is ", relativeX, relativeY)
-                // Look up the video by the keys
-                // create a new element with those details
-                // new element will be draggable/droppable/resizeable
-                // and control the current model
+                  setState((state) => {
+
+                    // Look up the video by the keys
+                    const sourceVideo = state.createdClient.find((c) => c.source.id == streamId && c.source.key == streamKey)
+
+                    if (!sourceVideo) {
+                      console.warn("Couldn't find source to build overlay", { streamId, streamKey })
+                      return state;
+                    }
+
+                    const videoRect = video.getBoundingClientRect();
+
+                    state.overlays.push({
+                      x: relativeX,
+                      y: relativeY,
+                      width: DEFAULT_OVERLAY_WIDTH,
+                      height: videoRect.height / (videoRect.width / DEFAULT_OVERLAY_WIDTH),
+                      source: sourceVideo
+                    })
+                    return { ...state }
+                  })
+                }
               }
             }
           })
@@ -242,19 +277,95 @@ function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: Mu
       </div>
       <div id="live-views" className="grid grid-cols-2 gap-4 mb-6">
         <div id="video-live-preview" className="h-full relative 2xl:w-8/12 lg:w-10/12 justify-self-end">
-
-          {/* I think this is where we be dragging and dropping onto */}
           <video id="video-live" muted autoPlay ref={refLivePreviewVideo}></video>
+          {state.overlays.map((o, i) => {
+            return <video
+              key={i}
+              style={{
+                position: 'absolute',
+                left: `${o.x}px`,
+                top: `${o.y}px`,
+                width: `${o.width}px`,
+                height: `${o.height}px`
+              }}
+              muted={true}
+              autoPlay={true}
+              ref={(ref) => {
+                if (ref) {
+                  ref.srcObject = o.source.client.mediaStream ?? null
+
+                  interact(ref)
+                    .draggable({
+                      listeners: {
+                        move: (event) => {
+
+                          // We'll update the overlay, but we won't update state
+                          // as that'd cause a redraw
+                          o.x += event.dx;
+                          o.y += event.dy;
+
+                          // So we'll do this in-place
+                          ref.style.left = `${o.x}px`;
+                          ref.style.top = `${o.y}px`;
+                        }
+                      },
+                      inertia: true,
+                      modifiers: [
+                        interact.modifiers.restrictRect({
+                          restriction: 'parent',
+                          endOnly: true
+                        })
+                      ]
+                    }).resizable({
+                      // resize from all edges and corners
+                      edges: { left: true, right: true, bottom: true, top: true },
+                      preserveAspectRatio: true,
+                      listeners: {
+                        move(event) {
+
+                          // Again, update the overlay in place
+                          o.width = event.rect.width;
+                          o.height = event.rect.height;
+                          o.x += event.deltaRect.left;
+                          o.y += event.deltaRect.top;
+
+                          // And then update hte style
+                          ref.style.left = `${o.x}px`;
+                          ref.style.top = `${o.y}px`;
+                          ref.style.width = `${o.width}px`;
+                          ref.style.height = `${o.height}px`;
+                        }
+                      }
+                    });
+                }
+                overlayRefs.current.push(ref);
+              }}
+            >
+            </video>
+          })}
 
           <button
             className={takeButtonClasses}
             onClick={(_e) => {
-              if (state.livePreviewSource) {
-                multiCamera.sendCommand({ type: "select-source", source: state.livePreviewSource.source })
+              if (state.livePreviewSource && refLivePreviewVideo.current) {
+                const parentRect = refLivePreviewVideo.current.getBoundingClientRect();
+                multiCamera.sendCommand({
+                  type: "select-source", source: state.livePreviewSource.source, overlays: state.overlays.map((o) => {
+                    // We'll go with percentages for now
+                    // Is that more or less arbitrary than exact pixels? I'm not sure
+                    return {
+                      source: o.source.source,
+                      x: (o.x / parentRect.width) * 100.0,
+                      y: (o.y / parentRect.height) * 100.0,
+                      width: (o.width / parentRect.width) * 100.0,
+                      height: (o.height / parentRect.height) * 100.0,
+                    }
+                  })
+                })
               }
             }}
           >
-            Take {state.livePreviewSource?.source.key ?? state.livePreviewSource?.source.id}
+            Take {state.overlays.length > 0 ? "Composition" : state.livePreviewSource?.source.key ?? state.livePreviewSource?.source.id}
           </button>
           <div className="absolute top-0 left-0 z-10 ml-2 mt-2 p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white opacity-70">
             Live Preview: <span id="active-source-overlay">{state.livePreviewSource?.source.key ?? state.livePreviewSource?.source.id}</span>

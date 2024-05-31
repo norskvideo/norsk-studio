@@ -77,7 +77,7 @@ function SummaryView({ state, config, sendCommand }: { state: MultiCameraSelectS
     { /* Button to commit, sets dropdown back to '...' and player back to preview */}
     {previewSource ? <button type="button" className="mt-2 mb-2 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800" onClick={(e) => {
       e.preventDefault();
-      sendCommand({ type: "select-source", source: previewSource });
+      sendCommand({ type: "select-source", source: previewSource, overlays: [] });
       setPreviewSource(undefined);
     }}>Make Active</button> : <></>}
   </>

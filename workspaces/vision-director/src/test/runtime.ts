@@ -138,7 +138,7 @@ describe("Multi camera select", () => {
         await waitForCondition(() => latestState()?.availableSources.length == 2)
 
         sendCommand({
-          type: 'select-source', source: { id: 'primary' }
+          type: 'select-source', source: { id: 'primary' }, overlays: []
         })
 
         await Promise.all([
@@ -170,11 +170,11 @@ describe("Multi camera select", () => {
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await waitForCondition(() => latestState()?.availableSources.length == 2)
         sendCommand({
-          type: 'select-source', source: { id: 'primary' }
+          type: 'select-source', source: { id: 'primary' }, overlays: []
         })
         await waitForCondition(() => latestState()?.activeSource.id == 'primary')
         sendCommand({
-          type: 'select-source', source: { id: 'utter nonsense' }
+          type: 'select-source', source: { id: 'utter nonsense' }, overlays: []
         })
 
         await Promise.all([
@@ -206,7 +206,7 @@ describe("Multi camera select", () => {
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await waitForCondition(() => latestState()?.availableSources.length == 2 && latestState()?.activeSource.id == 'fallback')
         sendCommand({
-          type: 'select-source', source: { id: 'primary' }
+          type: 'select-source', source: { id: 'primary' }, overlays: []
         })
         await waitForCondition(() => latestState()?.activeSource.id == 'primary')
 
@@ -240,7 +240,7 @@ describe("Multi camera select", () => {
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await waitForCondition(() => latestState()?.availableSources.length == 2 && latestState()?.activeSource.id == 'fallback')
         sendCommand({
-          type: 'select-source', source: { id: 'primary' }
+          type: 'select-source', source: { id: 'primary' }, overlays: []
         })
         await waitForCondition(() => latestState()?.activeSource.id == 'primary')
         switcher.subscribe([]);

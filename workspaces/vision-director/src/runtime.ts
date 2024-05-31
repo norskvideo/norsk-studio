@@ -2,6 +2,8 @@ import {
   ChannelLayout, MediaNodeId
   , Norsk, SampleRate, StreamMetadata
   , StreamSwitchSmoothNode, VideoTestcardGeneratorNode, audioToPin, videoToPin, ReceiveFromAddress, SourceMediaNode, WhepOutputNode, requireAV, ReceiveFromAddressAuto, selectAudio, selectVideo,
+  VideoComposeNode,
+  StreamKeyOverrideNode,
 } from '@norskvideo/norsk-sdk';
 
 // should probably just re-implement this or... 
@@ -10,7 +12,7 @@ import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscri
 import { CustomAutoDuplexNode, SubscriptionOpts } from "norsk-studio/lib/extension/base-nodes";
 import { Context } from '@norskvideo/norsk-sdk';
 import { assertUnreachable } from 'norsk-studio/lib/shared/util';
-import { debuglog } from 'norsk-studio/lib/server/logging';
+import { debuglog, warninglog } from 'norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from 'norsk-studio/lib/shared/config';
 
 export type MultiCameraSelectConfig = {
@@ -64,9 +66,18 @@ export type MultiCameraSelectEvent = {
   sources: MultiCameraSource[],
 };
 
+type MultiCameraOverlay = {
+  source: MultiCameraSource,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+}
+
 export type MultiCameraSelectCommand = {
   type: 'select-source',
-  source: MultiCameraSource
+  source: MultiCameraSource,
+  overlays: MultiCameraOverlay[]
 }
 
 export default class MultiCameraSelectDefinition implements ServerComponentDefinition<MultiCameraSelectConfig,
@@ -115,7 +126,7 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
     const commandType = command.type;
     switch (commandType) {
       case 'select-source':
-        node.setActiveSource(command.source);
+        node.setActiveSource(command.source, command.overlays);
         break;
       default:
         assertUnreachable(commandType);
@@ -144,13 +155,19 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
   smooth?: StreamSwitchSmoothNode<string>;
   initialised: Promise<void>;
   activeSource: MultiCameraSource = { id: '' };
+  desiredSource: MultiCameraSource = { id: '' };
   availableSources: MultiCameraSource[] = [];
+  lastSmoothSwitchContext: Map<string, StreamMetadata[]> = new Map();
   whepOutputs: Map<string, { whep: WhepOutputNode, encoder?: SourceMediaNode }> = new Map();
   encodePreview?: SourceMediaNode;
   whepPreview?: WhepOutputNode;
   subscriptions: StudioNodeSubscriptionSource[] = [];
   updates: RuntimeUpdates<MultiCameraSelectState, MultiCameraSelectEvent>;
   shared: StudioShared;
+
+  composeCount: number = 0;
+  pendingCompose?: { id: string, compose: VideoComposeNode<string>, output: StreamKeyOverrideNode, audio: StreamKeyOverrideNode };
+  activeCompose?: { id: string, compose: VideoComposeNode<string>, output: StreamKeyOverrideNode, audio: StreamKeyOverrideNode };
 
   async initialise() {
     const audio = await SilenceSource.create(this.norsk,
@@ -253,31 +270,77 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     this.initialised = this.initialise();
   }
 
-  onTransitionComplete() {
+  onTransitionComplete(pin: string) {
     debuglog("Transition complete", { id: this.id, source: this.activeSource })
     this.cfg.onActiveSourceChanged?.(this.activeSource);
+
+    if (pin == this.pendingCompose?.id) {
+      this.activeCompose = this.pendingCompose;
+      this.pendingCompose = undefined;
+      this.doSubscriptions();
+    } else if (this.pendingCompose) {
+      void this.pendingCompose.compose.close();
+      void this.pendingCompose.output.close();
+      this.pendingCompose = undefined;
+    }
   }
 
   async onSwitchContext(allStreams: Map<string, StreamMetadata[]>) {
+    this.lastSmoothSwitchContext = allStreams;
+    await this.maybeSwitchSource();
+  }
+
+  setActiveSource(source: MultiCameraSource, overlays: MultiCameraOverlay[]) {
+    if (!this.sourceIsAvailable(source)) return;
+
+    // Quit this if we started
+    if (this.pendingCompose) {
+      void this.pendingCompose.compose.close();
+      void this.pendingCompose.output.close();
+      this.pendingCompose = undefined;
+    }
+
+    if (overlays.length > 0) {
+      void this.setupComposeSource(source, overlays);
+    } else {
+      this.desiredSource = source;
+      void this.maybeSwitchSource();
+    }
+  }
+
+  async maybeSwitchSource() {
     const oldSources = this.availableSources;
+    const allStreams = this.lastSmoothSwitchContext;
 
     this.availableSources = [...allStreams.keys()].map(pinToMultiCameraSource);
 
-    // Fallback if our active source goes away
-    // We could be smarter and keep a list of recent transitions and go back to something recent
-    // but that starts to smell like business logic
-    // oh and don't switch to fallback until it exists because that doesn't work either
+    // Switch to desired source if available and not already done so
+    if (this.activeSource.id !== this.desiredSource.id || this.activeSource.key != this.desiredSource.key) {
+      const currentAvailable = this.sourceIsAvailable(this.desiredSource) && allStreams.get(multiCameraSourceToPin(this.desiredSource))?.length == 2;
+      if (currentAvailable) {
+        this.activeSource = this.desiredSource;
+        this.smooth?.switchSource(multiCameraSourceToPin(this.desiredSource));
+      }
+    }
+
+    // Switch to fallback if our desired source isn't available
     if (this.activeSource.id !== 'fallback') {
-      const currentUnavailable = !this.sourceIsAvailable(this.activeSource) || allStreams.get(multiCameraSourceToPin(this.activeSource))?.length !== 2;
+      const currentUnavailable = !this.sourceIsAvailable(this.desiredSource) || allStreams.get(multiCameraSourceToPin(this.desiredSource))?.length !== 2;
       const fallbackAvailable = this.sourceIsAvailable({ id: 'fallback' }) && allStreams.get(multiCameraSourceToPin({ id: 'fallback' }))?.length == 2;
       if (currentUnavailable && fallbackAvailable) {
         debuglog("Switching to fallback source", { id: this.id });
+        if (this.desiredSource.id == this.activeSource.id && this.desiredSource.key == this.activeSource.key) {
+          this.desiredSource = { id: 'fallback' };
+        }
         this.activeSource = { id: 'fallback' };
         this.smooth?.switchSource("fallback")
       }
     }
 
     for (const existing of oldSources) {
+      if (existing.id == this.pendingCompose?.id) continue;
+      if (existing.id == this.activeCompose?.id) continue;
+
       const pin = multiCameraSourceToPin(existing);
       if (!this.sourceIsAvailable(existing) || allStreams.get(pin)?.length == 0) {
         const player = this.whepOutputs.get(pin);
@@ -293,6 +356,9 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     }
 
     for (const current of this.availableSources) {
+      if (current.id == this.pendingCompose?.id) continue;
+      if (current.id == this.activeCompose?.id) continue;
+
       const pin = multiCameraSourceToPin(current);
       if (!this.whepOutputs.get(pin) && allStreams.get(pin)?.length == 2) {
         debuglog("Source online", { id: this.id, source: current });
@@ -303,7 +369,6 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
         })
 
         this.whepOutputs.set(pin, { whep });
-        // We need to add an event to WHEP for 'I've started my deferred workflow'
         this.cfg?.onSourceOnline(current);
         this.cfg?.onPlayerOnline({ source: current, url: whep.endpointUrl });
       }
@@ -311,22 +376,105 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     void this.setupPreviewPlayers();
   }
 
-  setActiveSource(source: MultiCameraSource) {
-    if (this.activeSource.id === source.id && this.activeSource.key == source.key) return;
-    if (!this.sourceIsAvailable(source)) return;
+  async setupComposeSource(source: MultiCameraSource, overlays: MultiCameraOverlay[]) {
+    const id = `${this.id}-compose-${this.composeCount++}`;
+    this.pendingCompose = {
+      id,
+      compose: await this.norsk.processor.transform.videoCompose<string>({
+        id,
+        referenceResolution: { width: 100, height: 100 },
+        outputResolution: this.cfg.resolution,
+        referenceStream: 'background',
+        missingStreamBehaviour: 'drop_part',
+        parts: [
+          {
+            pin: "background",
+            sourceRect: { x: 0, y: 0, width: 100.0, height: 100.0 },
+            destRect: { x: 0, y: 0, width: 100.0, height: 100.0 },
+            opacity: 1.0,
+            zIndex: 0
+          },
+          ...overlays.map((o, i) => {
+            return {
+              pin: `overlay-${i}`,
+              sourceRect: { x: 0, y: 0, width: 100, height: 100 },
+              destRect: { x: o.x, y: o.y, width: o.width, height: o.height },
+              opacity: 1.0,
+              zIndex: i + 1
+            }
+          })
+        ]
+      }),
+      output: await this.norsk.processor.transform.streamKeyOverride({
+        id: `${id}-video`,
+        streamKey: {
+          streamId: 256,
+          programNumber: 1,
+          sourceName: id,
+          renditionName: 'default'
+        }
+      }),
+      audio: await this.norsk.processor.transform.streamKeyOverride({
+        id: `${id}-audio`,
+        streamKey: {
+          streamId: 257,
+          programNumber: 1,
+          sourceName: id,
+          renditionName: 'default'
+        }
+      })
+    };
 
-    this.smooth?.switchSource(multiCameraSourceToPin(source));
-    this.activeSource = source;
+    const background = this.subscriptions.find((s) => s.source.id == source.id);
+
+    if (!background) {
+      warninglog("Unable to find source for stream", { source });
+      await this.pendingCompose.compose.close();
+      await this.pendingCompose.output.close();
+      this.pendingCompose = undefined;
+      return;
+    }
+
+    this.pendingCompose.output.subscribe([
+      { source: this.pendingCompose.compose, sourceSelector: selectVideo }
+    ])
+
+    // And the rest
+    this.pendingCompose.compose.subscribeToPins([
+      source.key ?
+        background.selectVideoToPinForKey("background", source.key)[0] :
+        background.selectVideoToPin("background")[0]
+      , ...overlays.flatMap((o, i) => {
+        const source = this.subscriptions.find((s) => s.source.id == o.source.id);
+        if (!source) return [];
+        return o.source.key ?
+          [source.selectVideoToPinForKey(`overlay-${i}`, o.source.key)[0]] :
+          [source.selectVideoToPin(`overlay-${i}`)[0]];
+      })])
+
+    // This could be a mixer..
+    this.pendingCompose.audio.subscribe([
+      source.key ?
+        background.selectAudioForKey(source.key)[0] :
+        background.selectAudio()[0]
+    ])
+    this.desiredSource = { id: `${this.pendingCompose.id}` };
+    this.doSubscriptions();
   }
-
 
   sourceIsAvailable(source: MultiCameraSource) {
     return !!this.availableSources.find((s) => s.id == source.id && s.key == source.key);
   }
 
-
   override subscribe(subs: StudioNodeSubscriptionSource[], opts?: SubscriptionOpts) {
+    this.subscriptions = subs;
+    this.doSubscriptions(opts);
+    void this.setupPreviewPlayers();
+  }
+
+  doSubscriptions(opts?: SubscriptionOpts) {
     const knownSources: MultiCameraSource[] = [];
+    const subs = this.subscriptions;
 
     const subscriptions = subs.flatMap((s) => {
       const sType = s.streams.type;
@@ -361,21 +509,38 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
       );
     if (this.video) {
       subscriptions.push(
-        {
-          source: this.video, sourceSelector: videoToPin("fallback")
-        }
+        { source: this.video, sourceSelector: videoToPin("fallback") }
       );
       knownSources.push({ id: "fallback" });
     }
 
     this.cfg.onSourcesDiscovered(knownSources);
 
+    if (this.pendingCompose) {
+      subscriptions.push({
+        source: this.pendingCompose.output,
+        sourceSelector: videoToPin(`${this.pendingCompose.id}`)
+      })
+      subscriptions.push({
+        source: this.pendingCompose.audio,
+        sourceSelector: audioToPin(`${this.pendingCompose.id}`)
+      })
+    }
+
+    if (this.activeCompose) {
+      subscriptions.push({
+        source: this.activeCompose.output,
+        sourceSelector: videoToPin(`${this.activeCompose.id}`)
+      })
+      subscriptions.push({
+        source: this.activeCompose.audio,
+        sourceSelector: audioToPin(`${this.activeCompose.id}`)
+      })
+    }
+
     debuglog("Subcription complete, known sources", { id: this.id, knownSources });
 
     this.smooth?.subscribeToPins(subscriptions, opts?.requireOneOfEverything ? (ctx: Context) => ctx.streams.length == (subs.length * 2) + 2 : undefined);
-
-    this.subscriptions = subs;
-    void this.setupPreviewPlayers();
   }
 
   async setupPreviewPlayers() {
