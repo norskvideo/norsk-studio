@@ -1,9 +1,9 @@
 import { Norsk, SrtInputSettings as SdkSettings } from '@norskvideo/norsk-sdk';
 import { SocketOptions } from '../shared/srt-types';
-import { SimpleInputWrapper } from 'norsk-studio/lib/extension/base-nodes';
-import { OnCreated, ServerComponentDefinition, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
-import { debuglog } from 'norsk-studio/lib/server/logging';
-import { assertUnreachable } from 'norsk-studio/lib/shared/util';
+import { SimpleInputWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { OnCreated, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 
 export type SrtInputSettings = Pick<SdkSettings
   , 'port'

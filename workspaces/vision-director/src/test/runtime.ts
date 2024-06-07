@@ -5,8 +5,8 @@ import { AvMultiInput, testRuntime as builtInRuntime } from "norsk-studio/lib/te
 import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "norsk-studio/lib/test/_util/sinks";
 import { testSourceDescription, videoAndAudio } from "norsk-studio/lib/test/_util/sources";
 import YAML from 'yaml';
-import * as document from 'norsk-studio/lib/runtime/document';
-import go, { RunResult } from 'norsk-studio/lib/runtime/execution';
+import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
+import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import cameraSelectInfo from '../info';
 import MultiCameraSelectDefinition, { MultiCameraSelect, MultiCameraSelectCommand, MultiCameraSelectState } from "../runtime";
 import { expect } from "chai";

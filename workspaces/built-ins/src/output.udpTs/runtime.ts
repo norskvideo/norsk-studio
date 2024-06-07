@@ -1,6 +1,6 @@
 import { Norsk, UdpTsOutputSettings as SdkSettings } from '@norskvideo/norsk-sdk';
-import { OnCreated, ServerComponentDefinition } from 'norsk-studio/lib/extension/runtime-types';
-import { SimpleSinkWrapper } from 'norsk-studio/lib/extension/base-nodes';
+import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 
 export type UdpTsOutputSettings = Pick<SdkSettings, 'port' | 'destinationIp' | 'interface' | 'bufferDelayMs' | 'avDelayMs'> & {
   id: string,

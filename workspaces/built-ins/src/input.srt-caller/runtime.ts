@@ -1,7 +1,7 @@
 import { Norsk, SrtInputSettings as SdkSettings } from '@norskvideo/norsk-sdk';
 import { SocketOptions } from '../shared/srt-types';
-import { SimpleInputWrapper } from 'norsk-studio/lib/extension/base-nodes';
-import { OnCreated, ServerComponentDefinition } from 'norsk-studio/lib/extension/runtime-types';
+import { SimpleInputWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 
 export type SrtInputSettings = Pick<SdkSettings, 'port' | 'ip' | 'sourceName' | 'passphrase' | 'streamId'> & {
   id: string,

@@ -1,7 +1,7 @@
 import { Norsk, WhepOutputSettings as SdkSettings } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, ServerComponentDefinition, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
-import { SimpleSinkWrapper } from 'norsk-studio/lib/extension/base-nodes';
+import { OnCreated, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 
 export type WhepOutputSettings = {
   id: string;

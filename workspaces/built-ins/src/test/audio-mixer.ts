@@ -3,8 +3,8 @@
 // import { YamlBuilder, YamlNodeBuilder } from "norsk-studio/lib/test/_util/builder";
 // import audioMixerInfo from '../processor.audioMixer/info';
 // import YAML from 'yaml';
-// import * as document from 'norsk-studio/lib/runtime/document';
-// import go, { RunResult } from 'norsk-studio/lib/runtime/execution';
+// import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
+// import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
 // import { AvMultiInput, testRuntime } from "norsk-studio/lib/test/_util/runtime";
 // import AudioMixerDefinition, { AudioMixer, AudioMixerCommand, AudioMixerState } from "../processor.audioMixer/runtime";
 // import { assertNodeOutputsAudioFrames, waitForAssert } from "norsk-studio/lib/test/_util/sinks";

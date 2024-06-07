@@ -1,6 +1,6 @@
 import { Norsk, VideoTestcardGeneratorSettings as SdkSettings } from '@norskvideo/norsk-sdk';
-import { SimpleInputWrapper } from 'norsk-studio/lib/extension/base-nodes';
-import { OnCreated, ServerComponentDefinition } from 'norsk-studio/lib/extension/runtime-types';
+import { SimpleInputWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 
 
 export type VideoTestcardGeneratorSettings = Pick<SdkSettings, 'resolution' | 'frameRate' | 'sourceName' | 'pattern'> & {

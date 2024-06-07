@@ -1,7 +1,7 @@
 import type { WhepOutputSettings } from "./runtime";
 import type Registration from "norsk-studio/lib/extension/registration";
 
-import { GlobalIceServers } from 'norsk-studio/lib/shared/config'
+import { GlobalIceServers } from '@norskvideo/norsk-studio/lib/shared/config'
 
 export default function(R: Registration) {
   const {

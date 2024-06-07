@@ -1,6 +1,6 @@
 import { IntervalTimestamp, Norsk, SinkMediaNode, StreamTimestampReportNode, selectAll } from '@norskvideo/norsk-sdk';
 
-import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime, StudioShared } from 'norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 
 export type LatencyStatsOutputSettings = {
   id: string;

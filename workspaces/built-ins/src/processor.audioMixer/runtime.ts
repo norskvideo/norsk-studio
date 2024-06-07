@@ -1,8 +1,8 @@
 import { AudioGainNode, AudioMeasureLevels, AudioMeasureLevelsNode, AudioMixNode, AudioMixSettings, ChannelLayout, Db, MediaNodeId, Norsk, StreamKey, SubscriptionError, getAmountOfChannels, selectAudio } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
-import { CustomAutoDuplexNode } from 'norsk-studio/lib/extension/base-nodes';
-import { assertUnreachable } from 'norsk-studio/lib/shared/util';
+import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomAutoDuplexNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 
 export type AudioMixerSettings = {
   id: string;

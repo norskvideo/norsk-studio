@@ -1,7 +1,7 @@
 import { AudioSignalGeneratorNode, ChannelLayout, Norsk, SampleRate, getAmountOfChannels, selectAudio } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, ServerComponentDefinition } from 'norsk-studio/lib/extension/runtime-types';
-import { CustomSourceNode } from 'norsk-studio/lib/extension/base-nodes';
+import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomSourceNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 
 export type SilenceConfig = {
   id: string,

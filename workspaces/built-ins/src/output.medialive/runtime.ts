@@ -1,11 +1,11 @@
 import { Norsk } from '@norskvideo/norsk-sdk';
-import { CustomSinkNode } from 'norsk-studio/lib/extension/base-nodes';
+import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
+import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 
 import express, { Response } from 'express';
 import { ChannelSummary, DescribeChannelCommand, DescribeInputCommand, DescribeInputCommandOutput, ListChannelsCommand, MediaLiveClient, MediaLiveServiceException } from '@aws-sdk/client-medialive';
-import { warninglog } from 'norsk-studio/lib/server/logging';
+import { warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { ListOriginEndpointsCommand, MediaPackageClient } from '@aws-sdk/client-mediapackage';
 
 

@@ -1,7 +1,7 @@
 import { IntervalTimestamp, Norsk, SinkMediaNode, StreamKey } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
-import { CustomSinkNode, SimpleSinkWrapper } from 'norsk-studio/lib/extension/base-nodes';
+import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomSinkNode, SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 
 export type TimestampOutputSettings = {
   id: string;

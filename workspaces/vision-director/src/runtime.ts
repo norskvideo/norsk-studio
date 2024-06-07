@@ -8,12 +8,12 @@ import {
 
 // should probably just re-implement this or... 
 import { SilenceSource } from 'norsk-studio.built-ins/lib/input.silence/runtime';
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from 'norsk-studio/lib/extension/runtime-types';
+import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomAutoDuplexNode, SubscriptionOpts } from "norsk-studio/lib/extension/base-nodes";
 import { Context } from '@norskvideo/norsk-sdk';
-import { assertUnreachable } from 'norsk-studio/lib/shared/util';
-import { debuglog, warninglog } from 'norsk-studio/lib/server/logging';
-import { HardwareAccelerationType, contractHardwareAcceleration } from 'norsk-studio/lib/shared/config';
+import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
+import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 
 export type MultiCameraSelectConfig = {
   id: MediaNodeId,

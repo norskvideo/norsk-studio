@@ -1,9 +1,9 @@
 import { AncillaryNode, JitterBufferNode, Norsk, WhepOutputSettings as SdkSettings, SourceMediaNode, StreamMetadataOverrideNode, WhepOutputNode, requireAV, selectAV, selectAncillary, selectVideo } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from 'norsk-studio/lib/extension/runtime-types';
-import { CustomAutoDuplexNode, SubscriptionOpts } from 'norsk-studio/lib/extension/base-nodes';
-import { assertUnreachable } from 'norsk-studio/lib/shared/util';
-import { HardwareAccelerationType } from 'norsk-studio/lib/shared/config';
+import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomAutoDuplexNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
+import { HardwareAccelerationType } from '@norskvideo/norsk-studio/lib/shared/config';
 
 export type MonetiseOutputSettings = {
   id: string;

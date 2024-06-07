@@ -6,7 +6,7 @@ import {
 } from '@norskvideo/norsk-sdk';
 
 import { SilenceSource } from '../input.silence/runtime';
-import { OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
+import { OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomAutoDuplexNode, SubscriptionOpts } from "norsk-studio/lib/extension/base-nodes";
 
 // Ideally this lives in client code too

@@ -2,9 +2,9 @@ import { Norsk } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
 import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
 import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "norsk-studio/lib/test/_util/builder"
-import * as document from 'norsk-studio/lib/runtime/document';
+import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
-import go from 'norsk-studio/lib/runtime/execution';
+import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { TraceSink, waitForAssert } from "norsk-studio/lib/test/_util/sinks";
 import { Ffmpeg, ffmpegCommand, rtmpOutput } from "norsk-studio/lib/test/_util/ffmpeg";
 

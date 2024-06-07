@@ -931,6 +931,71 @@ var init_info = __esm({
   }
 });
 
+// ../../node_modules/@norskvideo/norsk-studio/lib/shared/config.js
+var require_config2 = __commonJS({
+  "../../node_modules/@norskvideo/norsk-studio/lib/shared/config.js"(exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RootDataDir = exports.HardwareSelection = exports.contractHardwareAcceleration = exports.GlobalIceServers = void 0;
+    function GlobalIceServers4(f) {
+      return {
+        id: "ice-servers",
+        form: {
+          help: "ICE Servers to use in STUN negotiation (one per line)",
+          hint: {
+            type: "list",
+            validation: f.validation.Z.array(f.validation.IceServer),
+            defaultValue: ["stun:stun.l.google.com:19302"]
+          }
+        }
+      };
+    }
+    exports.GlobalIceServers = GlobalIceServers4;
+    function contractHardwareAcceleration(value, accepted) {
+      if (!value)
+        return void 0;
+      const expanded = accepted;
+      if (expanded.includes(value)) {
+        return value;
+      }
+      return void 0;
+    }
+    exports.contractHardwareAcceleration = contractHardwareAcceleration;
+    function HardwareSelection6() {
+      return {
+        id: "hardware-acceleration",
+        form: {
+          help: "Where available, use the specified hardware for encodes/compose operations",
+          hint: {
+            type: "select",
+            optional: true,
+            options: [
+              { value: "ma35d", display: "MA35D" },
+              { value: "quadra", display: "Quadra" },
+              { value: "nvidia", display: "Nvidia" },
+              { value: "logan", display: "Logan" }
+            ]
+          }
+        }
+      };
+    }
+    exports.HardwareSelection = HardwareSelection6;
+    function RootDataDir() {
+      return {
+        id: "root-data-dir",
+        form: {
+          help: "The root data dir to use against relative file paths in components/etc",
+          hint: {
+            type: "text",
+            defaultValue: "/"
+          }
+        }
+      };
+    }
+    exports.RootDataDir = RootDataDir;
+  }
+});
+
 // build/processor.actionReplay/summary.js
 var summary_exports2 = {};
 __export(summary_exports2, {
@@ -17030,7 +17095,7 @@ function info_default14({ defineComponent, All, validation: { Port, IpAddress, J
 }
 
 // build/output.whep/info.js
-var import_config2 = __toESM(require_config());
+var import_config2 = __toESM(require_config2());
 function info_default15(R) {
   const { defineComponent, Av, validation: { JitterBuffer } } = R;
   return defineComponent({

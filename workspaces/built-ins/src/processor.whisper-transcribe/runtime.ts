@@ -1,6 +1,6 @@
 import { AudioTranscribeWhisperNode, Norsk, StreamKeyOverrideNode, StreamMetadataOverrideNode, SubscribeDestination, SubscriptionError, selectSubtitles } from '@norskvideo/norsk-sdk';
-import { CreatedMediaNode, OnCreated, RelatedMediaNodes, ServerComponentDefinition, StudioNodeSubscriptionSource } from 'norsk-studio/lib/extension/runtime-types';
-import { debuglog } from 'norsk-studio/lib/server/logging';
+import { CreatedMediaNode, OnCreated, RelatedMediaNodes, ServerComponentDefinition, StudioNodeSubscriptionSource } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 
 export type WhisperTranscribeConfig = {
   id: string,

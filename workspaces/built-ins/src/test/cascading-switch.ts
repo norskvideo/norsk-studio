@@ -1,8 +1,8 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
 import { YamlBuilder, YamlNodeBuilder } from "norsk-studio/lib/test/_util/builder"
-import * as document from 'norsk-studio/lib/runtime/document';
+import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
-import go, { RunResult } from 'norsk-studio/lib/runtime/execution';
+import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "norsk-studio/lib/test/_util/sinks";
 import { CascadingSwitch, CascadingSwitchConfig, CascadingSwitchState } from "../processor.cascadingSwitch/runtime";
 import cascadingInfo from '../processor.cascadingSwitch/info';

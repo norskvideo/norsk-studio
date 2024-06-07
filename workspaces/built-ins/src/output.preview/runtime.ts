@@ -1,9 +1,9 @@
 import { AudioMeasureLevels, AudioMeasureLevelsNode, Norsk, ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, SourceMediaNode, WhepOutputNode, selectVideo } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from 'norsk-studio/lib/extension/runtime-types';
-import { CustomSinkNode, SimpleSinkWrapper, SubscriptionOpts } from 'norsk-studio/lib/extension/base-nodes';
-import { HardwareAccelerationType } from 'norsk-studio/lib/shared/config';
-import { debuglog } from 'norsk-studio/lib/server/logging';
+import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomSinkNode, SimpleSinkWrapper, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { HardwareAccelerationType } from '@norskvideo/norsk-studio/lib/shared/config';
+import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 
 export type PreviewOutputSettings = {
   id: string;

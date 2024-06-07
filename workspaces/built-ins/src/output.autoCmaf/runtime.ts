@@ -1,9 +1,9 @@
 import { AdMarker, AutoProcessorMediaNode, CmafDestinationSettings, CmafMultiVariantOutputNode, Norsk, Scte35InsertCommand, SourceMediaNode, StreamKey, StreamMetadata, SubscriptionError, selectExactKey, selectPlaylist, streamKeysAreEqual } from '@norskvideo/norsk-sdk';
 
-import { assertUnreachable } from 'norsk-studio/lib/shared/util';
-import { CreatedMediaNode, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
-import { CustomSinkNode } from 'norsk-studio/lib/extension/base-nodes';
-import { ReportBuilder } from 'norsk-studio/lib/runtime/execution';
+import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
+import { CreatedMediaNode, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { ReportBuilder } from '@norskvideo/norsk-studio/lib/runtime/execution';
 
 
 export type AutoCmafS3Destination = {

@@ -1,6 +1,6 @@
 import { AmdMA35DLoad, Norsk, SinkMediaNode } from '@norskvideo/norsk-sdk';
 
-import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 
 export type Ma35DStatsOutputSettings = {
   id: string;

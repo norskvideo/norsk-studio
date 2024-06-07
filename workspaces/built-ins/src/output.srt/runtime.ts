@@ -1,7 +1,7 @@
 import { Norsk, SrtOutputSettings as SdkSettings } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, ServerComponentDefinition } from 'norsk-studio/lib/extension/runtime-types';
-import { SimpleSinkWrapper } from 'norsk-studio/lib/extension/base-nodes';
+import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import type { SocketOptions } from '../shared/srt-types';
 
 export type SrtOutputSettings = Pick<SdkSettings, 'port' | 'ip' | 'mode' | 'passphrase' | 'streamId' | 'bufferDelayMs' | 'avDelayMs'> & {

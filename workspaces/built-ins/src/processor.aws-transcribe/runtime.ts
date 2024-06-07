@@ -1,8 +1,8 @@
 import { AudioTranscribeAwsNode, Norsk, StreamKeyOverrideNode, StreamMetadataOverrideNode, SubscribeDestination, SubscriptionError, selectSubtitles, AudioTranscribeAwsSettings as SdkSettings, SubtitleTranslateAwsSettings as TranslateSdkSettings, SubtitleTranslateAwsNode } from '@norskvideo/norsk-sdk';
-import { CreatedMediaNode, OnCreated, RelatedMediaNodes, ServerComponentDefinition, StudioNodeSubscriptionSource } from 'norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, OnCreated, RelatedMediaNodes, ServerComponentDefinition, StudioNodeSubscriptionSource } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import express from 'express';
 import { ListLanguagesCommand, TranslateClient } from '@aws-sdk/client-translate';
-import { warninglog } from 'norsk-studio/lib/server/logging';
+import { warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 
 export type AwsTranscribeConfig = Pick<SdkSettings, 'language'> & Pick<TranslateSdkSettings, 'targetLanguage'> & {
   id: string,

@@ -1,7 +1,7 @@
 import { Norsk, OnStreamResult, RtmpServerInputSettings as SdkSettings, RtmpServerStreamKeys } from '@norskvideo/norsk-sdk';
-import { SimpleInputWrapper } from 'norsk-studio/lib/extension/base-nodes';
-import { OnCreated, ServerComponentDefinition, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
-import { debuglog } from 'norsk-studio/lib/server/logging';
+import { SimpleInputWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { OnCreated, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 
 export type RtmpInputSettings = Pick<SdkSettings
   , 'port'

@@ -1,7 +1,7 @@
 import { AudioGainNode, AudioMeasureLevels, AudioMeasureLevelsNode, Db, Norsk, selectAudio } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from 'norsk-studio/lib/extension/runtime-types';
-import { CustomAutoDuplexNode } from 'norsk-studio/lib/extension/base-nodes';
+import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomAutoDuplexNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 
 export type AudioLevelSettings = {
   id: string;

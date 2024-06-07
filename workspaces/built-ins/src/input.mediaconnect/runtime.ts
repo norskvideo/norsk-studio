@@ -1,11 +1,11 @@
 import { Norsk, requireAV, selectAll } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, ServerComponentDefinition } from 'norsk-studio/lib/extension/runtime-types';
-import { CustomSourceNode } from 'norsk-studio/lib/extension/base-nodes';
+import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomSourceNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 
 import express, { Response } from 'express';
 import { DescribeFlowCommand, Flow, ListFlowsCommand, ListedFlow, MediaConnectClient, MediaConnectServiceException, Output } from '@aws-sdk/client-mediaconnect';
-import { errorlog } from 'norsk-studio/lib/server/logging';
+import { errorlog } from '@norskvideo/norsk-studio/lib/server/logging';
 
 
 export type MediaConnectConfig = {

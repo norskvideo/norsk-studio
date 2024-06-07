@@ -3,12 +3,12 @@ import {
   VideoStreamMetadata, avToPin, selectAV, selectAudio, selectExactKey, selectPlaylist, selectVideo
 } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from 'norsk-studio/lib/extension/runtime-types';
-import { SubscriptionOpts } from 'norsk-studio/lib/extension/base-nodes';
-import { assertUnreachable } from 'norsk-studio/lib/shared/util';
-import { debuglog, errorlog, infolog } from 'norsk-studio/lib/server/logging';
+import { OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
+import { debuglog, errorlog, infolog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { tmpdir } from 'os';
-import { HardwareAccelerationType, contractHardwareAcceleration } from 'norsk-studio/lib/shared/config';
+import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 
 export type ActionReplayConfig = {
   id: string,
