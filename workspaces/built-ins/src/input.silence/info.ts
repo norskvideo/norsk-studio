@@ -1,4 +1,4 @@
-import type Registration from "norsk-studio/lib/extension/registration"
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration"
 import type { SilenceConfig } from "./runtime";
 
 export default function({ defineComponent, Audio }: Registration) {

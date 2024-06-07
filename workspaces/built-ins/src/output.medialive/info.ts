@@ -1,4 +1,4 @@
-import type Registration from "norsk-studio/lib/extension/registration"
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration"
 import type { MediaLiveCommand, MediaLiveConfig, MediaLiveEvent, MediaLiveState } from "./runtime";
 import React from "react";
 

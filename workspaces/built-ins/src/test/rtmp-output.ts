@@ -1,17 +1,17 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "norsk-studio/lib/test/_util/builder"
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
+import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { RtmpOutputEvent, RtmpOutputSettings, RtmpOutputState } from "../output.rtmp/runtime";
-import { testSourceDescription, videoAndAudio } from "norsk-studio/lib/test/_util/sources";
+import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import RtmpInfo from "../output.rtmp/info";
-import { Av, RegistrationConsts } from "norsk-studio/lib/extension/client-types";
-import { SimpleSinkWrapper } from "norsk-studio/lib/extension/base-nodes";
-import { StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
-import { FfprobeStream, getStreams } from "norsk-studio/lib/test/_util/sinks";
+import { Av, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { SimpleSinkWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
+import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
+import { FfprobeStream, getStreams } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import { expect } from "chai";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {

@@ -1,16 +1,16 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "norsk-studio/lib/test/_util/builder"
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
+import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
-import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames } from "norsk-studio/lib/test/_util/sinks";
+import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import { SrtInputSettings } from "../input.srt-caller/runtime";
-import { Ffmpeg, ffmpegCommand, srtOutput } from "norsk-studio/lib/test/_util/ffmpeg";
+import { Ffmpeg, ffmpegCommand, srtOutput } from "@norskvideo/norsk-studio/lib/test/_util/ffmpeg";
 
 import SrtInfo from "../input.srt-caller/info";
-import { RegistrationConsts } from "norsk-studio/lib/extension/client-types";
+import { RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();

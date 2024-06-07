@@ -1,18 +1,18 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "norsk-studio/lib/test/_util/builder"
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
+import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { expect } from "chai";
 import { WhepOutputSettings } from "../output.whep/runtime";
-import { testSourceDescription, videoAndAudio } from "norsk-studio/lib/test/_util/sources";
+import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import puppeteer, { Browser, Page } from 'puppeteer';
 import WhepInfo from "../output.whep/info";
-import { Av, RegistrationConsts } from "norsk-studio/lib/extension/client-types";
-import { SimpleSinkWrapper } from "norsk-studio/lib/extension/base-nodes";
-import { StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
+import { Av, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { SimpleSinkWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
+import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();

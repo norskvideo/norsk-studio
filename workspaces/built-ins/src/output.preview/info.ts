@@ -1,7 +1,7 @@
 import React from "react";
 import type { PreviewOutputCommand, PreviewOutputEvent, PreviewOutputSettings, PreviewOutputState } from "./runtime";
-import type Registration from "norsk-studio/lib/extension/registration";
-import { GlobalIceServers, HardwareSelection } from "norsk-studio/lib/shared/config";
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
+import { GlobalIceServers, HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 
 export default function(R: Registration) {
   const {

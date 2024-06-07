@@ -1,18 +1,18 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
-import { Av, BaseConfig, NodeInfo, RegistrationConsts } from "norsk-studio/lib/extension/client-types";
-import { YamlBuilder, YamlNodeBuilder } from "norsk-studio/lib/test/_util/builder";
-import { AvMultiInput, testRuntime as builtInRuntime } from "norsk-studio/lib/test/_util/runtime";
-import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "norsk-studio/lib/test/_util/sinks";
-import { testSourceDescription, videoAndAudio } from "norsk-studio/lib/test/_util/sources";
+import { Av, BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { YamlBuilder, YamlNodeBuilder } from "@norskvideo/norsk-studio/lib/test/_util/builder";
+import { AvMultiInput, testRuntime as builtInRuntime } from "@norskvideo/norsk-studio/lib/test/_util/runtime";
+import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
+import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import YAML from 'yaml';
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import cameraSelectInfo from '../info';
 import MultiCameraSelectDefinition, { MultiCameraSelect, MultiCameraSelectCommand, MultiCameraSelectState } from "../runtime";
 import { expect } from "chai";
-import { waitForCondition } from "norsk-studio/lib/shared/util";
-import { debuglog } from "norsk-studio/lib/server/logging";
-import { StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
+import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
+import { debuglog } from "@norskvideo/norsk-studio/lib/server/logging";
+import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 
 
 const CameraSelectInfo = cameraSelectInfo(RegistrationConsts);

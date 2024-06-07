@@ -1,4 +1,4 @@
-import type Registration from "norsk-studio/lib/extension/registration"
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration"
 import type { SrtInputEvent, SrtInputSettings, SrtInputState } from "./runtime"
 import React from "react";
 const InlineView = React.lazy(async () => import('./inline-view'));

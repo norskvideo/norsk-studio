@@ -1,18 +1,18 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
-import { YamlBuilder, YamlNodeBuilder } from "norsk-studio/lib/test/_util/builder"
+import { YamlBuilder, YamlNodeBuilder } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
-import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "norsk-studio/lib/test/_util/sinks";
+import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import { CascadingSwitch, CascadingSwitchConfig, CascadingSwitchState } from "../processor.cascadingSwitch/runtime";
 import cascadingInfo from '../processor.cascadingSwitch/info';
 import { expect } from "chai";
-import { videoAndAudio, testSourceDescription } from "norsk-studio/lib/test/_util/sources";
-import { AvInput, TestConfig, extractLibraryFromRuntime, testRuntime } from "norsk-studio/lib/test/_util/runtime";
-import Session from "norsk-studio/lib/client/session";
-import { Av, RegistrationConsts } from "norsk-studio/lib/extension/client-types";
-import { DocumentDescription, NodeDescription } from "norsk-studio/lib/shared/document";
-import { StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
+import { videoAndAudio, testSourceDescription } from "@norskvideo/norsk-studio/lib/test/_util/sources";
+import { AvInput, TestConfig, extractLibraryFromRuntime, testRuntime } from "@norskvideo/norsk-studio/lib/test/_util/runtime";
+import Session from "@norskvideo/norsk-studio/lib/client/session";
+import { Av, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { DocumentDescription, NodeDescription } from "@norskvideo/norsk-studio/lib/shared/document";
+import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import registerAll from "..";
 
 const CascadingInfo = cascadingInfo(RegistrationConsts);

@@ -1,18 +1,18 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "norsk-studio/lib/test/_util/builder"
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
+import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { BrowserOverlayConfig } from "../processor.browserOverlay/runtime";
-import { videoAndAudio, testSourceDescription } from "norsk-studio/lib/test/_util/sources";
+import { videoAndAudio, testSourceDescription } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import { BrowserOverlay } from "../processor.browserOverlay/runtime";
-import { assertNodeOutputsVideoFrames } from "norsk-studio/lib/test/_util/sinks";
+import { assertNodeOutputsVideoFrames } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 
 import BrowserOverlayInfo from "../processor.browserOverlay/info";
-import { RegistrationConsts } from "norsk-studio/lib/extension/client-types";
-import { StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
+import { RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();

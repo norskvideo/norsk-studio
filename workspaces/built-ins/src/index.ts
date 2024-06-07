@@ -1,5 +1,5 @@
-import { autoRegisterComponents } from "norsk-studio/lib/extension/registration"
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
+import { autoRegisterComponents } from "@norskvideo/norsk-studio/lib/extension/registration"
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
 import path from 'path';
 
 export async function registerAll(r: RuntimeSystem) { 

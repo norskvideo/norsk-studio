@@ -1,6 +1,6 @@
 import React from "react";
 import type { AudioLevelCommand, AudioLevelEvent, AudioLevelSettings, AudioLevelState } from "./runtime";
-import type Registration from "norsk-studio/lib/extension/registration";
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 
 export default function({
   defineComponent,

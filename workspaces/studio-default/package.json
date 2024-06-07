@@ -11,7 +11,6 @@
   "license": "MIT",
   "dependencies": {
     "@norskvideo/norsk-studio": "^1.0.0",
-    "norsk-studio": "^1.0.0",
     "norsk-studio.built-ins": "^1.0.0",
     "norsk-studio.vision-director": "^1.0.0"
   }

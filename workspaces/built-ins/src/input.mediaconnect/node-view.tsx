@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { MediaConnectConfig } from "./runtime";
 import type { Flow } from "@aws-sdk/client-mediaconnect";
-import type { NodeDescription } from "norsk-studio/lib/shared/document";
+import type { NodeDescription } from "@norskvideo/norsk-studio/lib/shared/document";
 
 
 function NodeView(props: { node: NodeDescription<MediaConnectConfig> }) {

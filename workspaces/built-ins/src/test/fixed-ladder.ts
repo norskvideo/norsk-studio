@@ -1,18 +1,18 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "norsk-studio/lib/test/_util/builder"
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
+import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { FixedLadderConfig } from "../processor.fixedLadder/runtime";
-import { testSourceDescription, videoAndAudio } from "norsk-studio/lib/test/_util/sources";
-import { assertNodeOutputsVideoFrames } from "norsk-studio/lib/test/_util/sinks";
+import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
+import { assertNodeOutputsVideoFrames } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 
 import FixedLadderInfo, { RungName } from "../processor.fixedLadder/info";
-import { RegistrationConsts, Video } from "norsk-studio/lib/extension/client-types";
-import { SimpleProcessorWrapper } from "norsk-studio/lib/extension/base-nodes";
-import { StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
+import { RegistrationConsts, Video } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { SimpleProcessorWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
+import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();

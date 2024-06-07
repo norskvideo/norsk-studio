@@ -1,4 +1,4 @@
-import type Registration from "norsk-studio/lib/extension/registration"
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration"
 import type { SrtInputSettings } from "./runtime"
 import srtSocketOptions from '../shared/srt-socket-options';
 

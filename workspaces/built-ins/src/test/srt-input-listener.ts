@@ -1,19 +1,19 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "norsk-studio/lib/test/_util/builder"
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
+import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
-import { TraceSink, assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "norsk-studio/lib/test/_util/sinks";
+import { TraceSink, assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import { SrtInputEvent, SrtInputSettings, SrtInputState } from "../input.srt-listener/runtime";
-import { Ffmpeg, ffmpegCommand, srtOutput } from "norsk-studio/lib/test/_util/ffmpeg";
+import { Ffmpeg, ffmpegCommand, srtOutput } from "@norskvideo/norsk-studio/lib/test/_util/ffmpeg";
 
 import SrtInfo from "../input.srt-listener/info";
-import { BaseConfig, NodeInfo, RegistrationConsts } from "norsk-studio/lib/extension/client-types";
-import { StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
+import { BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { expect } from "chai";
-import { waitForCondition } from "norsk-studio/lib/shared/util";
+import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();

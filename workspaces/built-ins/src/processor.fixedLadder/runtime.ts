@@ -2,7 +2,7 @@ import { AmdMA35DH264, AmdMA35DHevc, Norsk, NvidiaH264, QuadraH264, VideoEncodeR
 
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-import { SimpleProcessorWrapper } from "norsk-studio/lib/extension/base-nodes";
+import { SimpleProcessorWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 import { RungName } from './info';
 import { HardwareAccelerationType } from '@norskvideo/norsk-studio/lib/shared/config';
 

@@ -1,5 +1,5 @@
-import type { BaseConfig, NodeInfo } from "norsk-studio/lib/extension/client-types";
-import type Registration from "norsk-studio/lib/extension/registration";
+import type { BaseConfig, NodeInfo } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 
 const InitialisedComponents: { [key: string]: NodeInfo<BaseConfig> } = {};
 let initialised = false;

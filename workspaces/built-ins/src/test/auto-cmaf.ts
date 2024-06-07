@@ -1,20 +1,20 @@
 import { Norsk, } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder } from "norsk-studio/lib/test/_util/builder"
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
+import { YamlBuilder, YamlNodeBuilder } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { expect } from "chai";
-import { audio, video, videoAndAudio, testSourceDescription } from "norsk-studio/lib/test/_util/sources";
+import { audio, video, videoAndAudio, testSourceDescription } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import { AutoCmaf, AutoCmafConfig, CmafOutputCommand, CmafOutputEvent, CmafOutputState } from "../output.autoCmaf/runtime";
 import * as HLS from 'hls-parser';
 import fetch from "node-fetch";
 import { types } from "hls-parser";
 import AutoCmafInfo from "../output.autoCmaf/info";
-import { RegistrationConsts } from "norsk-studio/lib/extension/client-types";
-import { CreatedMediaNode, StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
-import { testRuntime } from "norsk-studio/lib/test/_util/runtime";
+import { RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { CreatedMediaNode, StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
+import { testRuntime } from "@norskvideo/norsk-studio/lib/test/_util/runtime";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = await testRuntime();

@@ -1,5 +1,5 @@
 import type { WhepOutputSettings } from "./runtime";
-import type Registration from "norsk-studio/lib/extension/registration";
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 
 import { GlobalIceServers } from '@norskvideo/norsk-studio/lib/shared/config'
 

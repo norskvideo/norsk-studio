@@ -1,7 +1,7 @@
-import type Registration from "norsk-studio/lib/extension/registration";
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import type { ActionReplayConfig, ActionReplayState, ActionReplayCommand, ActionReplayEvent } from "./runtime";
 import React from "react";
-import { HardwareSelection } from "norsk-studio/lib/shared/config";
+import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 
 
 export default function({

@@ -1,7 +1,7 @@
 import { BrowserInputNode, Norsk, StreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
 
 import { OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-import { CustomAutoDuplexNode } from "norsk-studio/lib/extension/base-nodes";
+import { CustomAutoDuplexNode } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 

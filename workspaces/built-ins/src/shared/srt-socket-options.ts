@@ -1,4 +1,4 @@
-import type { ConfigForm, Validation } from "norsk-studio/lib/extension/client-types";
+import type { ConfigForm, Validation } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import type { SocketOptions } from "./srt-types";
 
 const result = ({ Z }: Validation): ConfigForm<SocketOptions> => ({

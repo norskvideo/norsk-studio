@@ -1,8 +1,8 @@
-import type Registration from "norsk-studio/lib/extension/registration";
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import type { FixedLadderConfig } from "./runtime";
-import type { ResolutionName } from "norsk-studio/lib/extension/common";
+import type { ResolutionName } from "@norskvideo/norsk-studio/lib/extension/common";
 import type { StreamKey } from "@norskvideo/norsk-sdk";
-import { HardwareSelection } from "norsk-studio/lib/shared/config";
+import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 
 
 export default function({

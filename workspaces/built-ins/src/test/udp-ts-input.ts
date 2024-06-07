@@ -1,15 +1,15 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "norsk-studio/lib/test/_util/builder"
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
+import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
-import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames } from "norsk-studio/lib/test/_util/sinks";
-import { Ffmpeg, ffmpegCommand, udpOut } from "norsk-studio/lib/test/_util/ffmpeg";
+import { assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
+import { Ffmpeg, ffmpegCommand, udpOut } from "@norskvideo/norsk-studio/lib/test/_util/ffmpeg";
 
 import UdpTsInfo from "../input.udp-ts/info";
-import { RegistrationConsts } from "norsk-studio/lib/extension/client-types";
+import { RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { UdpTsInputSettings } from "../input.udp-ts/runtime";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {

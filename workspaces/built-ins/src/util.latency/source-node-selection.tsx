@@ -1,5 +1,5 @@
 import { ChangeEvent } from "react";
-import type { DocumentDescription } from "norsk-studio/lib/shared/document";
+import type { DocumentDescription } from "@norskvideo/norsk-studio/lib/shared/document";
 
 type SourceNodeSelectionProps = {
   defaultValue?: string,

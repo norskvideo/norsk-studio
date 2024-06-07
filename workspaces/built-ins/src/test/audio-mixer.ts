@@ -1,20 +1,20 @@
 // import { Norsk } from "@norskvideo/norsk-sdk";
-// import { Audio, BaseConfig, NodeInfo, RegistrationConsts } from "norsk-studio/lib/extension/client-types";
-// import { YamlBuilder, YamlNodeBuilder } from "norsk-studio/lib/test/_util/builder";
+// import { Audio, BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
+// import { YamlBuilder, YamlNodeBuilder } from "@norskvideo/norsk-studio/lib/test/_util/builder";
 // import audioMixerInfo from '../processor.audioMixer/info';
 // import YAML from 'yaml';
 // import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 // import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
-// import { AvMultiInput, testRuntime } from "norsk-studio/lib/test/_util/runtime";
+// import { AvMultiInput, testRuntime } from "@norskvideo/norsk-studio/lib/test/_util/runtime";
 // import AudioMixerDefinition, { AudioMixer, AudioMixerCommand, AudioMixerState } from "../processor.audioMixer/runtime";
-// import { assertNodeOutputsAudioFrames, waitForAssert } from "norsk-studio/lib/test/_util/sinks";
+// import { assertNodeOutputsAudioFrames, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 // import { expect } from "chai";
-// import { audio, testSourceDescription } from "norsk-studio/lib/test/_util/sources";
-// import { StudioNodeSubscriptionSource } from "norsk-studio/lib/extension/runtime-types";
-// import { waitForCondition } from "norsk-studio/lib/shared/util";
-// import { debuglog } from "norsk-studio/lib/server/logging";
+// import { audio, testSourceDescription } from "@norskvideo/norsk-studio/lib/test/_util/sources";
+// import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
+// import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
+// import { debuglog } from "@norskvideo/norsk-studio/lib/server/logging";
 // import registerAll from "..";
-// import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
+// import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
 
 // async function defaultRuntime(): Promise<RuntimeSystem> {
 //   const runtime = await testRuntime();

@@ -1,5 +1,5 @@
 import type { RtmpOutputEvent, RtmpOutputSettings, RtmpOutputState } from "./runtime";
-import type Registration from "norsk-studio/lib/extension/registration";
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import React from "react";
 
 export default function({

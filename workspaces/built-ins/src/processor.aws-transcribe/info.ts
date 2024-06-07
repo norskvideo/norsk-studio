@@ -1,4 +1,4 @@
-import type Registration from "norsk-studio/lib/extension/registration";
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import type { AwsTranscribeConfig } from "./runtime";
 import { StreamMetadata } from "@norskvideo/norsk-sdk";
 import React from "react";

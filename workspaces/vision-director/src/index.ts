@@ -1,7 +1,7 @@
-import { RegistrationConsts } from "norsk-studio/lib/extension/client-types";
-import { RuntimeSystem } from "norsk-studio/lib/extension/runtime-system";
+import { RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
 import * as path from 'path';
-import { debuglog } from "norsk-studio/lib/server/logging";
+import { debuglog } from "@norskvideo/norsk-studio/lib/server/logging";
 
 import VisionDirector from './runtime';
 import VisionDirectorInfo from './info';

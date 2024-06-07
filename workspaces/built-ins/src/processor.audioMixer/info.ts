@@ -1,6 +1,6 @@
 import React from "react";
 import { AudioMixerLevels, type AudioMixerCommand, type AudioMixerEvent, type AudioMixerSettings, type AudioMixerState } from "./runtime";
-import type Registration from "norsk-studio/lib/extension/registration";
+import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import { ChannelLayout } from "@norskvideo/norsk-sdk";
 
 export function mkSourceKey(sourceId: string, key?: string) {

@@ -1,4 +1,4 @@
-import type { NodeDescription } from "norsk-studio/lib/shared/document";
+import type { NodeDescription } from "@norskvideo/norsk-studio/lib/shared/document";
 import type { MediaLiveConfig } from "./runtime";
 import type { ChannelSummary, DescribeInputCommandOutput } from "@aws-sdk/client-medialive";
 
