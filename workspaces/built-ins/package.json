@@ -14,7 +14,8 @@
   },
   "files": [
     "client/*",
-    "lib/*"
+    "lib/*",
+    "shared/*"
   ],
   "license": "MIT",
   "dependencies": {
