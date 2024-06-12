@@ -49,7 +49,7 @@ export type DynamicBugEvent = {
 // and provide a means for this code to reach out into ActiveSession and retrieve it
 // but anyway, an env var is fine for now
 function bugDir() {
-  return path.resolve(process.env.NORSK_DATA_DIR || "data/bugs");
+  return path.resolve(process.env.norsk_data_dir || "data/bugs");
 
 }
 
@@ -92,6 +92,9 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
   norsk: Norsk;
   cfg: DynamicBugConfig;
+  bug?: string;
+  orientation?: DynamicBugOrientation;
+
   videoSource?: StudioNodeSubscriptionSource;
   composeNode?: VideoComposeNode<"video" | "bug">;
   imageSource?: FileImageInputNode;
@@ -106,6 +109,8 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
 
   constructor(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugEvent>) {
     this.cfg = cfg;
+    this.bug = cfg.defaultBug;
+    this.orientation = cfg.defaultOrientation;
     this.id = cfg.id;
     this.norsk = norsk;
     this.initialised = this.initialise();
@@ -113,13 +118,9 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
   }
 
   async sourceContextChange(_responseCallback: (error?: SubscriptionError | undefined) => void): Promise<boolean> {
-    // If things change upstream, so so be it (for now)
-    if (this.composeNode) return false;
     if (!this.videoSource) {
-      errorlog("Context received by node, but no video source is presently active", { id: this.id });
       return false;
     }
-
     const videoStream = this.videoSource.latestStreams()[0];
 
     if (!videoStream) {
@@ -131,88 +132,130 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
       return false;
     }
 
-    this.composeNode = await this.norsk.processor.transform.videoCompose<'video' | 'bug'>({
-      id: `${this.id}-compose`,
-      referenceStream: 'video',
-      referenceResolution: { width: 100, height: 100 },
+    // If we haven't got a compose node, then spin one up
+    // with the resolution/etc of the incoming stream
+    if (!this.composeNode) {
+      this.composeNode = await this.norsk.processor.transform.videoCompose<'video' | 'bug'>({
+        id: `${this.id}-compose`,
+        referenceStream: 'video',
+        // Could accept quadra, but there is pending work on quadra compose
+        // which means that non-fullscreen overlays have a few outstanding issues
+        hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ["nvidia"]),
+        outputResolution: {
+          width: videoStream.metadata.message.value.width,
+          height: videoStream.metadata.message.value.height
+        },
+        parts: [
+          this.videoPart(videoStream.metadata.message.value.width, videoStream.metadata.message.value.height),
+        ]
+      });
+      this.composeNode.subscribeToPins(this.videoSource.selectVideoToPin("video"))
+      this.relatedMediaNodes.addOutput(this.composeNode);
+      this.relatedMediaNodes.addInput(this.composeNode);
+    }
 
-      // Could accept quadra, but there is pending work on quadra compose
-      // which means that non-fullscreen overlays have a few outstanding issues
-      hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ["nvidia"]),
-      outputResolution: {
-        width: videoStream.metadata.message.value.width,
-        height: videoStream.metadata.message.value.height
-      },
-      parts: [this.videoPart()]
-    });
-    this.composeNode.subscribeToPins(this.videoSource.selectVideoToPin("video"))
-    this.relatedMediaNodes.addOutput(this.composeNode);
-    this.relatedMediaNodes.addInput(this.composeNode);
-    void this.setupBug(this.cfg.defaultBug, this.cfg.defaultOrientation);
+    // Re-configure the compose node based on what we have, or don't have
+    // from the image source
+    if (this.imageSource) {
+      const imageStream = this.imageSource.outputStreams[0];
+      if (imageStream && imageStream.message.case == 'video') {
+        this.composeNode?.updateConfig({
+          parts: [
+            this.videoPart(videoStream.metadata.message.value.width, videoStream.metadata.message.value.height),
+            this.imagePart(this.orientation ?? 'topleft',
+              videoStream.metadata.message.value.width,
+              videoStream.metadata.message.value.height,
+              imageStream.message.value.width,
+              imageStream.message.value.height)
+          ]
+        })
+
+      } else {
+        this.composeNode?.updateConfig({
+          parts: [
+            this.videoPart(videoStream.metadata.message.value.width, videoStream.metadata.message.value.height),
+          ]
+        })
+      }
+    }
+
+    // Then update the subs regardless
+    this.doSubs();
     return false;
   }
 
-  async setupBug(bug?: string, orientation?: DynamicBugOrientation) {
-    if (!bug) {
+  doSubs() {
+    if (!this.imageSource) {
       this.composeNode?.subscribeToPins(this.videoSource?.selectVideoToPin("video") || [])
-      this.updates.raiseEvent({ type: 'bug-changed' })
-      return;
+    } else {
+      this.composeNode?.subscribeToPins((this.videoSource?.selectVideoToPin<"video" | "bug">("video") ?? []).concat([
+        { source: this.imageSource, sourceSelector: videoToPin("bug") }
+      ]))
     }
+  }
 
+  async setupBug(bug?: string, orientation?: DynamicBugOrientation) {
     // We could be clever here and do a clean switch with A and B and double buffering
     // but the side effect of not doing this, is to have a few frames without a bug, is that okay? probably
     if (this.imageSource) {
       await this.imageSource.close();
+      this.imageSource = undefined;
+    }
+    if (!bug) {
+      this.doSubs();
+      this.updates.raiseEvent({ type: 'bug-changed' })
+      return;
     }
 
     this.imageSource = await this.norsk.input.fileImage({
       sourceName: `${this.id}-bug`,
       fileName: path.join(bugDir(), bug)
     })
-
-    this.composeNode?.updateConfig({
-      parts: [
-        this.videoPart(),
-        this.imagePart(orientation ?? 'topleft')
-      ]
-    })
-
-    this.composeNode?.subscribeToPins((this.videoSource?.selectVideoToPin<"video" | "bug">("video") ?? []).concat([
-      { source: this.imageSource, sourceSelector: videoToPin("bug") }
-    ]))
+    this.imageSource.registerForContextChange(this);
+    this.bug = bug;
+    this.orientation = orientation;
     this.updates.raiseEvent({ type: 'bug-changed', file: bug, orientation })
   }
 
-  imagePart(orientation: DynamicBugOrientation): ComposePart<"bug"> {
-    return {
+  imagePart(orientation: DynamicBugOrientation,
+    videoWidth: number,
+    videoHeight: number,
+    imageWidth: number,
+    imageHeight: number): ComposePart<"bug"> {
+    const foo = {
       id: "bug",
       zIndex: 1,
-      sourceRect: { x: 0, y: 0, width: 100, height: 100 },
+      sourceRect: { x: 0, y: 0, width: videoWidth, height: videoHeight },
+      referenceResolution: undefined,
 
       // What to do about resolution?
       // we could subscribe to the output of the image source and do some maths
       // to preserve aspect ratio before building this config?
-      destRect: (orientation == 'topleft' ? { x: 0.1, y: 0.1, width: 5.0, height: 5.0 } :
-        orientation == 'topright' ? { x: 94.9, y: 0.1, width: 5.0, height: 5.0 } :
-          orientation == 'bottomleft' ? { x: 0.1, y: 94.9, width: 5.0, height: 5.0 } :
-            { x: 94.9, y: 94.9, width: 5.0, height: 5.0 }),
+      destRect: (orientation == 'topleft' ? { x: 5, y: 5, width: imageWidth, height: imageHeight } :
+        orientation == 'topright' ? { x: videoWidth - imageWidth - 5, y: 5, width: imageWidth, height: imageHeight } :
+          orientation == 'bottomleft' ? { x: 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight } :
+            { x: videoWidth - imageWidth - 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight }),
       opacity: 1.0,
       pin: "bug"
-    }
+    } as const;
+
+    console.log(foo);
+    return foo;
   }
 
-  videoPart(): ComposePart<"video"> {
+  videoPart(videoWidth: number, videoHeight: number): ComposePart<"video"> {
     return {
       id: "video",
       zIndex: 0,
-      sourceRect: { x: 0, y: 0, width: 100, height: 100 },
-      destRect: { x: 0, y: 0, width: 100, height: 100 },
+      sourceRect: { x: 0, y: 0, width: videoWidth, height: videoHeight },
+      destRect: { x: 0, y: 0, width: videoWidth, height: videoHeight },
       opacity: 1.0,
       pin: "video"
     }
   }
 
   async initialise() {
+    await this.setupBug(this.cfg.defaultBug, this.cfg.defaultOrientation);
   }
 
   subscribe(sources: StudioNodeSubscriptionSource[]) {
