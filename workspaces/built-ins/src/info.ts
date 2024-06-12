@@ -59,6 +59,8 @@ import processor_browserOverlay from "./processor.browserOverlay/info";
 AllComponents.push((r: Registration) => processor_browserOverlay(r) as unknown as NodeInfo<BaseConfig>);
 import processor_cascadingSwitch from "./processor.cascadingSwitch/info";
 AllComponents.push((r: Registration) => processor_cascadingSwitch(r) as unknown as NodeInfo<BaseConfig>);
+import processor_dynamicBug from "./processor.dynamicBug/info";
+AllComponents.push((r: Registration) => processor_dynamicBug(r) as unknown as NodeInfo<BaseConfig>);
 import processor_fixedLadder from "./processor.fixedLadder/info";
 AllComponents.push((r: Registration) => processor_fixedLadder(r) as unknown as NodeInfo<BaseConfig>);
 import processor_monetise from "./processor.monetise/info";

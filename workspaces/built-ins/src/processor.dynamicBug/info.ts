@@ -1,15 +1,18 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
-import type { DynamicBugConfig } from "./runtime";
+import type { DynamicBugCommand, DynamicBugConfig, DynamicBugEvent, DynamicBugState } from "./runtime";
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
+import React from "react";
 
 
 export default function({
   defineComponent,
-  Video,
-  validation: { Z },
+  Video
 }: Registration) {
-  return defineComponent<DynamicBugConfig>({
-    identifier: 'processor.transform.dynamicBug',
+  const BugSelection = React.lazy(async () => import('./bug-selection'));
+  const SummaryView = React.lazy(async () => import('./summary-view'));
+
+  return defineComponent<DynamicBugConfig, DynamicBugState, DynamicBugCommand, DynamicBugEvent>({
+    identifier: 'processor.dynamicBug',
     category: 'processor',
     name: "Dynamic Bug",
     subscription: {
@@ -28,7 +31,22 @@ export default function({
     },
     display: (desc) => {
       return {
-        url: desc.config?.url
+        default: desc.config.defaultBug ?? 'none',
+      }
+    },
+    runtime: {
+      summary: SummaryView,
+      initialState: () => ({
+      }),
+      handleEvent: (ev, state) => {
+        const evType = ev.type;
+        switch (evType) {
+          case "bug-changed":
+            return { ...state, activeBug: { file: ev.file, orientation: ev.orientation } };
+          default:
+            assertUnreachable(evType)
+
+        }
       }
     },
     configForm: {
@@ -36,8 +54,32 @@ export default function({
         hardware: HardwareSelection()
       },
       form: {
-        url: { help: "URL to render on top of the video", hint: { type: 'text', validation: Z.string().url(), defaultValue: "" } },
+        defaultBug: {
+          help: "The default bug to render on the video (if any)",
+          hint: {
+            type: "custom",
+            component: BugSelection,
+          }
+        },
+        defaultOrientation: {
+          help: "The default location to render the bug in",
+          hint: {
+            type: 'select',
+            optional: true,
+            options: [
+              { value: 'topleft', display: 'Top Left' },
+              { value: 'topright', display: 'Top Right' },
+              { value: 'bottomleft', display: 'Bottom Left' },
+              { value: 'bottomright', display: 'Bottom Right' }
+            ]
+          }
+        }
       }
     }
   });
 }
+
+function assertUnreachable(_: never): never {
+  throw new Error("Didn't expect to get here");
+}
+

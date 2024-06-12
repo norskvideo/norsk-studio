@@ -1,8 +1,9 @@
-import { ComposePart, FileImageInputNode, Norsk, SubscribeDestination, SubscriptionError, VideoComposeNode } from '@norskvideo/norsk-sdk';
+import { ComposePart, FileImageInputNode, Norsk, SubscribeDestination, SubscriptionError, VideoComposeNode, videoToPin } from '@norskvideo/norsk-sdk';
 
 import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { errorlog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
+import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { Router } from 'express';
 import express from 'express';
 import fs from 'fs/promises';
@@ -24,15 +25,15 @@ export type DynamicBugConfig = {
 
 export type DynamicBugState = {
   activeBug?: {
-    file: string,
-    orientation: DynamicBugOrientation
+    file?: string,
+    orientation?: DynamicBugOrientation
   },
 }
 
 export type DynamicBugCommand = {
   type: 'change-bug',
-  file: string,
-  orientation: DynamicBugOrientation
+  file?: string,
+  orientation?: DynamicBugOrientation
 }
 
 export type DynamicBugEvent = {
@@ -70,6 +71,18 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
       res.end(JSON.stringify(images));
     })
     return router;
+  }
+
+  async handleCommand(node: DynamicBug, command: DynamicBugCommand) {
+    const commandType = command.type;
+    switch (commandType) {
+      case 'change-bug':
+        await node.setupBug(command.file, command.orientation);
+        break;
+      default:
+        assertUnreachable(commandType);
+
+    }
   }
 }
 
@@ -124,6 +137,7 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
       referenceResolution: { width: 100, height: 100 },
 
       // Could accept quadra, but there is pending work on quadra compose
+      // which means that non-fullscreen overlays have a few outstanding issues
       hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ["nvidia"]),
       outputResolution: {
         width: videoStream.metadata.message.value.width,
@@ -132,6 +146,8 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
       parts: [this.videoPart()]
     });
     this.composeNode.subscribeToPins(this.videoSource.selectVideoToPin("video"))
+    this.relatedMediaNodes.addOutput(this.composeNode);
+    this.relatedMediaNodes.addInput(this.composeNode);
     void this.setupBug(this.cfg.defaultBug, this.cfg.defaultOrientation);
     return false;
   }
@@ -154,20 +170,32 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
       fileName: path.join(bugDir(), bug)
     })
 
+    this.composeNode?.updateConfig({
+      parts: [
+        this.videoPart(),
+        this.imagePart(orientation ?? 'topleft')
+      ]
+    })
 
+    this.composeNode?.subscribeToPins((this.videoSource?.selectVideoToPin<"video" | "bug">("video") ?? []).concat([
+      { source: this.imageSource, sourceSelector: videoToPin("bug") }
+    ]))
+    this.updates.raiseEvent({ type: 'bug-changed', file: bug, orientation })
   }
 
-  imagePart(orientation: DynamicBugOrientation) {
-    // We have the incoming dimensions here so we can probably 
-    // do it with pixels
+  imagePart(orientation: DynamicBugOrientation): ComposePart<"bug"> {
     return {
       id: "bug",
       zIndex: 1,
       sourceRect: { x: 0, y: 0, width: 100, height: 100 },
+
+      // What to do about resolution?
+      // we could subscribe to the output of the image source and do some maths
+      // to preserve aspect ratio before building this config?
       destRect: (orientation == 'topleft' ? { x: 0.1, y: 0.1, width: 5.0, height: 5.0 } :
-        orientation == 'topright' ? { x: 94.9, y: 94.9, width: 5.0, height: 5.0 } :
-          orientation == 'bottomleft' ? { x: 0.1, y: 0.1, width: 5.0, height: 5.0 } :
-            { x: 0.1, y: 0.1, width: 5.0, height: 5.0 }),
+        orientation == 'topright' ? { x: 94.9, y: 0.1, width: 5.0, height: 5.0 } :
+          orientation == 'bottomleft' ? { x: 0.1, y: 94.9, width: 5.0, height: 5.0 } :
+            { x: 94.9, y: 94.9, width: 5.0, height: 5.0 }),
       opacity: 1.0,
       pin: "bug"
     }
@@ -183,7 +211,6 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
       pin: "video"
     }
   }
-
 
   async initialise() {
   }

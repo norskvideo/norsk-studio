@@ -743,7 +743,7 @@ var require_config = __commonJS({
       return void 0;
     }
     exports.contractHardwareAcceleration = contractHardwareAcceleration;
-    function HardwareSelection6() {
+    function HardwareSelection7() {
       return {
         id: "hardware-acceleration",
         form: {
@@ -761,7 +761,7 @@ var require_config = __commonJS({
         }
       };
     }
-    exports.HardwareSelection = HardwareSelection6;
+    exports.HardwareSelection = HardwareSelection7;
     function RootDataDir() {
       return {
         id: "root-data-dir",
@@ -1442,6 +1442,94 @@ var init_inline_view8 = __esm({
   }
 });
 
+// build/processor.dynamicBug/bug-selection.js
+var bug_selection_exports = {};
+__export(bug_selection_exports, {
+  default: () => bug_selection_default
+});
+function BugSelection(props) {
+  const [loading, setLoading] = (0, import_react33.useState)(true);
+  (0, import_react33.useEffect)(() => {
+    const fn = async () => {
+      const result2 = await fetch("components/processor.dynamicBug/bugs");
+      if (result2.ok && result2.body) {
+        const bugs2 = await result2.json();
+        setBugs(bugs2);
+        setLoading(false);
+        if (props.defaultValue)
+          props.onChanged(props.defaultValue);
+      } else {
+        const text = await result2.text();
+        throw new Error(text);
+      }
+    };
+    fn().catch(console.error);
+  }, []);
+  const [bugs, setBugs] = (0, import_react33.useState)([]);
+  if (loading) {
+    return (0, import_jsx_runtime31.jsx)("div", { children: "Loading.." });
+  }
+  if (bugs.length == 0) {
+    return (0, import_jsx_runtime31.jsx)("div", { children: "No bugs loaded" });
+  }
+  return (0, import_jsx_runtime31.jsx)("div", { children: (0, import_jsx_runtime31.jsxs)("select", { defaultValue: props.defaultValue, className: `node-editor-select-input`, id: props.id, onChange: myOnChange, onBlur: myOnChange, children: [(0, import_jsx_runtime31.jsx)("option", { value: "", children: "---" }, "empty"), bugs.map((o, i) => {
+    return (0, import_jsx_runtime31.jsx)("option", { value: o, children: o }, i);
+  })] }) });
+  function myOnChange(e) {
+    props.onChanged(e.target.value);
+  }
+}
+var import_jsx_runtime31, import_react33, bug_selection_default;
+var init_bug_selection = __esm({
+  "build/processor.dynamicBug/bug-selection.js"() {
+    "use strict";
+    import_jsx_runtime31 = __toESM(require_jsx_runtime());
+    import_react33 = __toESM(require_react());
+    bug_selection_default = BugSelection;
+  }
+});
+
+// build/processor.dynamicBug/summary-view.js
+var summary_view_exports5 = {};
+__export(summary_view_exports5, {
+  default: () => summary_view_default5
+});
+function SummaryView7({ state, config, sendCommand }) {
+  const [bug, setBug] = (0, import_react34.useState)(state.activeBug?.file ?? config.defaultBug);
+  const [orientation, setOrientation] = (0, import_react34.useState)(state.activeBug?.orientation ?? config.defaultOrientation);
+  const [bugs, setBugs] = (0, import_react34.useState)([]);
+  (0, import_react34.useEffect)(() => {
+    const fn = async () => {
+      const result2 = await fetch("components/processor.dynamicBug/bugs");
+      if (result2.ok && result2.body) {
+        const bugs2 = await result2.json();
+        setBugs(bugs2);
+      } else {
+        const text = await result2.text();
+        throw new Error(text);
+      }
+    };
+    fn().catch(console.error);
+  }, []);
+  return (0, import_jsx_runtime32.jsxs)(import_jsx_runtime32.Fragment, { children: [(0, import_jsx_runtime32.jsx)("h2", { children: "Controls" }), (0, import_jsx_runtime32.jsx)("label", { htmlFor: "select-preview", className: "mt-2", children: "Source" }), (0, import_jsx_runtime32.jsxs)("select", { id: "select-bug", className: "mt-2 node-editor-select-input", onChange: (e) => {
+    setBug(e.currentTarget.value);
+  }, children: [(0, import_jsx_runtime32.jsx)("option", { selected: bug === void 0, children: "---" }), bugs.map((s, i) => (0, import_jsx_runtime32.jsx)("option", { selected: bug == s, value: s, children: s }, i))] }), (0, import_jsx_runtime32.jsxs)("select", { id: "select-orientation", className: "mt-2 node-editor-select-input", onChange: (e) => {
+    setOrientation(e.currentTarget.value);
+  }, children: [(0, import_jsx_runtime32.jsx)("option", { selected: orientation === void 0, children: "---" }), (0, import_jsx_runtime32.jsx)("option", { value: "topleft", selected: orientation === "topleft", children: "Top Left" }), (0, import_jsx_runtime32.jsx)("option", { value: "topright", selected: orientation === "topright", children: "Top Right" }), (0, import_jsx_runtime32.jsx)("option", { value: "bottomleft", selected: orientation === "bottomleft", children: "Bottom Left" }), (0, import_jsx_runtime32.jsx)("option", { value: "bottomright", selected: orientation === "bottomright", children: "Bottom Right" })] }), bug != state.activeBug?.file || orientation != state.activeBug?.orientation ? (0, import_jsx_runtime32.jsx)("button", { type: "button", className: "mt-2 mb-2 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800", onClick: (e) => {
+    e.preventDefault();
+    sendCommand({ type: "change-bug", file: bug, orientation });
+  }, children: "Commit" }) : (0, import_jsx_runtime32.jsx)(import_jsx_runtime32.Fragment, {})] });
+}
+var import_jsx_runtime32, import_react34, summary_view_default5;
+var init_summary_view5 = __esm({
+  "build/processor.dynamicBug/summary-view.js"() {
+    "use strict";
+    import_jsx_runtime32 = __toESM(require_jsx_runtime());
+    import_react34 = __toESM(require_react());
+    summary_view_default5 = SummaryView7;
+  }
+});
+
 // build/processor.monetise/summary.js
 var summary_exports3 = {};
 __export(summary_exports3, {
@@ -1450,9 +1538,9 @@ __export(summary_exports3, {
 function InlineView14({ state, config, sendCommand }) {
   const url = state.url;
   const id = config.id;
-  const previewVideo = (0, import_react33.useRef)(null);
-  const durationSlider = (0, import_react33.useRef)(null);
-  (0, import_react33.useEffect)(() => {
+  const previewVideo = (0, import_react36.useRef)(null);
+  const durationSlider = (0, import_react36.useRef)(null);
+  (0, import_react36.useEffect)(() => {
     if (!url)
       return;
     setTimeout(() => {
@@ -1465,8 +1553,8 @@ function InlineView14({ state, config, sendCommand }) {
     }, 1e3);
   }, [state.url]);
   if (!url)
-    return (0, import_jsx_runtime31.jsx)(import_jsx_runtime31.Fragment, { children: "Starting up..." });
-  return (0, import_jsx_runtime31.jsxs)("div", { className: "mb-5", children: [(0, import_jsx_runtime31.jsx)("div", { ref: previewVideo, className: "", id: `preview-${id}` }), state.currentAdvert ? (0, import_jsx_runtime31.jsxs)(import_jsx_runtime31.Fragment, { children: ["Advert currently playing: ", Math.floor(state.currentAdvert.timeLeftMs / 1e3), "s"] }) : (0, import_jsx_runtime31.jsxs)(import_jsx_runtime31.Fragment, { children: [(0, import_jsx_runtime31.jsxs)("label", { htmlFor: "default-range", className: "block mb-2 text-sm font-medium text-gray-900 dark:text-white", children: ["Advert Duration (", durationSlider.current?.value ?? 16, "s)"] }), (0, import_jsx_runtime31.jsx)("input", { ref: durationSlider, id: "default-range", type: "range", defaultValue: "16", min: "16", max: "120", className: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" }), (0, import_jsx_runtime31.jsx)("button", { onClick: sendAdvertCommand, type: "button", className: "mt-2 mb-2 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800", children: "Inject Advert" })] })] });
+    return (0, import_jsx_runtime33.jsx)(import_jsx_runtime33.Fragment, { children: "Starting up..." });
+  return (0, import_jsx_runtime33.jsxs)("div", { className: "mb-5", children: [(0, import_jsx_runtime33.jsx)("div", { ref: previewVideo, className: "", id: `preview-${id}` }), state.currentAdvert ? (0, import_jsx_runtime33.jsxs)(import_jsx_runtime33.Fragment, { children: ["Advert currently playing: ", Math.floor(state.currentAdvert.timeLeftMs / 1e3), "s"] }) : (0, import_jsx_runtime33.jsxs)(import_jsx_runtime33.Fragment, { children: [(0, import_jsx_runtime33.jsxs)("label", { htmlFor: "default-range", className: "block mb-2 text-sm font-medium text-gray-900 dark:text-white", children: ["Advert Duration (", durationSlider.current?.value ?? 16, "s)"] }), (0, import_jsx_runtime33.jsx)("input", { ref: durationSlider, id: "default-range", type: "range", defaultValue: "16", min: "16", max: "120", className: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" }), (0, import_jsx_runtime33.jsx)("button", { onClick: sendAdvertCommand, type: "button", className: "mt-2 mb-2 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800", children: "Inject Advert" })] })] });
   function sendAdvertCommand() {
     if (!previewVideo.current)
       return;
@@ -1478,12 +1566,12 @@ function InlineView14({ state, config, sendCommand }) {
     });
   }
 }
-var import_jsx_runtime31, import_react33, import_webrtc_client2, summary_default3;
+var import_jsx_runtime33, import_react36, import_webrtc_client2, summary_default3;
 var init_summary3 = __esm({
   "build/processor.monetise/summary.js"() {
     "use strict";
-    import_jsx_runtime31 = __toESM(require_jsx_runtime());
-    import_react33 = __toESM(require_react());
+    import_jsx_runtime33 = __toESM(require_jsx_runtime());
+    import_react36 = __toESM(require_react());
     import_webrtc_client2 = __toESM(require_webrtc_client());
     summary_default3 = InlineView14;
   }
@@ -15813,8 +15901,8 @@ __export(inline_view_exports9, {
   default: () => inline_view_default9
 });
 function InlineView15({ state, config: _2 }) {
-  const chartContainer = (0, import_react35.useRef)(null);
-  const [chartControl, setChartControl] = (0, import_react35.useState)(void 0);
+  const chartContainer = (0, import_react38.useRef)(null);
+  const [chartControl, setChartControl] = (0, import_react38.useState)(void 0);
   function makeDataSet(key, color2, values) {
     return {
       label: key,
@@ -15831,7 +15919,7 @@ function InlineView15({ state, config: _2 }) {
       datasets: [makeDataSet("latency", "rgba(255, 0, 0, 255)", state2.values)]
     };
   }
-  (0, import_react35.useEffect)(() => {
+  (0, import_react38.useEffect)(() => {
     if (!chartContainer.current)
       return;
     auto_default.defaults.color = "#FFF";
@@ -15869,19 +15957,19 @@ function InlineView15({ state, config: _2 }) {
       chart.update();
     }, 100);
   }, [chartContainer]);
-  (0, import_react35.useEffect)(() => {
+  (0, import_react38.useEffect)(() => {
     if (!chartControl)
       return;
     chartControl.data = makeData(state);
   }, [state]);
-  return (0, import_jsx_runtime32.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime32.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
+  return (0, import_jsx_runtime34.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime34.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
 }
-var import_jsx_runtime32, import_react35, inline_view_default9;
+var import_jsx_runtime34, import_react38, inline_view_default9;
 var init_inline_view9 = __esm({
   "build/util.latency/inline-view.js"() {
     "use strict";
-    import_jsx_runtime32 = __toESM(require_jsx_runtime());
-    import_react35 = __toESM(require_react());
+    import_jsx_runtime34 = __toESM(require_jsx_runtime());
+    import_react38 = __toESM(require_react());
     init_auto();
     inline_view_default9 = InlineView15;
   }
@@ -15893,22 +15981,22 @@ __export(source_node_selection_exports, {
   default: () => source_node_selection_default
 });
 function SourceNodeSelection(props) {
-  return (0, import_jsx_runtime33.jsx)("div", { children: (0, import_jsx_runtime33.jsxs)("select", { defaultValue: props.defaultValue, className: `node-editor-select-input`, id: props.id, onChange: myOnChange, onBlur: myOnChange, children: [(0, import_jsx_runtime33.jsx)("option", { value: "", children: "---" }, "empty"), Object.values(props.latestDocument.nodes).map((o, i) => {
+  return (0, import_jsx_runtime35.jsx)("div", { children: (0, import_jsx_runtime35.jsxs)("select", { defaultValue: props.defaultValue, className: `node-editor-select-input`, id: props.id, onChange: myOnChange, onBlur: myOnChange, children: [(0, import_jsx_runtime35.jsx)("option", { value: "", children: "---" }, "empty"), Object.values(props.latestDocument.nodes).map((o, i) => {
     if (o.id == props.id)
-      return (0, import_jsx_runtime33.jsx)(import_jsx_runtime33.Fragment, {});
+      return (0, import_jsx_runtime35.jsx)(import_jsx_runtime35.Fragment, {});
     if (o.info.category === "output")
       return;
-    return (0, import_jsx_runtime33.jsx)("option", { value: o.id, children: o.config.displayName }, i);
+    return (0, import_jsx_runtime35.jsx)("option", { value: o.id, children: o.config.displayName }, i);
   })] }) });
   function myOnChange(e) {
     props.onChanged(e.target.value);
   }
 }
-var import_jsx_runtime33, source_node_selection_default;
+var import_jsx_runtime35, source_node_selection_default;
 var init_source_node_selection = __esm({
   "build/util.latency/source-node-selection.js"() {
     "use strict";
-    import_jsx_runtime33 = __toESM(require_jsx_runtime());
+    import_jsx_runtime35 = __toESM(require_jsx_runtime());
     source_node_selection_default = SourceNodeSelection;
   }
 });
@@ -15919,8 +16007,8 @@ __export(inline_view_exports10, {
   default: () => inline_view_default10
 });
 function InlineView16({ state, config: _2 }) {
-  const chartContainer = (0, import_react37.useRef)(null);
-  const [chartControl, setChartControl] = (0, import_react37.useState)(void 0);
+  const chartContainer = (0, import_react40.useRef)(null);
+  const [chartControl, setChartControl] = (0, import_react40.useState)(void 0);
   function makeDataSet(key, color2, values) {
     return {
       label: key,
@@ -15941,7 +16029,7 @@ function InlineView16({ state, config: _2 }) {
       ]
     };
   }
-  (0, import_react37.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     if (!chartContainer.current)
       return;
     auto_default.defaults.color = "#FFF";
@@ -15979,19 +16067,19 @@ function InlineView16({ state, config: _2 }) {
       chart.update();
     }, 100);
   }, [chartContainer]);
-  (0, import_react37.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     if (!chartControl)
       return;
     chartControl.data = makeData(state);
   }, [state]);
-  return (0, import_jsx_runtime34.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime34.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
+  return (0, import_jsx_runtime36.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime36.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
 }
-var import_jsx_runtime34, import_react37, inline_view_default10;
+var import_jsx_runtime36, import_react40, inline_view_default10;
 var init_inline_view10 = __esm({
   "build/util.ma35d/inline-view.js"() {
     "use strict";
-    import_jsx_runtime34 = __toESM(require_jsx_runtime());
-    import_react37 = __toESM(require_react());
+    import_jsx_runtime36 = __toESM(require_jsx_runtime());
+    import_react40 = __toESM(require_react());
     init_auto();
     inline_view_default10 = InlineView16;
   }
@@ -16003,9 +16091,9 @@ __export(inline_view_exports11, {
   default: () => inline_view_default11
 });
 function InlineView17({ state, config: _2 }) {
-  const chartContainer = (0, import_react39.useRef)(null);
-  const [chartControl, setChartControl] = (0, import_react39.useState)(void 0);
-  (0, import_react39.useEffect)(() => {
+  const chartContainer = (0, import_react42.useRef)(null);
+  const [chartControl, setChartControl] = (0, import_react42.useState)(void 0);
+  (0, import_react42.useEffect)(() => {
     if (!chartContainer.current)
       return;
     if (state.timestamps.length < 2)
@@ -16067,7 +16155,7 @@ function InlineView17({ state, config: _2 }) {
       chart.update();
     }, 100);
   }, [chartContainer]);
-  (0, import_react39.useEffect)(() => {
+  (0, import_react42.useEffect)(() => {
     if (!chartControl)
       return;
     chartControl.data = {
@@ -16090,14 +16178,14 @@ function InlineView17({ state, config: _2 }) {
       })
     };
   }, [state]);
-  return (0, import_jsx_runtime35.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime35.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
+  return (0, import_jsx_runtime37.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime37.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
 }
-var import_jsx_runtime35, import_react39, inline_view_default11;
+var import_jsx_runtime37, import_react42, inline_view_default11;
 var init_inline_view11 = __esm({
   "build/util.timestamps/inline-view.js"() {
     "use strict";
-    import_jsx_runtime35 = __toESM(require_jsx_runtime());
-    import_react39 = __toESM(require_react());
+    import_jsx_runtime37 = __toESM(require_jsx_runtime());
+    import_react42 = __toESM(require_react());
     init_auto();
     inline_view_default11 = InlineView17;
   }
@@ -16525,7 +16613,7 @@ function info_default7({ defineComponent, Video, validation: { SourceName }, com
 // build/output.autoCmaf/info.js
 var import_react10 = __toESM(require_react());
 function info_default8({ defineComponent, All, validation: { Z, Hostname } }) {
-  const SummaryView7 = import_react10.default.lazy(async () => Promise.resolve().then(() => (init_summary(), summary_exports)));
+  const SummaryView8 = import_react10.default.lazy(async () => Promise.resolve().then(() => (init_summary(), summary_exports)));
   const FullscreenView3 = import_react10.default.lazy(async () => Promise.resolve().then(() => (init_fullscreen(), fullscreen_exports)));
   const SegmentConfiguration2 = import_react10.default.lazy(async () => {
     const views = await Promise.resolve().then(() => (init_form_views(), form_views_exports));
@@ -16572,7 +16660,7 @@ function info_default8({ defineComponent, All, validation: { Z, Hostname } }) {
         }
         return { ...state };
       },
-      summary: SummaryView7,
+      summary: SummaryView8,
       fullscreen: FullscreenView3
     },
     configForm: {
@@ -17065,8 +17153,8 @@ function info_default15(R) {
 // build/processor.actionReplay/info.js
 var import_react24 = __toESM(require_react());
 var import_config3 = __toESM(require_config());
-function info_default16({ defineComponent, assertUnreachable: assertUnreachable15, Av }) {
-  const SummaryView7 = import_react24.default.lazy(async () => Promise.resolve().then(() => (init_summary2(), summary_exports2)));
+function info_default16({ defineComponent, assertUnreachable: assertUnreachable16, Av }) {
+  const SummaryView8 = import_react24.default.lazy(async () => Promise.resolve().then(() => (init_summary2(), summary_exports2)));
   return defineComponent({
     identifier: "processor.transform.actionReplay",
     category: "processor",
@@ -17097,7 +17185,7 @@ function info_default16({ defineComponent, assertUnreachable: assertUnreachable1
       }
     },
     runtime: {
-      summary: SummaryView7,
+      summary: SummaryView8,
       initialState: () => ({
         replaying: false,
         contentPlayerUrl: void 0
@@ -17112,7 +17200,7 @@ function info_default16({ defineComponent, assertUnreachable: assertUnreachable1
           case "replay-finished":
             return { ...state, replaying: false };
           default:
-            return assertUnreachable15(evType);
+            return assertUnreachable16(evType);
         }
       }
     },
@@ -17133,7 +17221,7 @@ function info_default16({ defineComponent, assertUnreachable: assertUnreachable1
 var import_react26 = __toESM(require_react());
 function info_default17({ defineComponent, Audio, validation: { Z } }) {
   const InlineView18 = import_react26.default.lazy(async () => Promise.resolve().then(() => (init_inline_view6(), inline_view_exports6)));
-  const SummaryView7 = import_react26.default.lazy(async () => Promise.resolve().then(() => (init_summary_view3(), summary_view_exports3)));
+  const SummaryView8 = import_react26.default.lazy(async () => Promise.resolve().then(() => (init_summary_view3(), summary_view_exports3)));
   return defineComponent({
     identifier: "processor.audioLevel",
     category: "processor",
@@ -17174,7 +17262,7 @@ function info_default17({ defineComponent, Audio, validation: { Z } }) {
         return { ...state };
       },
       inline: InlineView18,
-      summary: SummaryView7
+      summary: SummaryView8
     },
     configForm: {
       form: {
@@ -17195,7 +17283,7 @@ function mkSourceKey3(sourceId, key) {
 function info_default18({ defineComponent, Audio, validation: { Z } }) {
   const InlineView18 = import_react28.default.lazy(async () => Promise.resolve().then(() => (init_inline_view7(), inline_view_exports7)));
   const FullscreenView3 = import_react28.default.lazy(async () => Promise.resolve().then(() => (init_fullscreen_view(), fullscreen_view_exports)));
-  const SummaryView7 = import_react28.default.lazy(async () => Promise.resolve().then(() => (init_summary_view4(), summary_view_exports4)));
+  const SummaryView8 = import_react28.default.lazy(async () => Promise.resolve().then(() => (init_summary_view4(), summary_view_exports4)));
   return defineComponent({
     identifier: "processor.audioMixer",
     category: "processor",
@@ -17280,7 +17368,7 @@ function info_default18({ defineComponent, Audio, validation: { Z } }) {
       },
       inline: InlineView18,
       fullscreen: FullscreenView3,
-      summary: SummaryView7
+      summary: SummaryView8
     },
     configForm: {
       form: {
@@ -17411,9 +17499,9 @@ function info_default20({ defineComponent, Video, validation: { Z } }) {
 }
 
 // build/processor.cascadingSwitch/info.js
-function info_default21({ defineComponent, Av, React: React19, common: { Resolutions, FrameRates } }) {
-  const SourceSelection = React19.lazy(async () => Promise.resolve().then(() => (init_source_selection(), source_selection_exports)));
-  const InlineView18 = React19.lazy(async () => Promise.resolve().then(() => (init_inline_view8(), inline_view_exports8)));
+function info_default21({ defineComponent, Av, React: React20, common: { Resolutions, FrameRates } }) {
+  const SourceSelection = React20.lazy(async () => Promise.resolve().then(() => (init_source_selection(), source_selection_exports)));
+  const InlineView18 = React20.lazy(async () => Promise.resolve().then(() => (init_inline_view8(), inline_view_exports8)));
   return defineComponent({
     identifier: "processor.control.cascadingSwitch",
     category: "processor",
@@ -17546,9 +17634,84 @@ function assertUnreachable10(_) {
   throw new Error("Didn't expect to get here");
 }
 
-// build/processor.fixedLadder/info.js
+// build/processor.dynamicBug/info.js
 var import_config5 = __toESM(require_config());
+var import_react35 = __toESM(require_react());
 function info_default22({ defineComponent, Video }) {
+  const BugSelection2 = import_react35.default.lazy(async () => Promise.resolve().then(() => (init_bug_selection(), bug_selection_exports)));
+  const SummaryView8 = import_react35.default.lazy(async () => Promise.resolve().then(() => (init_summary_view5(), summary_view_exports5)));
+  return defineComponent({
+    identifier: "processor.dynamicBug",
+    category: "processor",
+    name: "Dynamic Bug",
+    subscription: {
+      // Only accept a single video stream
+      accepts: {
+        type: "single-stream",
+        media: Video
+      },
+      produces: {
+        type: "single-stream",
+        media: Video
+      }
+    },
+    extraValidation: function(ctx) {
+      ctx.requireVideo(1);
+    },
+    display: (desc) => {
+      return {
+        default: desc.config.defaultBug ?? "none"
+      };
+    },
+    runtime: {
+      summary: SummaryView8,
+      initialState: () => ({}),
+      handleEvent: (ev, state) => {
+        const evType = ev.type;
+        switch (evType) {
+          case "bug-changed":
+            return { ...state, activeBug: { file: ev.file, orientation: ev.orientation } };
+          default:
+            assertUnreachable11(evType);
+        }
+      }
+    },
+    configForm: {
+      global: {
+        hardware: (0, import_config5.HardwareSelection)()
+      },
+      form: {
+        defaultBug: {
+          help: "The default bug to render on the video (if any)",
+          hint: {
+            type: "custom",
+            component: BugSelection2
+          }
+        },
+        defaultOrientation: {
+          help: "The default location to render the bug in",
+          hint: {
+            type: "select",
+            optional: true,
+            options: [
+              { value: "topleft", display: "Top Left" },
+              { value: "topright", display: "Top Right" },
+              { value: "bottomleft", display: "Bottom Left" },
+              { value: "bottomright", display: "Bottom Right" }
+            ]
+          }
+        }
+      }
+    }
+  });
+}
+function assertUnreachable11(_) {
+  throw new Error("Didn't expect to get here");
+}
+
+// build/processor.fixedLadder/info.js
+var import_config6 = __toESM(require_config());
+function info_default23({ defineComponent, Video }) {
   return defineComponent({
     identifier: "processor.transform.fixedLadder",
     category: "processor",
@@ -17588,7 +17751,7 @@ function info_default22({ defineComponent, Video }) {
     },
     configForm: {
       global: {
-        hardware: (0, import_config5.HardwareSelection)()
+        hardware: (0, import_config6.HardwareSelection)()
       },
       form: {
         rungs: {
@@ -17617,11 +17780,11 @@ var rungNames = [
 ];
 
 // build/processor.monetise/info.js
-var import_react34 = __toESM(require_react());
-var import_config6 = __toESM(require_config());
-function info_default23(R) {
+var import_react37 = __toESM(require_react());
+var import_config7 = __toESM(require_config());
+function info_default24(R) {
   const { defineComponent, Av } = R;
-  const SummaryView7 = import_react34.default.lazy(async () => Promise.resolve().then(() => (init_summary3(), summary_exports3)));
+  const SummaryView8 = import_react37.default.lazy(async () => Promise.resolve().then(() => (init_summary3(), summary_exports3)));
   return defineComponent({
     identifier: "processor.monetise",
     category: "output",
@@ -17661,27 +17824,27 @@ function info_default23(R) {
             state.currentAdvert = void 0;
             break;
           default:
-            assertUnreachable11(evType);
+            assertUnreachable12(evType);
         }
         return { ...state };
       },
-      summary: SummaryView7
+      summary: SummaryView8
     },
     configForm: {
       global: {
-        iceServers: (0, import_config6.GlobalIceServers)(R),
-        hardware: (0, import_config6.HardwareSelection)()
+        iceServers: (0, import_config7.GlobalIceServers)(R),
+        hardware: (0, import_config7.HardwareSelection)()
       },
       form: {}
     }
   });
 }
-function assertUnreachable11(_) {
+function assertUnreachable12(_) {
   throw new Error("Didn't expect to get here");
 }
 
 // build/processor.whisper-transcribe/info.js
-function info_default24({ defineComponent, Av, Subtitle, validation: { Z } }) {
+function info_default25({ defineComponent, Av, Subtitle, validation: { Z } }) {
   return defineComponent({
     identifier: "processor.whisper-transcribe",
     category: "processor",
@@ -17723,11 +17886,11 @@ function info_default24({ defineComponent, Av, Subtitle, validation: { Z } }) {
 }
 
 // build/util.latency/info.js
-var import_react36 = __toESM(require_react());
-function info_default25(R) {
+var import_react39 = __toESM(require_react());
+function info_default26(R) {
   const { defineComponent } = R;
-  const InlineView18 = import_react36.default.lazy(async () => Promise.resolve().then(() => (init_inline_view9(), inline_view_exports9)));
-  const SourceNodeSelection2 = import_react36.default.lazy(async () => Promise.resolve().then(() => (init_source_node_selection(), source_node_selection_exports)));
+  const InlineView18 = import_react39.default.lazy(async () => Promise.resolve().then(() => (init_inline_view9(), inline_view_exports9)));
+  const SourceNodeSelection2 = import_react39.default.lazy(async () => Promise.resolve().then(() => (init_source_node_selection(), source_node_selection_exports)));
   return defineComponent({
     identifier: "util.latency-stats",
     category: "output",
@@ -17754,7 +17917,7 @@ function info_default25(R) {
             break;
           }
           default:
-            assertUnreachable12(evType);
+            assertUnreachable13(evType);
         }
         return { ...state };
       },
@@ -17808,15 +17971,15 @@ function info_default25(R) {
     }
   });
 }
-function assertUnreachable12(_) {
+function assertUnreachable13(_) {
   throw new Error("Didn't expect to get here");
 }
 
 // build/util.ma35d/info.js
-var import_react38 = __toESM(require_react());
-function info_default26(R) {
+var import_react41 = __toESM(require_react());
+function info_default27(R) {
   const { defineComponent } = R;
-  const InlineView18 = import_react38.default.lazy(async () => Promise.resolve().then(() => (init_inline_view10(), inline_view_exports10)));
+  const InlineView18 = import_react41.default.lazy(async () => Promise.resolve().then(() => (init_inline_view10(), inline_view_exports10)));
   return defineComponent({
     identifier: "util.ma35d-stats",
     category: "output",
@@ -17849,7 +18012,7 @@ function info_default26(R) {
             break;
           }
           default:
-            assertUnreachable13(evType);
+            assertUnreachable14(evType);
         }
         return { ...state };
       },
@@ -17860,15 +18023,15 @@ function info_default26(R) {
     }
   });
 }
-function assertUnreachable13(_) {
+function assertUnreachable14(_) {
   throw new Error("Didn't expect to get here");
 }
 
 // build/util.timestamps/info.js
-var import_react40 = __toESM(require_react());
-function info_default27(R) {
+var import_react43 = __toESM(require_react());
+function info_default28(R) {
   const { defineComponent, All } = R;
-  const InlineView18 = import_react40.default.lazy(async () => Promise.resolve().then(() => (init_inline_view11(), inline_view_exports11)));
+  const InlineView18 = import_react43.default.lazy(async () => Promise.resolve().then(() => (init_inline_view11(), inline_view_exports11)));
   return defineComponent({
     identifier: "util.timestamps",
     category: "output",
@@ -17903,7 +18066,7 @@ function info_default27(R) {
             break;
           }
           default:
-            assertUnreachable14(evType);
+            assertUnreachable15(evType);
         }
         return { ...state };
       },
@@ -17914,7 +18077,7 @@ function info_default27(R) {
     }
   });
 }
-function assertUnreachable14(_) {
+function assertUnreachable15(_) {
   throw new Error("Didn't expect to get here");
 }
 
@@ -17959,6 +18122,7 @@ AllComponents.push((r) => info_default24(r));
 AllComponents.push((r) => info_default25(r));
 AllComponents.push((r) => info_default26(r));
 AllComponents.push((r) => info_default27(r));
+AllComponents.push((r) => info_default28(r));
 export {
   getNodeInfo as default
 };

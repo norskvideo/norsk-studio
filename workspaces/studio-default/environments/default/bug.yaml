@@ -1,0 +1,63 @@
+__layout:
+  - id: videotestcard-0
+    x: 416
+    y: 272
+  - id: dynamicbug-0
+    x: 896
+    y: 208
+  - id: silence-0
+    x: 656
+    y: 592
+  - id: whep-0
+    x: 1440
+    y: 176
+__globalConfig: {}
+nodes:
+  - type: input.videoTestCard
+    config:
+      displayName: videoTestCard
+      resolution:
+        width: 1280
+        height: 720
+      frameRate:
+        frames: 25
+        seconds: 1
+      sourceName: video
+      pattern: black
+      id: videotestcard-0
+    subscriptions: []
+  - type: processor.dynamicBug
+    config:
+      displayName: dynamicBug
+      defaultBug: smile.png
+      defaultOrientation: topleft
+      id: dynamicbug-0
+    subscriptions:
+      - source: videotestcard-0
+        streams:
+          type: take-first-stream
+          select:
+            - video
+  - type: input.silence
+    config:
+      displayName: silence
+      sampleRate: 48000
+      channelLayout: stereo
+      id: silence-0
+    subscriptions: []
+  - type: output.whep
+    config:
+      displayName: whep
+      bufferDelayMs: 500
+      id: whep-0
+    subscriptions:
+      - source: dynamicbug-0
+        streams:
+          type: take-first-stream
+          select:
+            - video
+      - source: silence-0
+        streams:
+          type: take-first-stream
+          select:
+            - audio

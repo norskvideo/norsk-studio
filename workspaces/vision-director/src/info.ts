@@ -18,9 +18,6 @@ export default function(R: Registration) {
     category: 'processor',
     name: "MultiCamera",
     subscription: {
-      // Each input *has* to come with video AND audio
-      // and they can't come from different sources
-      // We might want a 'join' node for that purpose ( :-( )
       accepts: {
         type: 'multi-stream',
         media: Av
@@ -31,6 +28,9 @@ export default function(R: Registration) {
       }
     },
     extraValidation: (ctx) => {
+      // Each input *has* to come with video AND audio
+      // and they can't come from different sources
+      // We might want a 'join' node for that purpose ( :-( )
       ctx.subscriptions.forEach((s) => {
         if (s.streams.select.includes("audio") && s.streams.select.includes("video")) {
           return;
