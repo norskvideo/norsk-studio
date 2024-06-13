@@ -13,7 +13,7 @@ import bodyParser from 'body-parser';
 import express from 'express'
 import multer from 'multer';
 
-export type DynamicBugOrientation = "topleft" | "topright" | "bottomleft" | "bottomright";
+export type DynamicBugPosition = "topleft" | "topright" | "bottomleft" | "bottomright";
 
 export type DynamicBugConfig = {
   __global: {
@@ -23,27 +23,27 @@ export type DynamicBugConfig = {
   id: string,
   displayName: string,
   defaultBug?: string
-  defaultOrientation?: DynamicBugOrientation;
+  defaultPosition?: DynamicBugPosition;
   apiPort: number;
 }
 
 export type DynamicBugState = {
   activeBug?: {
     file?: string,
-    orientation?: DynamicBugOrientation
+    position?: DynamicBugPosition
   },
 }
 
 export type DynamicBugCommand = {
   type: 'change-bug',
   file?: string,
-  orientation?: DynamicBugOrientation
+  position?: DynamicBugPosition
 }
 
 export type DynamicBugEvent = {
   type: 'bug-changed',
   file?: string,
-  orientation?: DynamicBugOrientation
+  position?: DynamicBugPosition
 }
 
 // Norsk Studio itself really needs the concept of a 'data dir'
@@ -80,13 +80,13 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
       res.writeHead(200);
       res.end(JSON.stringify({
         bug: node.bug,
-        orientation: node.orientation
+        position: node.position
       }));
     })
     expressApp.post("/active-bug", async (req, res) => {
-      if (!["topleft", "topright", "bottomleft", "bottomright"].includes(req.body.orientation)) {
+      if (!["topleft", "topright", "bottomleft", "bottomright"].includes(req.body.position)) {
         res.writeHead(400);
-        res.end("bad orientation");
+        res.end("bad position");
         return;
       }
       const images = await getBugs();
@@ -95,7 +95,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
         res.end("bad bug");
         return;
       }
-      await node.setupBug(req.body.bug, req.body.orientation);
+      await node.setupBug(req.body.bug, req.body.position);
       res.writeHead(200);
       res.end("ok");
     })
@@ -137,7 +137,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     const commandType = command.type;
     switch (commandType) {
       case 'change-bug':
-        await node.setupBug(command.file, command.orientation);
+        await node.setupBug(command.file, command.position);
         break;
       default:
         assertUnreachable(commandType);
@@ -153,11 +153,13 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
   norsk: Norsk;
   cfg: DynamicBugConfig;
   bug?: string;
-  orientation?: DynamicBugOrientation;
+  position?: DynamicBugPosition;
 
   videoSource?: StudioNodeSubscriptionSource;
   composeNode?: VideoComposeNode<"video" | "bug">;
   imageSource?: FileImageInputNode;
+  oldImageSource?: FileImageInputNode;
+  activeImage: "a" | "b" = "a";
   initialised: Promise<void>;
   updates: RuntimeUpdates<DynamicBugState, DynamicBugEvent>;
 
@@ -169,15 +171,13 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
 
   constructor(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugEvent>) {
     this.cfg = cfg;
-    this.bug = cfg.defaultBug;
-    this.orientation = cfg.defaultOrientation;
     this.id = cfg.id;
     this.norsk = norsk;
-    this.initialised = this.initialise();
     this.updates = updates;
+    this.initialised = this.initialise();
   }
 
-  async sourceContextChange(_responseCallback: (error?: SubscriptionError | undefined) => void): Promise<boolean> {
+  async sourceContextChange(responseCallback: (error?: SubscriptionError | undefined) => void): Promise<boolean> {
     if (!this.videoSource) {
       return false;
     }
@@ -214,23 +214,53 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
       this.relatedMediaNodes.addInput(this.composeNode);
     }
 
+    // What we want to do here is
+    // If there is *only* an imageSource, then go ahead and use it, parts and all
+    // If there are both old and new sources, then use the old source and subscribe to it if the new source hasn't got a stream yet
+    // If there are are streams from both sources
+    // remove the subscription entirely
+    // close the old node and swap them
+    // then re-do this whole thing
+
     // Re-configure the compose node based on what we have, or don't have
-    // from the image source
-    if (this.imageSource) {
-      const imageStream = this.imageSource.outputStreams[0];
+    // prefering the new image source if it exists
+    if (this.imageSource || this.oldImageSource) {
+      const newImageStream = this.imageSource?.outputStreams[0];
+      const oldImageStream = this.oldImageSource?.outputStreams[0];
+      if (newImageStream && oldImageStream) {
+        // Clear the subs
+        this.doSubs();
+
+        // Reset the compose node to have no overlay
+        this.composeNode?.updateConfig({
+          parts: [
+            this.videoPart(videoStream.metadata.message.value.width, videoStream.metadata.message.value.height),
+          ]
+        })
+        void this.oldImageSource?.close();
+        this.oldImageSource = undefined;
+        return await this.sourceContextChange(responseCallback);
+      }
+
+      if (newImageStream) {
+        this.doSubs(this.imageSource);
+      } else if (oldImageStream) {
+        this.doSubs(this.oldImageSource);
+      }
+      const imageStream = newImageStream ?? oldImageStream;
       if (imageStream && imageStream.message.case == 'video') {
         this.composeNode?.updateConfig({
           parts: [
             this.videoPart(videoStream.metadata.message.value.width, videoStream.metadata.message.value.height),
-            this.imagePart(this.orientation ?? 'topleft',
+            this.imagePart(this.position ?? 'topleft',
               videoStream.metadata.message.value.width,
               videoStream.metadata.message.value.height,
               imageStream.message.value.width,
               imageStream.message.value.height)
           ]
         })
-
       } else {
+        this.doSubs();
         this.composeNode?.updateConfig({
           parts: [
             this.videoPart(videoStream.metadata.message.value.width, videoStream.metadata.message.value.height),
@@ -238,46 +268,45 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
         })
       }
     }
-
-    // Then update the subs regardless
-    this.doSubs();
     return false;
   }
 
-  doSubs() {
-    if (!this.imageSource) {
+  doSubs(imageSource?: FileImageInputNode) {
+    if (!imageSource) {
       this.composeNode?.subscribeToPins(this.videoSource?.selectVideoToPin("video") || [])
     } else {
       this.composeNode?.subscribeToPins((this.videoSource?.selectVideoToPin<"video" | "bug">("video") ?? []).concat([
-        { source: this.imageSource, sourceSelector: videoToPin("bug") }
+        { source: imageSource, sourceSelector: videoToPin("bug") }
       ]))
     }
   }
 
-  async setupBug(bug?: string, orientation?: DynamicBugOrientation) {
-    // We could be clever here and do a clean switch with A and B and double buffering
-    // but the side effect of not doing this, is to have a few frames without a bug, is that okay? probably
-    if (this.imageSource) {
-      await this.imageSource.close();
-      this.imageSource = undefined;
-    }
-    if (!bug) {
+  async setupBug(bug?: string, position?: DynamicBugPosition) {
+    this.position = position;
+    if (!bug || bug === "") {
       this.doSubs();
+      await this.imageSource?.close();
+      this.imageSource = undefined;
+      this.bug = undefined;
       this.updates.raiseEvent({ type: 'bug-changed' })
+      await this.sourceContextChange(() => { });
       return;
+    } else if (bug !== this.bug) {
+      this.bug = bug;
+      this.activeImage = this.activeImage == "a" ? "b" : "a";
+      this.oldImageSource = this.imageSource;
+      this.imageSource = await this.norsk.input.fileImage({
+        id: `${this.id}-${this.activeImage}`,
+        sourceName: `${this.id}-bug-${this.activeImage}`,
+        fileName: path.join(bugDir(), bug)
+      })
+      this.imageSource.registerForContextChange(this);
     }
-
-    this.imageSource = await this.norsk.input.fileImage({
-      sourceName: `${this.id}-bug`,
-      fileName: path.join(bugDir(), bug)
-    })
-    this.imageSource.registerForContextChange(this);
-    this.bug = bug;
-    this.orientation = orientation;
-    this.updates.raiseEvent({ type: 'bug-changed', file: bug, orientation })
+    await this.sourceContextChange(() => { });
+    this.updates.raiseEvent({ type: 'bug-changed', file: bug, position })
   }
 
-  imagePart(orientation: DynamicBugOrientation,
+  imagePart(position: DynamicBugPosition,
     videoWidth: number,
     videoHeight: number,
     imageWidth: number,
@@ -296,9 +325,9 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
       // What to do about resolution?
       // we could subscribe to the output of the image source and do some maths
       // to preserve aspect ratio before building this config?
-      destRect: (orientation == 'topleft' ? { x: 5, y: 5, width: imageWidth, height: imageHeight } :
-        orientation == 'topright' ? { x: videoWidth - imageWidth - 5, y: 5, width: imageWidth, height: imageHeight } :
-          orientation == 'bottomleft' ? { x: 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight } :
+      destRect: (position == 'topleft' ? { x: 5, y: 5, width: imageWidth, height: imageHeight } :
+        position == 'topright' ? { x: videoWidth - imageWidth - 5, y: 5, width: imageWidth, height: imageHeight } :
+          position == 'bottomleft' ? { x: 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight } :
             { x: videoWidth - imageWidth - 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight }),
       opacity: 1.0,
       pin: "bug"
@@ -318,7 +347,7 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
   }
 
   async initialise() {
-    await this.setupBug(this.cfg.defaultBug, this.cfg.defaultOrientation);
+    await this.setupBug(this.cfg.defaultBug, this.cfg.defaultPosition);
   }
 
   subscribe(sources: StudioNodeSubscriptionSource[]) {

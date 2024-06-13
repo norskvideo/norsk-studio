@@ -43,7 +43,7 @@ export default function({
         const evType = ev.type;
         switch (evType) {
           case "bug-changed":
-            return { ...state, activeBug: { file: ev.file, orientation: ev.orientation } };
+            return { ...state, activeBug: { file: ev.file, position: ev.position } };
           default:
             assertUnreachable(evType)
 
@@ -62,7 +62,7 @@ export default function({
             component: BugSelection,
           }
         },
-        defaultOrientation: {
+        defaultPosition: {
           help: "The default location to render the bug in",
           hint: {
             type: 'select',
