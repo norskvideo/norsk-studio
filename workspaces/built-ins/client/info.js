@@ -1498,26 +1498,51 @@ function SummaryView7({ state, config, sendCommand }) {
   const [bug, setBug] = (0, import_react34.useState)(state.activeBug?.file ?? config.defaultBug);
   const [orientation, setOrientation] = (0, import_react34.useState)(state.activeBug?.orientation ?? config.defaultOrientation);
   const [bugs, setBugs] = (0, import_react34.useState)([]);
+  const [fileToUpload, setFileToUpload] = (0, import_react34.useState)(void 0);
+  async function updateBugs() {
+    const result2 = await fetch("components/processor.dynamicBug/bugs");
+    if (result2.ok && result2.body) {
+      const bugs2 = await result2.json();
+      setBugs(bugs2);
+    } else {
+      const text = await result2.text();
+      throw new Error(text);
+    }
+  }
   (0, import_react34.useEffect)(() => {
     const fn = async () => {
-      const result2 = await fetch("components/processor.dynamicBug/bugs");
-      if (result2.ok && result2.body) {
-        const bugs2 = await result2.json();
-        setBugs(bugs2);
-      } else {
-        const text = await result2.text();
-        throw new Error(text);
-      }
+      await updateBugs();
     };
     fn().catch(console.error);
   }, []);
+  function onFileChange(e) {
+    if (e.target.files?.[0])
+      setFileToUpload(e.target.files[0]);
+  }
   return (0, import_jsx_runtime32.jsxs)(import_jsx_runtime32.Fragment, { children: [(0, import_jsx_runtime32.jsx)("h2", { children: "Controls" }), (0, import_jsx_runtime32.jsx)("label", { htmlFor: "select-preview", className: "mt-2", children: "Source" }), (0, import_jsx_runtime32.jsxs)("select", { id: "select-bug", className: "mt-2 node-editor-select-input", onChange: (e) => {
     setBug(e.currentTarget.value);
-  }, children: [(0, import_jsx_runtime32.jsx)("option", { selected: bug === void 0, children: "---" }), bugs.map((s, i) => (0, import_jsx_runtime32.jsx)("option", { selected: bug == s, value: s, children: s }, i))] }), (0, import_jsx_runtime32.jsxs)("select", { id: "select-orientation", className: "mt-2 node-editor-select-input", onChange: (e) => {
+  }, children: [(0, import_jsx_runtime32.jsx)("option", { selected: bug === void 0, children: "---" }), (0, import_jsx_runtime32.jsx)("option", { value: "new", selected: bug === "new", children: "New" }), bugs.map((s, i) => (0, import_jsx_runtime32.jsx)("option", { selected: bug == s, value: s, children: s }, i))] }), (0, import_jsx_runtime32.jsx)("form", { style: { display: bug === "new" ? "block" : "none" }, onSubmit: (e) => e.preventDefault(), children: (0, import_jsx_runtime32.jsx)("input", { type: "file", id: "file", name: "filename", onChange: onFileChange }) }), (0, import_jsx_runtime32.jsxs)("select", { id: "select-orientation", className: "mt-2 node-editor-select-input", onChange: (e) => {
     setOrientation(e.currentTarget.value);
-  }, children: [(0, import_jsx_runtime32.jsx)("option", { selected: orientation === void 0, children: "---" }), (0, import_jsx_runtime32.jsx)("option", { value: "topleft", selected: orientation === "topleft", children: "Top Left" }), (0, import_jsx_runtime32.jsx)("option", { value: "topright", selected: orientation === "topright", children: "Top Right" }), (0, import_jsx_runtime32.jsx)("option", { value: "bottomleft", selected: orientation === "bottomleft", children: "Bottom Left" }), (0, import_jsx_runtime32.jsx)("option", { value: "bottomright", selected: orientation === "bottomright", children: "Bottom Right" })] }), bug != state.activeBug?.file || orientation != state.activeBug?.orientation ? (0, import_jsx_runtime32.jsx)("button", { type: "button", className: "mt-2 mb-2 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800", onClick: (e) => {
+  }, children: [(0, import_jsx_runtime32.jsx)("option", { selected: orientation === void 0, children: "---" }), (0, import_jsx_runtime32.jsx)("option", { value: "topleft", selected: orientation === "topleft", children: "Top Left" }), (0, import_jsx_runtime32.jsx)("option", { value: "topright", selected: orientation === "topright", children: "Top Right" }), (0, import_jsx_runtime32.jsx)("option", { value: "bottomleft", selected: orientation === "bottomleft", children: "Bottom Left" }), (0, import_jsx_runtime32.jsx)("option", { value: "bottomright", selected: orientation === "bottomright", children: "Bottom Right" })] }), bug != state.activeBug?.file || orientation != state.activeBug?.orientation || fileToUpload ? (0, import_jsx_runtime32.jsx)("button", { type: "button", className: "mt-2 mb-2 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800", onClick: async (e) => {
     e.preventDefault();
-    sendCommand({ type: "change-bug", file: bug, orientation });
+    if (fileToUpload && bug === "new") {
+      const form = new FormData();
+      const url = `http://${document.location.hostname}:${config.apiPort}/bugs`;
+      form.append("file", fileToUpload);
+      await fetch(url, {
+        method: "POST",
+        body: form
+      });
+      setTimeout(async () => {
+        await updateBugs();
+        sendCommand({ type: "change-bug", file: fileToUpload.name, orientation });
+        setBug(fileToUpload.name);
+        setFileToUpload(void 0);
+        return;
+      }, 500);
+    } else {
+      sendCommand({ type: "change-bug", file: bug, orientation });
+    }
   }, children: "Commit" }) : (0, import_jsx_runtime32.jsx)(import_jsx_runtime32.Fragment, {})] });
 }
 var import_jsx_runtime32, import_react34, summary_view_default5;

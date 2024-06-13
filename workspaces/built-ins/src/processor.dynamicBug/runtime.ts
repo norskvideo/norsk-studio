@@ -7,6 +7,7 @@ import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { Router } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
+import cors from 'cors';
 
 import bodyParser from 'body-parser';
 import express from 'express'
@@ -73,6 +74,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     // but that's going to require some thought
     const expressApp = express();
     expressApp.use(express.json());
+    expressApp.use(cors());
 
     expressApp.get("/active-bug", async (_req, res) => {
       res.writeHead(200);
@@ -107,7 +109,10 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     expressApp.post('/bugs', upload.single('file'), (_req, res) => {
       res.send('File uploaded successfully')
     })
-    expressApp.get("/bugs", async (_req, res) => {
+    expressApp.get("/bugs", cors({
+      origin: '*',
+      optionsSuccessStatus: 200
+    }), async (_req, res) => {
       const images = await getBugs();
       res.writeHead(200);
       res.end(JSON.stringify(images));
@@ -277,6 +282,11 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
     videoHeight: number,
     imageWidth: number,
     imageHeight: number): ComposePart<"bug"> {
+
+    // We shouldn't need this, pending work on Compose
+    imageWidth = Math.min(videoWidth - 100, imageWidth);
+    imageHeight = Math.min(videoHeight - 100, imageHeight);
+
     const foo = {
       id: "bug",
       zIndex: 1,
@@ -293,8 +303,6 @@ export class DynamicBug implements CreatedMediaNode, SubscribeDestination {
       opacity: 1.0,
       pin: "bug"
     } as const;
-
-    console.log(foo);
     return foo;
   }
 
