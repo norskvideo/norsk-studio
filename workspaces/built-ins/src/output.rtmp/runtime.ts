@@ -66,7 +66,7 @@ class RtmpOutput extends CustomSinkNode {
       }
     }
     this.rtmp = await this.norsk.output.rtmp(rtmpCfg)
-    this.setup({ sink: this.rtmp });
+    this.setup({ sink: this.rtmp }, { requireOneOfEverything: true });
   }
 }
 

@@ -16991,8 +16991,10 @@ function info_default11({ defineComponent, Av, validation: { Z, JitterBuffer } }
         media: Av
       }
     },
-    display: (_desc) => {
-      return {};
+    display: (desc) => {
+      return {
+        url: desc.config.url
+      };
     },
     runtime: {
       initialState: () => ({ connected: false, connectRetries: 0 }),
