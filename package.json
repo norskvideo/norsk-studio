@@ -12,10 +12,5 @@
     "workspaces/built-ins",
     "workspaces/vision-director",
     "workspaces/studio-default"
-  ],
-  "dependencies": {
-  },
-  "devDependencies": {
-    "@norskvideo/norsk-studio-built-ins": "^1.0.1"
-  }
+  ]
 }
