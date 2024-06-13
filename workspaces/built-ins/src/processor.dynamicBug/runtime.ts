@@ -53,7 +53,7 @@ export type DynamicBugEvent = {
 // and provide a means for this code to reach out into ActiveSession and retrieve it
 // but anyway, an env var is fine for now
 function bugDir() {
-  return path.resolve(process.env.norsk_data_dir || "data/bugs");
+  return path.resolve(process.env.NORSK_DATA_DIR || "data/bugs");
 }
 
 async function getBugs() {
