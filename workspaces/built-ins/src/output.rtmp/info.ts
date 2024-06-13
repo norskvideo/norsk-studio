@@ -2,7 +2,7 @@ import type { RtmpOutputEvent, RtmpOutputSettings, RtmpOutputState } from "./run
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import React from "react";
 
-export default function({
+export default function ({
   defineComponent,
   Av,
   validation: { Z, JitterBuffer },
@@ -25,7 +25,11 @@ export default function({
         media: Av
       },
     },
-    display: (_desc) => { return {}; },
+    display: (desc) => {
+      return {
+        url: desc.config.url
+      };
+    },
     runtime: {
       initialState: () => ({ connected: false, connectRetries: 0 }),
       handleEvent: (ev, state) => {
