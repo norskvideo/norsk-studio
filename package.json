@@ -12,5 +12,6 @@
     "workspaces/built-ins",
     "workspaces/vision-director",
     "workspaces/studio-default"
-  ]
+  ],
+  "version": "0.0.1"
 }
