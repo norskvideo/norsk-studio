@@ -14,11 +14,8 @@
     "workspaces/studio-default"
   ],
   "dependencies": {
-    "body-parser": "^1.20.2",
-    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
-    "@norskvideo/norsk-studio-built-ins": "^1.0.1",
-    "@types/multer": "^1.4.11"
+    "@norskvideo/norsk-studio-built-ins": "^1.0.1"
   }
 }
