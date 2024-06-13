@@ -17637,7 +17637,7 @@ function assertUnreachable10(_) {
 // build/processor.dynamicBug/info.js
 var import_config5 = __toESM(require_config());
 var import_react35 = __toESM(require_react());
-function info_default22({ defineComponent, Video }) {
+function info_default22({ defineComponent, Video, validation: { Port, unique } }) {
   const BugSelection2 = import_react35.default.lazy(async () => Promise.resolve().then(() => (init_bug_selection(), bug_selection_exports)));
   const SummaryView8 = import_react35.default.lazy(async () => Promise.resolve().then(() => (init_summary_view5(), summary_view_exports5)));
   return defineComponent({
@@ -17699,6 +17699,15 @@ function info_default22({ defineComponent, Video }) {
               { value: "bottomleft", display: "Bottom Left" },
               { value: "bottomright", display: "Bottom Right" }
             ]
+          }
+        },
+        apiPort: {
+          help: "Port to open the API on",
+          hint: {
+            type: "numeric",
+            defaultValue: 5e3,
+            validation: Port,
+            global: unique("port")
           }
         }
       }

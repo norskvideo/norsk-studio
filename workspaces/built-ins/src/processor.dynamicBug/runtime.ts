@@ -5,10 +5,12 @@ import { errorlog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { Router } from 'express';
-import express from 'express';
 import fs from 'fs/promises';
 import path from 'path';
 
+import bodyParser from 'body-parser';
+import express from 'express'
+import multer from 'multer';
 
 export type DynamicBugOrientation = "topleft" | "topright" | "bottomleft" | "bottomright";
 
@@ -21,6 +23,7 @@ export type DynamicBugConfig = {
   displayName: string,
   defaultBug?: string
   defaultOrientation?: DynamicBugOrientation;
+  apiPort: number;
 }
 
 export type DynamicBugState = {
@@ -50,23 +53,75 @@ export type DynamicBugEvent = {
 // but anyway, an env var is fine for now
 function bugDir() {
   return path.resolve(process.env.norsk_data_dir || "data/bugs");
-
 }
+
+async function getBugs() {
+  const files = await fs.readdir(bugDir());
+  const images = files.filter((f) => {
+    return f.endsWith(".png") || f.endsWith(".jpg");
+  })
+  return images;
+}
+
 
 export default class DynamicBugDefinition implements ServerComponentDefinition<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent> {
   async create(norsk: Norsk, cfg: DynamicBugConfig, cb: OnCreated<DynamicBug>, runtime: StudioRuntime<DynamicBugState, DynamicBugEvent>) {
     const node = await DynamicBug.create(norsk, cfg, runtime.updates);
     cb(node);
+
+    // Really I'd like to hijack the Norsk Studio express here in some way, shape, or form
+    // but that's going to require some thought
+    const expressApp = express();
+    expressApp.use(express.json());
+
+    expressApp.get("/active-bug", async (_req, res) => {
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        bug: node.bug,
+        orientation: node.orientation
+      }));
+    })
+    expressApp.post("/active-bug", async (req, res) => {
+      if (!["topleft", "topright", "bottomleft", "bottomright"].includes(req.body.orientation)) {
+        res.writeHead(400);
+        res.end("bad orientation");
+        return;
+      }
+      const images = await getBugs();
+      if (!images.includes(req.body.bug)) {
+        res.writeHead(400);
+        res.end("bad bug");
+        return;
+      }
+      await node.setupBug(req.body.bug, req.body.orientation);
+      res.writeHead(200);
+      res.end("ok");
+    })
+    const storage = multer.diskStorage({
+      destination: bugDir(),
+      filename: function(_req, file, cb) {
+        cb(null, path.basename(file.originalname));
+      }
+    });
+    const upload = multer({ storage })
+    expressApp.post('/bugs', upload.single('file'), (_req, res) => {
+      res.send('File uploaded successfully')
+    })
+    expressApp.get("/bugs", async (_req, res) => {
+      const images = await getBugs();
+      res.writeHead(200);
+      res.end(JSON.stringify(images));
+    })
+
+    expressApp.listen(cfg.apiPort);
   }
 
   routes(): Router {
     const router = express.Router()
+    router.use(bodyParser.json());
 
     router.get("/bugs", async (_req, res) => {
-      const files = await fs.readdir(bugDir());
-      const images = files.filter((f) => {
-        return f.endsWith(".png") || f.endsWith(".jpg");
-      })
+      const images = await getBugs();
       res.writeHead(200);
       res.end(JSON.stringify(images));
     })

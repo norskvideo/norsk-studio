@@ -2,15 +2,15 @@ __layout:
   - id: videotestcard-0
     x: 416
     y: 272
-  - id: dynamicbug-0
-    x: 896
-    y: 208
   - id: silence-0
     x: 656
     y: 592
   - id: whep-0
     x: 1440
     y: 176
+  - id: dynamicbug-1
+    x: 896
+    y: 208
 __globalConfig: {}
 nodes:
   - type: input.videoTestCard
@@ -26,18 +26,6 @@ nodes:
       pattern: black
       id: videotestcard-0
     subscriptions: []
-  - type: processor.dynamicBug
-    config:
-      displayName: dynamicBug
-      defaultBug: smile.png
-      defaultOrientation: topleft
-      id: dynamicbug-0
-    subscriptions:
-      - source: videotestcard-0
-        streams:
-          type: take-first-stream
-          select:
-            - video
   - type: input.silence
     config:
       displayName: silence
@@ -51,7 +39,7 @@ nodes:
       bufferDelayMs: 500
       id: whep-0
     subscriptions:
-      - source: dynamicbug-0
+      - source: dynamicbug-1
         streams:
           type: take-first-stream
           select:
@@ -61,3 +49,16 @@ nodes:
           type: take-first-stream
           select:
             - audio
+  - type: processor.dynamicBug
+    config:
+      displayName: dynamicBug
+      defaultBug: smile.png
+      defaultOrientation: topleft
+      apiPort: 5000
+      id: dynamicbug-1
+    subscriptions:
+      - source: videotestcard-0
+        streams:
+          type: take-first-stream
+          select:
+            - video
