@@ -83,6 +83,11 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
         position: node.position
       }));
     })
+    expressApp.delete("/active-bug", async (req, res) => {
+      await node.setupBug(undefined, undefined);
+      res.writeHead(200);
+      res.end("ok");
+    })
     expressApp.post("/active-bug", async (req, res) => {
       if (!["topleft", "topright", "bottomleft", "bottomright"].includes(req.body.position)) {
         res.writeHead(400);
@@ -101,7 +106,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     })
     const storage = multer.diskStorage({
       destination: bugDir(),
-      filename: function(_req, file, cb) {
+      filename: function (_req, file, cb) {
         cb(null, path.basename(file.originalname));
       }
     });
