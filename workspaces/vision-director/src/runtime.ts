@@ -3,7 +3,7 @@ import {
   , Norsk, SampleRate, StreamMetadata
   , StreamSwitchSmoothNode, VideoTestcardGeneratorNode, audioToPin, videoToPin, ReceiveFromAddress, SourceMediaNode, WhepOutputNode, requireAV, ReceiveFromAddressAuto, selectAudio, selectVideo,
   VideoComposeNode,
-  StreamKeyOverrideNode,
+  StreamKeyOverrideNode
 } from '@norskvideo/norsk-sdk';
 
 // should probably just re-implement this or... 
@@ -162,6 +162,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
   encodePreview?: SourceMediaNode;
   whepPreview?: WhepOutputNode;
   subscriptions: StudioNodeSubscriptionSource[] = [];
+  overlayInputs: StreamKeyOverrideNode[] = [];
   updates: RuntimeUpdates<MultiCameraSelectState, MultiCameraSelectEvent>;
   shared: StudioShared;
 
@@ -273,14 +274,18 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
   onTransitionComplete(pin: string) {
     debuglog("Transition complete", { id: this.id, source: this.activeSource })
     this.cfg.onActiveSourceChanged?.(this.activeSource);
-
     if (pin == this.pendingCompose?.id) {
+      // TODO: close this again
+      // if (this.activeCompose) {
+      //   void this.activeCompose.compose.close();
+      //   void this.activeCompose.output.close();
+      // }
       this.activeCompose = this.pendingCompose;
       this.pendingCompose = undefined;
       this.doSubscriptions();
     } else if (this.pendingCompose) {
-      void this.pendingCompose.compose.close();
-      void this.pendingCompose.output.close();
+      // void this.pendingCompose.compose.close();
+      // void this.pendingCompose.output.close();
       this.pendingCompose = undefined;
     }
   }
@@ -384,7 +389,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
         id,
         referenceResolution: { width: 100, height: 100 },
         outputResolution: this.cfg.resolution,
-        referenceStream: 'background',
+        referenceStream: "background",
         missingStreamBehaviour: 'drop_part',
         parts: [
           {
@@ -396,7 +401,10 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
           },
           ...overlays.map((o, i) => {
             return {
-              pin: `overlay-${i}`,
+              // Pins should all just be the source
+              // and we should be re-using pins across the composition
+              // but work is needed on composition so you can use the same input twice again
+              pin: `layer-${i}`,
               sourceRect: { x: 0, y: 0, width: 100, height: 100 },
               destRect: { x: o.x, y: o.y, width: o.width, height: o.height },
               opacity: 1.0,
@@ -429,8 +437,8 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
 
     if (!background) {
       warninglog("Unable to find source for stream", { source });
-      await this.pendingCompose.compose.close();
-      await this.pendingCompose.output.close();
+      // await this.pendingCompose.compose.close();
+      // await this.pendingCompose.output.close();
       this.pendingCompose = undefined;
       return;
     }
@@ -439,18 +447,34 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
       { source: this.pendingCompose.compose, sourceSelector: selectVideo }
     ])
 
+    // Set up the overlays in order
+    await this.ensureEnoughOverlaysExist(overlays);
+
+    // And hook them up
+    overlays.forEach((o, i) => {
+      const source = this.subscriptions.find((s) => s.source.id == o.source.id);
+      if (!source) {
+        this.overlayInputs[i].subscribe([]);
+        return;
+      }
+      this.overlayInputs[i].subscribe(
+        o.source.key ?
+          [source.selectVideoForKey(o.source.key)[0]] :
+          [source.selectVideo()[0]]
+      );
+    });
+
     // And the rest
     this.pendingCompose.compose.subscribeToPins([
       source.key ?
         background.selectVideoToPinForKey("background", source.key)[0] :
         background.selectVideoToPin("background")[0]
-      , ...overlays.flatMap((o, i) => {
-        const source = this.subscriptions.find((s) => s.source.id == o.source.id);
-        if (!source) return [];
-        return o.source.key ?
-          [source.selectVideoToPinForKey(`overlay-${i}`, o.source.key)[0]] :
-          [source.selectVideoToPin(`overlay-${i}`)[0]];
-      })])
+      , ...overlays.map((_o, i) => {
+        return {
+          source: this.overlayInputs[i],
+          sourceSelector: videoToPin(`layer-${i}`)
+        }
+      })]);
 
     // This could be a mixer..
     this.pendingCompose.audio.subscribe([
@@ -460,6 +484,21 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     ])
     this.desiredSource = { id: `${this.pendingCompose.id}` };
     this.doSubscriptions();
+  }
+
+  async ensureEnoughOverlaysExist(overlays: MultiCameraOverlay[]) {
+    while (this.overlayInputs.length < overlays.length) {
+      const i = await this.norsk.processor.transform.streamKeyOverride({
+        id: `${this.id}-compose-input-${this.overlayInputs.length}`,
+        streamKey: {
+          programNumber: 1,
+          streamId: 256,
+          sourceName: "compose-input",
+          renditionName: `input-${this.overlayInputs.length}`
+        }
+      })
+      this.overlayInputs.push(i)
+    }
   }
 
   sourceIsAvailable(source: MultiCameraSource) {
@@ -549,6 +588,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
       const [id, key] = pinToSourceAndKey(active);
       // This is a bit more involved now
       const source = this.subscriptions.find((s) => s.source.id == id);
+
       if (!player) continue;
 
       if (active === "fallback") {

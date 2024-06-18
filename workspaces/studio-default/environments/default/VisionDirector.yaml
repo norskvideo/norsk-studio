@@ -3,11 +3,11 @@ __layout:
     x: 48
     y: 384
   - id: camera_1-0
-    x: 176
-    y: -160
+    x: 48
+    y: -256
   - id: camera_2-0
-    x: 736
-    y: -160
+    x: 560
+    y: -256
   - id: live_camera-0
     x: 912
     y: 640
@@ -15,8 +15,8 @@ __layout:
     x: 912
     y: 224
   - id: camera_3-0
-    x: 1296
-    y: -160
+    x: 1056
+    y: -256
   - id: abr_ladder-0
     x: 1280
     y: 224
