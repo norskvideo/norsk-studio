@@ -154,8 +154,6 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
   video?: VideoTestcardGeneratorNode;
   smooth?: StreamSwitchSmoothNode<string>;
   initialised: Promise<void>;
-  activeSource: MultiCameraSource = { id: '' };
-  desiredSource: MultiCameraSource = { id: '' };
   availableSources: MultiCameraSource[] = [];
   lastSmoothSwitchContext: Map<string, StreamMetadata[]> = new Map();
   whepOutputs: Map<string, { whep: WhepOutputNode, encoder?: SourceMediaNode }> = new Map();
@@ -165,6 +163,15 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
   overlayInputs: StreamKeyOverrideNode[] = [];
   updates: RuntimeUpdates<MultiCameraSelectState, MultiCameraSelectEvent>;
   shared: StudioShared;
+
+  // The source that the user has selected
+  desiredSource: MultiCameraSource = { id: '' };
+
+  // The source that we have told SSS to switch to 
+  pendingSource: MultiCameraSource = { id: '' };
+
+  // The source that the SSS has told us that we have selected
+  activeSource: MultiCameraSource = { id: '' };
 
   composeCount: number = 0;
   pendingCompose?: { id: string, compose: VideoComposeNode<string>, output: StreamKeyOverrideNode, audio: StreamKeyOverrideNode };
@@ -273,21 +280,24 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
 
   onTransitionComplete(pin: string) {
     debuglog("Transition complete", { id: this.id, source: this.activeSource })
-    this.cfg.onActiveSourceChanged?.(this.activeSource);
     if (pin == this.pendingCompose?.id) {
-      // TODO: close this again
-      // if (this.activeCompose) {
-      //   void this.activeCompose.compose.close();
-      //   void this.activeCompose.output.close();
-      // }
+      if (this.activeCompose) {
+        void this.activeCompose.compose.close();
+        void this.activeCompose.output.close();
+      }
       this.activeCompose = this.pendingCompose;
       this.pendingCompose = undefined;
       this.doSubscriptions();
+
+      // We shouldn't end up here but..
     } else if (this.pendingCompose) {
-      // void this.pendingCompose.compose.close();
-      // void this.pendingCompose.output.close();
+      void this.pendingCompose.compose.close();
+      void this.pendingCompose.output.close();
       this.pendingCompose = undefined;
     }
+    // Effectively unlocking things for change again
+    this.activeSource = this.desiredSource;
+    this.cfg.onActiveSourceChanged?.(this.activeSource);
   }
 
   async onSwitchContext(allStreams: Map<string, StreamMetadata[]>) {
@@ -297,19 +307,32 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
 
   setActiveSource(source: MultiCameraSource, overlays: MultiCameraOverlay[]) {
     if (!this.sourceIsAvailable(source)) return;
-
-    // Quit this if we started
-    if (this.pendingCompose) {
-      void this.pendingCompose.compose.close();
-      void this.pendingCompose.output.close();
-      this.pendingCompose = undefined;
-    }
+    // Don't allow multiple simultaneous requests
+    // Client should be showing UI when things are already afoot
+    // There are lots of 'awaits' in the pipeline and if we don't do this
+    // then we'll end up with race conditions
+    if (this.pendingCompose) return;
+    if (this.desiredSource != this.activeSource) return;
 
     if (overlays.length > 0) {
       void this.setupComposeSource(source, overlays);
     } else {
       this.desiredSource = source;
       void this.maybeSwitchSource();
+    }
+  }
+
+
+  async maybeSwitchToFallback(source: MultiCameraSource) {
+    if (this.pendingSource.id == "fallback") return;
+    const allStreams = this.lastSmoothSwitchContext;
+    const currentUnavailable = !this.sourceIsAvailable(source) || allStreams.get(multiCameraSourceToPin(source))?.length !== 2;
+    const fallbackAvailable = this.sourceIsAvailable({ id: 'fallback' }) && allStreams.get(multiCameraSourceToPin({ id: 'fallback' }))?.length == 2;
+    if (currentUnavailable && fallbackAvailable) {
+      debuglog("Switching to fallback source", { id: this.id });
+      this.desiredSource = { id: 'fallback' };
+      this.pendingSource = { id: "fallback" };
+      this.smooth?.switchSource("fallback")
     }
   }
 
@@ -320,26 +343,18 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     this.availableSources = [...allStreams.keys()].map(pinToMultiCameraSource);
 
     // Switch to desired source if available and not already done so
-    if (this.activeSource.id !== this.desiredSource.id || this.activeSource.key != this.desiredSource.key) {
+    if (this.pendingSource.id !== this.desiredSource.id || this.pendingSource.key != this.desiredSource.key) {
       const currentAvailable = this.sourceIsAvailable(this.desiredSource) && allStreams.get(multiCameraSourceToPin(this.desiredSource))?.length == 2;
       if (currentAvailable) {
-        this.activeSource = this.desiredSource;
+        this.pendingSource = this.desiredSource;
         this.smooth?.switchSource(multiCameraSourceToPin(this.desiredSource));
       }
     }
-
-    // Switch to fallback if our desired source isn't available
-    if (this.activeSource.id !== 'fallback') {
-      const currentUnavailable = !this.sourceIsAvailable(this.desiredSource) || allStreams.get(multiCameraSourceToPin(this.desiredSource))?.length !== 2;
-      const fallbackAvailable = this.sourceIsAvailable({ id: 'fallback' }) && allStreams.get(multiCameraSourceToPin({ id: 'fallback' }))?.length == 2;
-      if (currentUnavailable && fallbackAvailable) {
-        debuglog("Switching to fallback source", { id: this.id });
-        if (this.desiredSource.id == this.activeSource.id && this.desiredSource.key == this.activeSource.key) {
-          this.desiredSource = { id: 'fallback' };
-        }
-        this.activeSource = { id: 'fallback' };
-        this.smooth?.switchSource("fallback")
-      }
+    // Switch to fallback if either active/pending stops being available
+    else if (this.pendingSource != this.activeSource) {
+      await this.maybeSwitchToFallback(this.pendingSource);
+    } else {
+      await this.maybeSwitchToFallback(this.activeSource);
     }
 
     for (const existing of oldSources) {
@@ -382,6 +397,11 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
   }
 
   async setupComposeSource(source: MultiCameraSource, overlays: MultiCameraOverlay[]) {
+    if (this.pendingCompose) {
+      await this.pendingCompose.compose.close();
+      await this.pendingCompose.output.close();
+      this.pendingCompose = undefined;
+    }
     const id = `${this.id}-compose-${this.composeCount++}`;
     this.pendingCompose = {
       id,
