@@ -3,8 +3,8 @@ server:
   working_directory: 'environments/default'
   logs: 'logs'
   library:
-    - '@norskvideo/norsk-studio-built-ins'
-    - '@norskvideo/norsk-studio-vision-director'
+    - '/Users/robashton/src/studio-defaults/workspaces/built-ins'
+    - '/Users/robashton/src/studio-defaults/workspaces/vision-director'
   developer_mode: true
 
 norsk:

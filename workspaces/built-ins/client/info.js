@@ -778,13 +778,13 @@ var require_config = __commonJS({
       return {
         id: "ice-servers",
         form: {
-          help: "STUN Servers to use in STUN negotiation (one per line)",
+          help: "ICE Servers to use for either STUN or TURN",
           hint: {
-            envOverride: () => "ICE_SERVERS",
+            envOverride: true,
             type: "form-list",
             form: {
               url: {
-                help: "URL of the STUN server",
+                help: "URL of the STUN/TURN server (with turn:/stun: prefix)",
                 hint: {
                   type: "text",
                   validation: f.validation.IceServer
@@ -16609,7 +16609,8 @@ function info_default5({ defineComponent, Av, validation }) {
             type: "numeric",
             validation: Port,
             defaultValue: 5001,
-            global: unique("port")
+            global: unique("port"),
+            envOverride: true
           }
         },
         ip: {
@@ -16617,10 +16618,18 @@ function info_default5({ defineComponent, Av, validation }) {
           hint: {
             type: "text",
             validation: IpAddress,
-            defaultValue: "0.0.0.0"
+            defaultValue: "0.0.0.0",
+            envOverride: true
           }
         },
-        passphrase: { help: "Optional: Authentication for this SRT input", hint: { type: "text", validation: SrtPassphrase } },
+        passphrase: {
+          help: "Optional: Authentication for this SRT input",
+          hint: {
+            type: "text",
+            validation: SrtPassphrase,
+            envOverride: true
+          }
+        },
         socketOptions: {
           help: "Socket Options",
           hint: {

@@ -69,7 +69,8 @@ export default function({
               type: 'numeric',
               validation: Port,
               defaultValue: 5001,
-              global: unique('port')
+              global: unique('port'),
+              envOverride: true
             }
           },
           ip: {
@@ -77,10 +78,18 @@ export default function({
             hint: {
               type: 'text',
               validation: IpAddress,
-              defaultValue: "0.0.0.0"
+              defaultValue: "0.0.0.0",
+              envOverride: true
             }
           },
-          passphrase: { help: "Optional: Authentication for this SRT input", hint: { type: 'text', validation: SrtPassphrase } },
+          passphrase: {
+            help: "Optional: Authentication for this SRT input",
+            hint: {
+              type: 'text',
+              validation: SrtPassphrase,
+              envOverride: true,
+            }
+          },
           socketOptions: {
             help: "Socket Options",
             hint: {
