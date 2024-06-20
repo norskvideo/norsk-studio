@@ -13,7 +13,7 @@ import { CustomAutoDuplexNode, SubscriptionOpts } from "@norskvideo/norsk-studio
 import { Context } from '@norskvideo/norsk-sdk';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
-import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
+import { HardwareAccelerationType, IceServer, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 
 export type MultiCameraSelectConfig = {
   id: MediaNodeId,
@@ -23,7 +23,7 @@ export type MultiCameraSelectConfig = {
   sampleRate: SampleRate,
   channelLayout: ChannelLayout
   __global: {
-    iceServers: string[];
+    iceServers: IceServer[];
     hardware?: HardwareAccelerationType,
   }
 
@@ -204,7 +204,8 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
 
     this.whepPreview = await this.norsk.output.whep({
       id: `${this.cfg.id}-preview`,
-      iceServers: this.cfg.__global.iceServers.map((s) => ({ urls: [s] })), // not sure about turn
+      iceServers: this.cfg.__global.iceServers.map((s) =>
+        ({ urls: [s.url], username: s.username, credential: s.password }))
     });
 
     this.whepPreview?.subscribe([{
@@ -365,7 +366,8 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
 
         const whep = await this.norsk.output.whep({
           id: `${this.id}-whep-${pin}`,
-          iceServers: this.cfg.__global.iceServers.map((s) => ({ urls: [s] })), // not sure about turn
+          iceServers: this.cfg.__global.iceServers.map((s) =>
+            ({ urls: [s.url], username: s.username, credential: s.password }))
         })
 
         this.whepOutputs.set(pin, { whep });

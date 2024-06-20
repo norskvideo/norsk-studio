@@ -3,13 +3,13 @@ import { AncillaryNode, JitterBufferNode, Norsk, WhepOutputSettings as SdkSettin
 import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomAutoDuplexNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
-import { HardwareAccelerationType } from '@norskvideo/norsk-studio/lib/shared/config';
+import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
 
 export type MonetiseOutputSettings = {
   id: string;
   displayName: string,
   __global: {
-    iceServers: string[];
+    iceServers: IceServer[];
     hardware?: HardwareAccelerationType;
   }
 };
@@ -88,7 +88,8 @@ class MonetiseOutput extends CustomAutoDuplexNode {
     const whepCfg: SdkSettings = {
       id: `${this.cfg.id}-whep`,
       bufferDelayMs: 500.0,
-      iceServers: this.cfg.__global.iceServers.map((s) => ({ urls: [s] })), // not sure about turn
+      iceServers: this.cfg.__global.iceServers.map((s) =>
+        ({ urls: [s.url], username: s.username, credential: s.password }))
     };
     this.whep = await this.norsk.output.whep(whepCfg);
     this.ancillary = await this.norsk.processor.transform.ancillary({ id: `${this.cfg.id}-inject` });

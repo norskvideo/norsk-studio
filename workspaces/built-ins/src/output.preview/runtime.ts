@@ -2,7 +2,7 @@ import { AudioMeasureLevels, AudioMeasureLevelsNode, Norsk, ReceiveFromAddressAu
 
 import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode, SimpleSinkWrapper, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
-import { HardwareAccelerationType } from '@norskvideo/norsk-studio/lib/shared/config';
+import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 
 export type PreviewOutputSettings = {
@@ -10,7 +10,7 @@ export type PreviewOutputSettings = {
   displayName: string,
   bufferDelayMs?: SdkSettings['bufferDelayMs'],
   __global: {
-    iceServers: string[],
+    iceServers: IceServer[],
     hardware?: HardwareAccelerationType,
   }
 };
@@ -69,7 +69,8 @@ class PreviewOutput extends CustomSinkNode {
     const whepCfg: SdkSettings = {
       id: `${this.cfg.id}-whep`,
       bufferDelayMs: this.cfg.bufferDelayMs,
-      iceServers: this.cfg.__global.iceServers?.map((s) => ({ urls: [s] })), // not sure about turn
+      iceServers: this.cfg.__global.iceServers.map((s) =>
+        ({ urls: [s.url], username: s.username, credential: s.password })),
       onPublishStart: () => {
         const url = this.whep?.endpointUrl;
         if (url) {
@@ -78,7 +79,7 @@ class PreviewOutput extends CustomSinkNode {
       }
     };
     this.whep = await this.norsk.output.whep(whepCfg);
-    
+
     this.audioLevels = await this.norsk.processor.control.audioMeasureLevels({
       id: `${this.cfg.id}-audiolevels`,
       onData: (levels: AudioMeasureLevels) => {

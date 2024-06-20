@@ -64,8 +64,22 @@ export default function({
       },
       configForm: {
         form: {
-          port: { help: "The port this SRT input will listen on", hint: { type: 'numeric', validation: Port, defaultValue: 5001, global: unique('port') } },
-          ip: { help: "The IP address this SRT input will listen on", hint: { type: 'text', validation: IpAddress, defaultValue: "0.0.0.0" } },
+          port: {
+            help: "The port this SRT input will listen on", hint: {
+              type: 'numeric',
+              validation: Port,
+              defaultValue: 5001,
+              global: unique('port')
+            }
+          },
+          ip: {
+            help: "The IP address this SRT input will listen on",
+            hint: {
+              type: 'text',
+              validation: IpAddress,
+              defaultValue: "0.0.0.0"
+            }
+          },
           passphrase: { help: "Optional: Authentication for this SRT input", hint: { type: 'text', validation: SrtPassphrase } },
           socketOptions: {
             help: "Socket Options",

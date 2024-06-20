@@ -713,21 +713,102 @@ var init_fullscreen2 = __esm({
   }
 });
 
-// ../../node_modules/@norskvideo/norsk-studio/lib/shared/config.js
-var require_config = __commonJS({
-  "../../node_modules/@norskvideo/norsk-studio/lib/shared/config.js"(exports) {
+// ../../../norsk-studio/lib/shared/shared-views.js
+var require_shared_views = __commonJS({
+  "../../../norsk-studio/lib/shared/shared-views.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.GlobalIceServerView = void 0;
+    var jsx_runtime_1 = require_jsx_runtime();
+    function GlobalIceServerView(i) {
+      return (0, jsx_runtime_1.jsxs)("div", { className: "grid grid-flow-row-dense grid-cols-3 text-sm", children: [(0, jsx_runtime_1.jsx)("div", { className: "col-span-1", children: "URL" }), (0, jsx_runtime_1.jsx)("div", { className: "col-span-2", children: i.url }), (0, jsx_runtime_1.jsx)("div", { className: "col-span-1", children: "Username" }), (0, jsx_runtime_1.jsx)("div", { className: "col-span-2", children: i.username ?? "" }), (0, jsx_runtime_1.jsx)("div", { className: "col-span-1", children: "Password" }), (0, jsx_runtime_1.jsx)("div", { className: "col-span-2", children: i.password ?? "" })] });
+    }
+    exports.GlobalIceServerView = GlobalIceServerView;
+  }
+});
+
+// ../../../norsk-studio/lib/shared/config.js
+var require_config = __commonJS({
+  "../../../norsk-studio/lib/shared/config.js"(exports) {
+    "use strict";
+    var __createBinding = exports && exports.__createBinding || (Object.create ? function(o, m, k, k2) {
+      if (k2 === void 0)
+        k2 = k;
+      var desc = Object.getOwnPropertyDescriptor(m, k);
+      if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+        desc = { enumerable: true, get: function() {
+          return m[k];
+        } };
+      }
+      Object.defineProperty(o, k2, desc);
+    } : function(o, m, k, k2) {
+      if (k2 === void 0)
+        k2 = k;
+      o[k2] = m[k];
+    });
+    var __setModuleDefault = exports && exports.__setModuleDefault || (Object.create ? function(o, v) {
+      Object.defineProperty(o, "default", { enumerable: true, value: v });
+    } : function(o, v) {
+      o["default"] = v;
+    });
+    var __importStar = exports && exports.__importStar || function(mod) {
+      if (mod && mod.__esModule)
+        return mod;
+      var result2 = {};
+      if (mod != null) {
+        for (var k in mod)
+          if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k))
+            __createBinding(result2, mod, k);
+      }
+      __setModuleDefault(result2, mod);
+      return result2;
+    };
+    var __importDefault = exports && exports.__importDefault || function(mod) {
+      return mod && mod.__esModule ? mod : { "default": mod };
+    };
+    Object.defineProperty(exports, "__esModule", { value: true });
     exports.RootDataDir = exports.HardwareSelection = exports.contractHardwareAcceleration = exports.GlobalIceServers = void 0;
+    var react_1 = __importDefault(require_react());
     function GlobalIceServers4(f) {
+      const GlobalIceServerView = react_1.default.lazy(async () => {
+        const views = await Promise.resolve().then(() => __importStar(require_shared_views()));
+        return { default: views.GlobalIceServerView };
+      });
+      const { validation: { Z } } = f;
       return {
         id: "ice-servers",
         form: {
-          help: "ICE Servers to use in STUN negotiation (one per line)",
+          help: "STUN Servers to use in STUN negotiation (one per line)",
           hint: {
-            type: "list",
-            validation: f.validation.Z.array(f.validation.IceServer),
-            defaultValue: ["stun:stun.l.google.com:19302"]
+            envOverride: () => "ICE_SERVERS",
+            type: "form-list",
+            form: {
+              url: {
+                help: "URL of the STUN server",
+                hint: {
+                  type: "text",
+                  validation: f.validation.IceServer
+                }
+              },
+              username: {
+                help: "Optional username",
+                hint: {
+                  type: "text",
+                  validation: Z.string()
+                }
+              },
+              password: {
+                help: "Optional password",
+                hint: {
+                  type: "text",
+                  validation: Z.string()
+                }
+              }
+            },
+            view: GlobalIceServerView,
+            defaultValue: [{
+              url: "stun:stun.l.google.com:19302"
+            }]
           }
         }
       };
@@ -16522,8 +16603,23 @@ function info_default5({ defineComponent, Av, validation }) {
     },
     configForm: {
       form: {
-        port: { help: "The port this SRT input will listen on", hint: { type: "numeric", validation: Port, defaultValue: 5001, global: unique("port") } },
-        ip: { help: "The IP address this SRT input will listen on", hint: { type: "text", validation: IpAddress, defaultValue: "0.0.0.0" } },
+        port: {
+          help: "The port this SRT input will listen on",
+          hint: {
+            type: "numeric",
+            validation: Port,
+            defaultValue: 5001,
+            global: unique("port")
+          }
+        },
+        ip: {
+          help: "The IP address this SRT input will listen on",
+          hint: {
+            type: "text",
+            validation: IpAddress,
+            defaultValue: "0.0.0.0"
+          }
+        },
         passphrase: { help: "Optional: Authentication for this SRT input", hint: { type: "text", validation: SrtPassphrase } },
         socketOptions: {
           help: "Socket Options",
