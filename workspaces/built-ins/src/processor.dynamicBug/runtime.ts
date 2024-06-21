@@ -53,7 +53,7 @@ export type DynamicBugEvent = {
 // and provide a means for this code to reach out into ActiveSession and retrieve it
 // but anyway, an env var is fine for now
 function bugDir() {
-  return path.resolve(process.env.NORSK_DATA_DIR || "data/bugs");
+  return path.resolve(process.env.NORSK_DATA_BUGS_DIR || "/mnt/data/bugs");
 }
 
 async function getBugs() {
@@ -89,16 +89,18 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
       res.end("ok");
     })
     expressApp.post("/active-bug", async (req, res) => {
-      if (!["topleft", "topright", "bottomleft", "bottomright"].includes(req.body.position)) {
-        res.writeHead(400);
-        res.end("bad position");
-        return;
-      }
-      const images = await getBugs();
-      if (!images.includes(req.body.bug)) {
-        res.writeHead(400);
-        res.end("bad bug");
-        return;
+      if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
+        if (!["topleft", "topright", "bottomleft", "bottomright"].includes(req.body.position)) {
+          res.writeHead(400);
+          res.end("bad position");
+          return;
+        }
+        const images = await getBugs();
+        if (!images.includes(req.body.bug)) {
+          res.writeHead(400);
+          res.end("bad bug");
+          return;
+        }
       }
       await node.setupBug(req.body.bug, req.body.position);
       res.writeHead(200);

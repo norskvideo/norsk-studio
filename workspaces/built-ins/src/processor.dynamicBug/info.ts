@@ -81,7 +81,8 @@ export default function({
             type: 'numeric',
             defaultValue: 5000,
             validation: Port,
-            global: unique('port')
+            global: unique('port'),
+            envOverride: true
           }
         }
       }
