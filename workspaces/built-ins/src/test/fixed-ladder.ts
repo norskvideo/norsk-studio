@@ -33,7 +33,8 @@ describe("Fixed Ladder", () => {
         ('ladder',
           FixedLadderInfo(RegistrationConsts),
           {
-            rungs
+            rungs,
+            customRungs: {} // TODO
           }
         ).reify())
       .reify();

@@ -5,7 +5,7 @@ import type { StreamKey } from "@norskvideo/norsk-sdk";
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 
 
-export default function({
+export default function ({
   defineComponent,
   Video
 }: Registration) {
@@ -38,7 +38,7 @@ export default function({
         },
       }
     },
-    extraValidation: function(ctx) {
+    extraValidation: function (ctx) {
       ctx.requireVideo(1);
     },
     display: (desc) => {
