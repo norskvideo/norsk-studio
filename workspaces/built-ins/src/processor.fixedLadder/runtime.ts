@@ -13,13 +13,6 @@ export type FixedLadderConfig = {
   id: string,
   displayName: string,
   rungs: RungName[]
-  customRungs?: {
-    x264?: VideoEncodeRung[],
-    ma35d?: VideoEncodeRung[],
-    logan?: VideoEncodeRung[],
-    nvidia?: VideoEncodeRung[],
-    quadra?: VideoEncodeRung[]
-  }
 }
 
 
@@ -28,28 +21,19 @@ export default class FixedLadderDefinition implements ServerComponentDefinition<
     const wrapper = new SimpleProcessorWrapper(cfg.id, async () => {
       return await norsk.processor.transform.videoEncode({
         id: `${cfg.id}-ladder`,
-        rungs: cfg.rungs.map((r) => createRung(r, cfg))
+        rungs: cfg.rungs.map((r) => createRung(r, cfg.__global.hardware))
       });
     });
     await wrapper.initialised;
     cb(wrapper);
+
   }
 }
 
-function customRung(rung: RungName, rungs: VideoEncodeRung[] | undefined): VideoEncodeRung | undefined {
-  if (rungs) {
-    return rungs.find((cr) => cr.name === rung);
-  }
-  return undefined;
-}
-
-function createRung(rung: RungName, cfg: FixedLadderConfig) {
-  let custom = undefined;
-  switch (cfg.__global.hardware) {
+// Or whatever
+function createRung(rung: RungName, hardware?: HardwareAccelerationType) {
+  switch (hardware) {
     case undefined:
-      custom = customRung(rung, cfg.customRungs?.x264);
-      if (custom) { return custom }
-
       switch (rung) {
         case 'h264_1920x1080':
           return createRungImpl({ name: rung, threads: 8, bitrate: 5_000 });
@@ -63,9 +47,6 @@ function createRung(rung: RungName, cfg: FixedLadderConfig) {
           return assertUnreachable(rung);
       }
     case "ma35d":
-      custom = customRung(rung, cfg.customRungs?.ma35d);
-      if (custom) { return custom }
-
       switch (rung) {
         case 'h264_1920x1080':
           return createMa35DHevcRungImpl({ name: rung, bitrate: 10_000 });
@@ -79,11 +60,8 @@ function createRung(rung: RungName, cfg: FixedLadderConfig) {
           return assertUnreachable(rung);
       }
     case 'logan':
-      throw new Error("Logan not supported yet");
+      throw new Error("Logan not supported, just for show");
     case 'nvidia':
-      custom = customRung(rung, cfg.customRungs?.nvidia);
-      if (custom) { return custom }
-
       switch (rung) {
         case 'h264_1920x1080':
           return createNvidiaRungImpl({ name: rung, bitrate: 5_000_000 });
@@ -97,9 +75,6 @@ function createRung(rung: RungName, cfg: FixedLadderConfig) {
           return assertUnreachable(rung);
       }
     case 'quadra':
-      custom = customRung(rung, cfg.customRungs?.quadra);
-      if (custom) { return custom }
-
       switch (rung) {
         case 'h264_1920x1080':
           return createQuadraRungImpl({ name: rung, bitrate: 5_000_000 });
@@ -113,7 +88,7 @@ function createRung(rung: RungName, cfg: FixedLadderConfig) {
           return assertUnreachable(rung);
       }
     default:
-      return assertUnreachable(cfg.__global.hardware);
+      return assertUnreachable(hardware);
   }
 }
 
