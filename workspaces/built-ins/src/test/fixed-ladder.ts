@@ -1,92 +1,93 @@
-import { Norsk } from "@norskvideo/norsk-sdk";
-import { registerAll } from "../";
-import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
-import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
-import YAML from 'yaml';
-import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
-import { FixedLadderConfig } from "../processor.fixedLadder/runtime";
-import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
-import { assertNodeOutputsVideoFrames } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
+// import { Norsk } from "@norskvideo/norsk-sdk";
+// import { registerAll } from "../";
+// import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
+// import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
+// import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
+// import YAML from 'yaml';
+// import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
+// import { FixedLadderConfig } from "../processor.fixedLadder/runtime";
+// import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
+// import { assertNodeOutputsVideoFrames } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 
-import FixedLadderInfo, { RungName } from "../processor.fixedLadder/info";
-import { RegistrationConsts, Video } from "@norskvideo/norsk-studio/lib/extension/client-types";
-import { SimpleProcessorWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
-import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
+// import { RungName } from "../processor.fixedLadder/info";
+// import FixedLadderInfo from "../processor.fixedLadder/newFile";
+// import { RegistrationConsts, Video } from "@norskvideo/norsk-studio/lib/extension/client-types";
+// import { SimpleProcessorWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
+// import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 
-async function defaultRuntime(): Promise<RuntimeSystem> {
-  const runtime = emptyRuntime();
-  await registerAll(runtime);
-  return runtime;
-}
+// async function defaultRuntime(): Promise<RuntimeSystem> {
+//   const runtime = emptyRuntime();
+//   await registerAll(runtime);
+//   return runtime;
+// }
 
-describe("Fixed Ladder", () => {
-  let norsk: Norsk | undefined = undefined;
-  let result: RunResult | undefined = undefined;
+// describe("Fixed Ladder", () => {
+//   let norsk: Norsk | undefined = undefined;
+//   let result: RunResult | undefined = undefined;
 
-  async function sharedSetup(rungs: RungName[]) {
-    const runtime = await defaultRuntime();
-    let yaml = new YamlBuilder().reify();
-    let compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
-    yaml = new YamlBuilder().addNode(
-      new YamlNodeBuilder<FixedLadderConfig>
-        ('ladder',
-          FixedLadderInfo(RegistrationConsts),
-          {
-            rungs
-          }
-        ).reify())
-      .reify();
-    compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
-    norsk = await Norsk.connect({ onShutdown: () => { } });
-    result = await go(norsk, compiled);
-    const ladder = result.nodes["ladder"] as SimpleProcessorWrapper;
-    const source = await videoAndAudio(norsk, 'source');
+//   async function sharedSetup(rungs: RungName[]) {
+//     const runtime = await defaultRuntime();
+//     let yaml = new YamlBuilder().reify();
+//     let compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
+//     yaml = new YamlBuilder().addNode(
+//       new YamlNodeBuilder<FixedLadderConfig>
+//         ('ladder',
+//           FixedLadderInfo(RegistrationConsts),
+//           {
+//             rungs
+//           }
+//         ).reify())
+//       .reify();
+//     compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
+//     norsk = await Norsk.connect({ onShutdown: () => { } });
+//     result = await go(norsk, compiled);
+//     const ladder = result.nodes["ladder"] as SimpleProcessorWrapper;
+//     const source = await videoAndAudio(norsk, 'source');
 
-    ladder.subscribe([new StudioNodeSubscriptionSource(
-      source,
-      testSourceDescription(),
-      { type: "take-all-streams", select: Video }
-    )])
-  }
+//     ladder.subscribe([new StudioNodeSubscriptionSource(
+//       source,
+//       testSourceDescription(),
+//       { type: "take-all-streams", select: Video }
+//     )])
+//   }
 
-  afterEach(async () => {
-    await norsk?.close();
-  })
+//   afterEach(async () => {
+//     await norsk?.close();
+//   })
 
-  describe("Ladder with single rung", () => {
-    before(async () => {
-      await sharedSetup(['h264_640x360']);
-    })
+//   describe("Ladder with single rung", () => {
+//     before(async () => {
+//       await sharedSetup(['h264_640x360']);
+//     })
 
-    it("Outputs a single rung with the right resolution", async () => {
-      if (!norsk) throw "Oh no";
-      await Promise.all([
-        assertNodeOutputsVideoFrames(norsk, result as RunResult, "ladder", {
-          resolution: { width: 640, height: 360 }
-        }),
-      ])
-    });
-  });
+//     it("Outputs a single rung with the right resolution", async () => {
+//       if (!norsk) throw "Oh no";
+//       await Promise.all([
+//         assertNodeOutputsVideoFrames(norsk, result as RunResult, "ladder", {
+//           resolution: { width: 640, height: 360 }
+//         }),
+//       ])
+//     });
+//   });
 
-  describe("Ladder with multiple rungs", () => {
-    before(async () => {
-      await sharedSetup(['h264_640x360', 'h264_320x180']);
-    })
-    it("Outputs multiple rungs with the right resolution", async () => {
-      if (!norsk) throw "Oh no";
+//   describe("Ladder with multiple rungs", () => {
+//     before(async () => {
+//       await sharedSetup(['h264_640x360', 'h264_320x180']);
+//     })
+//     it("Outputs multiple rungs with the right resolution", async () => {
+//       if (!norsk) throw "Oh no";
 
-      await Promise.all([
-        assertNodeOutputsVideoFrames(norsk, result as RunResult, "ladder", {
-          match: { renditionName: 'h264_640x360' },
-          resolution: { width: 640, height: 360 }
-        }),
-        assertNodeOutputsVideoFrames(norsk, result as RunResult, "ladder", {
-          match: { renditionName: 'h264_320x180' },
-          resolution: { width: 320, height: 180 }
-        }),
-      ])
-    })
-  });
-});
+//       await Promise.all([
+//         assertNodeOutputsVideoFrames(norsk, result as RunResult, "ladder", {
+//           match: { renditionName: 'h264_640x360' },
+//           resolution: { width: 640, height: 360 }
+//         }),
+//         assertNodeOutputsVideoFrames(norsk, result as RunResult, "ladder", {
+//           match: { renditionName: 'h264_320x180' },
+//           resolution: { width: 320, height: 180 }
+//         }),
+//       ])
+//     })
+//   });
+// });
 

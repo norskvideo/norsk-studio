@@ -713,9 +713,9 @@ var init_fullscreen2 = __esm({
   }
 });
 
-// ../../node_modules/@norskvideo/norsk-studio/lib/shared/shared-views.js
+// ../../../norsk-studio/lib/shared/shared-views.js
 var require_shared_views = __commonJS({
-  "../../node_modules/@norskvideo/norsk-studio/lib/shared/shared-views.js"(exports) {
+  "../../../norsk-studio/lib/shared/shared-views.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.GlobalIceServerView = void 0;
@@ -727,9 +727,9 @@ var require_shared_views = __commonJS({
   }
 });
 
-// ../../node_modules/@norskvideo/norsk-studio/lib/shared/config.js
+// ../../../norsk-studio/lib/shared/config.js
 var require_config = __commonJS({
-  "../../node_modules/@norskvideo/norsk-studio/lib/shared/config.js"(exports) {
+  "../../../norsk-studio/lib/shared/config.js"(exports) {
     "use strict";
     var __createBinding = exports && exports.__createBinding || (Object.create ? function(o, m, k, k2) {
       if (k2 === void 0)
@@ -1636,6 +1636,76 @@ var init_summary_view5 = __esm({
   }
 });
 
+// build/processor.fixedLadder/rung-view.js
+var rung_view_exports = {};
+__export(rung_view_exports, {
+  default: () => rung_view_default
+});
+function rung_view_default(rung) {
+  return (0, import_jsx_runtime33.jsx)("div", { className: "", children: rung.name });
+}
+var import_jsx_runtime33;
+var init_rung_view = __esm({
+  "build/processor.fixedLadder/rung-view.js"() {
+    "use strict";
+    import_jsx_runtime33 = __toESM(require_jsx_runtime());
+  }
+});
+
+// build/processor.fixedLadder/codec-editor.js
+var codec_editor_exports = {};
+__export(codec_editor_exports, {
+  default: () => CodecEditor
+});
+function CodecEditor(props) {
+  (0, import_react36.useEffect)(() => {
+    if (props.defaultValue)
+      props.onChanged(props.defaultValue);
+  }, [props.defaultValue]);
+  const textAreaRef = (0, import_react36.useRef)(null);
+  const [value, setValue] = (0, import_react36.useState)(props.defaultValue);
+  (0, import_react36.useEffect)(() => {
+    if (textAreaRef.current) {
+      const target = textAreaRef.current;
+      target.style.height = "";
+      target.style.height = target.scrollHeight + "px";
+    }
+  }, []);
+  return (0, import_jsx_runtime34.jsx)("textarea", { ref: textAreaRef, className: "w-full min-h-fit dark:text-white dark:bg-black", onChange: (e) => {
+    const target = e.currentTarget;
+    try {
+      const codec = JSON.parse(target.value);
+      setValue(codec);
+      props.onChanged(codec);
+    } catch (e2) {
+    }
+  }, defaultValue: JSON.stringify(value, void 0, 2) });
+}
+var import_jsx_runtime34, import_react36;
+var init_codec_editor = __esm({
+  "build/processor.fixedLadder/codec-editor.js"() {
+    "use strict";
+    import_jsx_runtime34 = __toESM(require_jsx_runtime());
+    import_react36 = __toESM(require_react());
+  }
+});
+
+// build/processor.fixedLadder/codec-view.js
+var codec_view_exports = {};
+__export(codec_view_exports, {
+  default: () => CodecEditor2
+});
+function CodecEditor2(props) {
+  return (0, import_jsx_runtime35.jsxs)(import_jsx_runtime35.Fragment, { children: [props.width, "x", props.height] });
+}
+var import_jsx_runtime35;
+var init_codec_view = __esm({
+  "build/processor.fixedLadder/codec-view.js"() {
+    "use strict";
+    import_jsx_runtime35 = __toESM(require_jsx_runtime());
+  }
+});
+
 // build/processor.monetise/summary.js
 var summary_exports3 = {};
 __export(summary_exports3, {
@@ -1644,9 +1714,9 @@ __export(summary_exports3, {
 function InlineView14({ state, config, sendCommand }) {
   const url = state.url;
   const id = config.id;
-  const previewVideo = (0, import_react36.useRef)(null);
-  const durationSlider = (0, import_react36.useRef)(null);
-  (0, import_react36.useEffect)(() => {
+  const previewVideo = (0, import_react38.useRef)(null);
+  const durationSlider = (0, import_react38.useRef)(null);
+  (0, import_react38.useEffect)(() => {
     if (!url)
       return;
     setTimeout(() => {
@@ -1659,8 +1729,8 @@ function InlineView14({ state, config, sendCommand }) {
     }, 1e3);
   }, [state.url]);
   if (!url)
-    return (0, import_jsx_runtime33.jsx)(import_jsx_runtime33.Fragment, { children: "Starting up..." });
-  return (0, import_jsx_runtime33.jsxs)("div", { className: "mb-5", children: [(0, import_jsx_runtime33.jsx)("div", { ref: previewVideo, className: "", id: `preview-${id}` }), state.currentAdvert ? (0, import_jsx_runtime33.jsxs)(import_jsx_runtime33.Fragment, { children: ["Advert currently playing: ", Math.floor(state.currentAdvert.timeLeftMs / 1e3), "s"] }) : (0, import_jsx_runtime33.jsxs)(import_jsx_runtime33.Fragment, { children: [(0, import_jsx_runtime33.jsxs)("label", { htmlFor: "default-range", className: "block mb-2 text-sm font-medium text-gray-900 dark:text-white", children: ["Advert Duration (", durationSlider.current?.value ?? 16, "s)"] }), (0, import_jsx_runtime33.jsx)("input", { ref: durationSlider, id: "default-range", type: "range", defaultValue: "16", min: "16", max: "120", className: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" }), (0, import_jsx_runtime33.jsx)("button", { onClick: sendAdvertCommand, type: "button", className: "mt-2 mb-2 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800", children: "Inject Advert" })] })] });
+    return (0, import_jsx_runtime36.jsx)(import_jsx_runtime36.Fragment, { children: "Starting up..." });
+  return (0, import_jsx_runtime36.jsxs)("div", { className: "mb-5", children: [(0, import_jsx_runtime36.jsx)("div", { ref: previewVideo, className: "", id: `preview-${id}` }), state.currentAdvert ? (0, import_jsx_runtime36.jsxs)(import_jsx_runtime36.Fragment, { children: ["Advert currently playing: ", Math.floor(state.currentAdvert.timeLeftMs / 1e3), "s"] }) : (0, import_jsx_runtime36.jsxs)(import_jsx_runtime36.Fragment, { children: [(0, import_jsx_runtime36.jsxs)("label", { htmlFor: "default-range", className: "block mb-2 text-sm font-medium text-gray-900 dark:text-white", children: ["Advert Duration (", durationSlider.current?.value ?? 16, "s)"] }), (0, import_jsx_runtime36.jsx)("input", { ref: durationSlider, id: "default-range", type: "range", defaultValue: "16", min: "16", max: "120", className: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" }), (0, import_jsx_runtime36.jsx)("button", { onClick: sendAdvertCommand, type: "button", className: "mt-2 mb-2 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800", children: "Inject Advert" })] })] });
   function sendAdvertCommand() {
     if (!previewVideo.current)
       return;
@@ -1672,12 +1742,12 @@ function InlineView14({ state, config, sendCommand }) {
     });
   }
 }
-var import_jsx_runtime33, import_react36, import_webrtc_client2, summary_default3;
+var import_jsx_runtime36, import_react38, import_webrtc_client2, summary_default3;
 var init_summary3 = __esm({
   "build/processor.monetise/summary.js"() {
     "use strict";
-    import_jsx_runtime33 = __toESM(require_jsx_runtime());
-    import_react36 = __toESM(require_react());
+    import_jsx_runtime36 = __toESM(require_jsx_runtime());
+    import_react38 = __toESM(require_react());
     import_webrtc_client2 = __toESM(require_webrtc_client());
     summary_default3 = InlineView14;
   }
@@ -16007,8 +16077,8 @@ __export(inline_view_exports9, {
   default: () => inline_view_default9
 });
 function InlineView15({ state, config: _2 }) {
-  const chartContainer = (0, import_react38.useRef)(null);
-  const [chartControl, setChartControl] = (0, import_react38.useState)(void 0);
+  const chartContainer = (0, import_react40.useRef)(null);
+  const [chartControl, setChartControl] = (0, import_react40.useState)(void 0);
   function makeDataSet(key, color2, values) {
     return {
       label: key,
@@ -16025,7 +16095,7 @@ function InlineView15({ state, config: _2 }) {
       datasets: [makeDataSet("latency", "rgba(255, 0, 0, 255)", state2.values)]
     };
   }
-  (0, import_react38.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     if (!chartContainer.current)
       return;
     auto_default.defaults.color = "#FFF";
@@ -16063,19 +16133,19 @@ function InlineView15({ state, config: _2 }) {
       chart.update();
     }, 100);
   }, [chartContainer]);
-  (0, import_react38.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     if (!chartControl)
       return;
     chartControl.data = makeData(state);
   }, [state]);
-  return (0, import_jsx_runtime34.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime34.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
+  return (0, import_jsx_runtime37.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime37.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
 }
-var import_jsx_runtime34, import_react38, inline_view_default9;
+var import_jsx_runtime37, import_react40, inline_view_default9;
 var init_inline_view9 = __esm({
   "build/util.latency/inline-view.js"() {
     "use strict";
-    import_jsx_runtime34 = __toESM(require_jsx_runtime());
-    import_react38 = __toESM(require_react());
+    import_jsx_runtime37 = __toESM(require_jsx_runtime());
+    import_react40 = __toESM(require_react());
     init_auto();
     inline_view_default9 = InlineView15;
   }
@@ -16087,22 +16157,22 @@ __export(source_node_selection_exports, {
   default: () => source_node_selection_default
 });
 function SourceNodeSelection(props) {
-  return (0, import_jsx_runtime35.jsx)("div", { children: (0, import_jsx_runtime35.jsxs)("select", { defaultValue: props.defaultValue, className: `node-editor-select-input`, id: props.id, onChange: myOnChange, onBlur: myOnChange, children: [(0, import_jsx_runtime35.jsx)("option", { value: "", children: "---" }, "empty"), Object.values(props.latestDocument.nodes).map((o, i) => {
+  return (0, import_jsx_runtime38.jsx)("div", { children: (0, import_jsx_runtime38.jsxs)("select", { defaultValue: props.defaultValue, className: `node-editor-select-input`, id: props.id, onChange: myOnChange, onBlur: myOnChange, children: [(0, import_jsx_runtime38.jsx)("option", { value: "", children: "---" }, "empty"), Object.values(props.latestDocument.nodes).map((o, i) => {
     if (o.id == props.id)
-      return (0, import_jsx_runtime35.jsx)(import_jsx_runtime35.Fragment, {});
+      return (0, import_jsx_runtime38.jsx)(import_jsx_runtime38.Fragment, {});
     if (o.info.category === "output")
       return;
-    return (0, import_jsx_runtime35.jsx)("option", { value: o.id, children: o.config.displayName }, i);
+    return (0, import_jsx_runtime38.jsx)("option", { value: o.id, children: o.config.displayName }, i);
   })] }) });
   function myOnChange(e) {
     props.onChanged(e.target.value);
   }
 }
-var import_jsx_runtime35, source_node_selection_default;
+var import_jsx_runtime38, source_node_selection_default;
 var init_source_node_selection = __esm({
   "build/util.latency/source-node-selection.js"() {
     "use strict";
-    import_jsx_runtime35 = __toESM(require_jsx_runtime());
+    import_jsx_runtime38 = __toESM(require_jsx_runtime());
     source_node_selection_default = SourceNodeSelection;
   }
 });
@@ -16113,8 +16183,8 @@ __export(inline_view_exports10, {
   default: () => inline_view_default10
 });
 function InlineView16({ state, config: _2 }) {
-  const chartContainer = (0, import_react40.useRef)(null);
-  const [chartControl, setChartControl] = (0, import_react40.useState)(void 0);
+  const chartContainer = (0, import_react42.useRef)(null);
+  const [chartControl, setChartControl] = (0, import_react42.useState)(void 0);
   function makeDataSet(key, color2, values) {
     return {
       label: key,
@@ -16135,7 +16205,7 @@ function InlineView16({ state, config: _2 }) {
       ]
     };
   }
-  (0, import_react40.useEffect)(() => {
+  (0, import_react42.useEffect)(() => {
     if (!chartContainer.current)
       return;
     auto_default.defaults.color = "#FFF";
@@ -16173,19 +16243,19 @@ function InlineView16({ state, config: _2 }) {
       chart.update();
     }, 100);
   }, [chartContainer]);
-  (0, import_react40.useEffect)(() => {
+  (0, import_react42.useEffect)(() => {
     if (!chartControl)
       return;
     chartControl.data = makeData(state);
   }, [state]);
-  return (0, import_jsx_runtime36.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime36.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
+  return (0, import_jsx_runtime39.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime39.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
 }
-var import_jsx_runtime36, import_react40, inline_view_default10;
+var import_jsx_runtime39, import_react42, inline_view_default10;
 var init_inline_view10 = __esm({
   "build/util.ma35d/inline-view.js"() {
     "use strict";
-    import_jsx_runtime36 = __toESM(require_jsx_runtime());
-    import_react40 = __toESM(require_react());
+    import_jsx_runtime39 = __toESM(require_jsx_runtime());
+    import_react42 = __toESM(require_react());
     init_auto();
     inline_view_default10 = InlineView16;
   }
@@ -16197,9 +16267,9 @@ __export(inline_view_exports11, {
   default: () => inline_view_default11
 });
 function InlineView17({ state, config: _2 }) {
-  const chartContainer = (0, import_react42.useRef)(null);
-  const [chartControl, setChartControl] = (0, import_react42.useState)(void 0);
-  (0, import_react42.useEffect)(() => {
+  const chartContainer = (0, import_react44.useRef)(null);
+  const [chartControl, setChartControl] = (0, import_react44.useState)(void 0);
+  (0, import_react44.useEffect)(() => {
     if (!chartContainer.current)
       return;
     if (state.timestamps.length < 2)
@@ -16261,7 +16331,7 @@ function InlineView17({ state, config: _2 }) {
       chart.update();
     }, 100);
   }, [chartContainer]);
-  (0, import_react42.useEffect)(() => {
+  (0, import_react44.useEffect)(() => {
     if (!chartControl)
       return;
     chartControl.data = {
@@ -16284,14 +16354,14 @@ function InlineView17({ state, config: _2 }) {
       })
     };
   }, [state]);
-  return (0, import_jsx_runtime37.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime37.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
+  return (0, import_jsx_runtime40.jsx)("div", { className: "bg-gray-50 dark:bg-gray-700 rounded", style: { width: "360px", height: "200px", padding: "10px" }, children: (0, import_jsx_runtime40.jsx)("canvas", { className: "bg-gray-50 dark:bg-gray-700 rounded", ref: chartContainer }) });
 }
-var import_jsx_runtime37, import_react42, inline_view_default11;
+var import_jsx_runtime40, import_react44, inline_view_default11;
 var init_inline_view11 = __esm({
   "build/util.timestamps/inline-view.js"() {
     "use strict";
-    import_jsx_runtime37 = __toESM(require_jsx_runtime());
-    import_react42 = __toESM(require_react());
+    import_jsx_runtime40 = __toESM(require_jsx_runtime());
+    import_react44 = __toESM(require_react());
     init_auto();
     inline_view_default11 = InlineView17;
   }
@@ -17285,7 +17355,7 @@ function info_default15(R) {
 // build/processor.actionReplay/info.js
 var import_react24 = __toESM(require_react());
 var import_config3 = __toESM(require_config());
-function info_default16({ defineComponent, assertUnreachable: assertUnreachable16, Av }) {
+function info_default16({ defineComponent, assertUnreachable: assertUnreachable17, Av }) {
   const SummaryView8 = import_react24.default.lazy(async () => Promise.resolve().then(() => (init_summary2(), summary_exports2)));
   return defineComponent({
     identifier: "processor.transform.actionReplay",
@@ -17332,7 +17402,7 @@ function info_default16({ defineComponent, assertUnreachable: assertUnreachable1
           case "replay-finished":
             return { ...state, replaying: false };
           default:
-            return assertUnreachable16(evType);
+            return assertUnreachable17(evType);
         }
       }
     },
@@ -17631,9 +17701,9 @@ function info_default20({ defineComponent, Video, validation: { Z } }) {
 }
 
 // build/processor.cascadingSwitch/info.js
-function info_default21({ defineComponent, Av, React: React20, common: { Resolutions, FrameRates } }) {
-  const SourceSelection = React20.lazy(async () => Promise.resolve().then(() => (init_source_selection(), source_selection_exports)));
-  const InlineView18 = React20.lazy(async () => Promise.resolve().then(() => (init_inline_view8(), inline_view_exports8)));
+function info_default21({ defineComponent, Av, React: React21, common: { Resolutions, FrameRates } }) {
+  const SourceSelection = React21.lazy(async () => Promise.resolve().then(() => (init_source_selection(), source_selection_exports)));
+  const InlineView18 = React21.lazy(async () => Promise.resolve().then(() => (init_inline_view8(), inline_view_exports8)));
   return defineComponent({
     identifier: "processor.control.cascadingSwitch",
     category: "processor",
@@ -17852,8 +17922,12 @@ function assertUnreachable11(_) {
 }
 
 // build/processor.fixedLadder/info.js
+var import_react37 = __toESM(require_react());
 var import_config6 = __toESM(require_config());
 function info_default23({ defineComponent, Video }) {
+  const RungView = import_react37.default.lazy(async () => Promise.resolve().then(() => (init_rung_view(), rung_view_exports)));
+  const CodecEditor3 = import_react37.default.lazy(async () => Promise.resolve().then(() => (init_codec_editor(), codec_editor_exports)));
+  const CodecView = import_react37.default.lazy(async () => Promise.resolve().then(() => (init_codec_view(), codec_view_exports)));
   return defineComponent({
     identifier: "processor.transform.fixedLadder",
     category: "processor",
@@ -17870,8 +17944,8 @@ function info_default23({ defineComponent, Video }) {
         keys: (cfg) => {
           return cfg.rungs.map((r) => {
             return {
-              key: r,
-              display: r,
+              key: r.name,
+              display: r.name,
               media: Video
             };
           });
@@ -17887,7 +17961,7 @@ function info_default23({ defineComponent, Video }) {
     display: (desc) => {
       const result2 = {};
       desc.config.rungs.forEach((r, i) => {
-        result2[i] = r;
+        result2[i] = r.name;
       });
       return result2;
     },
@@ -17897,22 +17971,106 @@ function info_default23({ defineComponent, Video }) {
       },
       form: {
         rungs: {
-          help: "",
+          help: "The rungs in this encode ladder",
           hint: {
-            type: "multiselect",
-            options: rungNames.map((rn) => {
-              return { value: rn, display: `h264: ${rn}` };
-            }),
-            defaultValue: [
-              "h264_1920x1080",
-              "h264_1280x720",
-              "h264_640x360"
-            ]
+            type: "form-list",
+            envOverride: true,
+            newForm: {
+              form: {
+                name: {
+                  help: "Unique name of the ladder rung (used in outputs)",
+                  hint: {
+                    type: "text",
+                    defaultValue: "default"
+                  }
+                },
+                width: {
+                  help: "Width in pixels of this rung",
+                  hint: {
+                    type: "numeric",
+                    defaultValue: 640
+                  }
+                },
+                height: {
+                  help: "Width in pixels of this rung",
+                  hint: {
+                    type: "numeric",
+                    defaultValue: 360
+                  }
+                }
+              },
+              transform: (x) => ({
+                name: x.name,
+                software: createRungImpl({ name: `hack_${x.width}x${x.height}`, bitrate: 5e3, threads: 4 }),
+                quadra: createQuadraRungImpl({ name: `hack_${x.width}x${x.height}`, bitrate: 5e6 }),
+                logan: createLoganRungImpl({ name: `hack_${x.width}x${x.height}`, bitrate: 5e6 }),
+                nvidia: createNvidiaRungImpl({ name: `hack_${x.width}x${x.height}`, bitrate: 5e6 }),
+                ma35d: createMa35DH264RungImpl({ name: `hack_${x.width}x${x.height}`, bitrate: 5e6 })
+              })
+            },
+            form: {
+              name: {
+                help: "Unique name of the ladder rung (used in outputs)",
+                hint: {
+                  type: "text",
+                  defaultValue: "default"
+                }
+              },
+              software: rungEditorForm("software"),
+              quadra: rungEditorForm("quadra"),
+              logan: rungEditorForm("logan"),
+              nvidia: rungEditorForm("nvidia"),
+              ma35d: rungEditorForm("ma35d")
+            },
+            view: RungView,
+            defaultValue: rungNames.map((n) => {
+              return {
+                name: n,
+                software: createSoftwareRung(n),
+                quadra: createQuadraRung(n),
+                logan: createLoganRung(n),
+                nvidia: createNvidiaRung(n),
+                ma35d: createMa35dRung(n)
+              };
+            })
           }
         }
       }
     }
   });
+  function rungEditorForm(mode) {
+    const codecHint = {
+      type: "custom",
+      component: CodecEditor3
+    };
+    return {
+      help: `Settings to use when encoding using ${mode} mode`,
+      hint: {
+        type: "form-item",
+        view: CodecView,
+        form: {
+          width: {
+            help: "Width in pixels of this rung",
+            hint: {
+              type: "numeric",
+              defaultValue: 640
+            }
+          },
+          height: {
+            help: "Width in pixels of this rung",
+            hint: {
+              type: "numeric",
+              defaultValue: 360
+            }
+          },
+          codec: {
+            help: "Codec settings for this rung",
+            hint: codecHint
+          }
+        }
+      }
+    };
+  }
 }
 var rungNames = [
   "h264_1920x1080",
@@ -17920,13 +18078,181 @@ var rungNames = [
   "h264_640x360",
   "h264_320x180"
 ];
+function createSoftwareRung(rung) {
+  switch (rung) {
+    case "h264_1920x1080":
+      return createRungImpl({ name: rung, threads: 8, bitrate: 5e3 });
+    case "h264_1280x720":
+      return createRungImpl({ name: rung, threads: 4, bitrate: 2500 });
+    case "h264_640x360":
+      return createRungImpl({ name: rung, threads: 2, bitrate: 1e3 });
+    case "h264_320x180":
+      return createRungImpl({ name: rung, threads: 1, bitrate: 800 });
+    default:
+      return assertUnreachable12(rung);
+  }
+}
+function createMa35dRung(rung) {
+  switch (rung) {
+    case "h264_1920x1080":
+      return createMa35DHevcRungImpl({ name: rung, bitrate: 1e4 });
+    case "h264_1280x720":
+      return createMa35DH264RungImpl({ name: rung, bitrate: 5e3 });
+    case "h264_640x360":
+      return createMa35DH264RungImpl({ name: rung, bitrate: 2e3 });
+    case "h264_320x180":
+      return createMa35DH264RungImpl({ name: rung, bitrate: 1e3 });
+    default:
+      return assertUnreachable12(rung);
+  }
+}
+function createNvidiaRung(rung) {
+  switch (rung) {
+    case "h264_1920x1080":
+      return createNvidiaRungImpl({ name: rung, bitrate: 5e6 });
+    case "h264_1280x720":
+      return createNvidiaRungImpl({ name: rung, bitrate: 25e5 });
+    case "h264_640x360":
+      return createNvidiaRungImpl({ name: rung, bitrate: 1e6 });
+    case "h264_320x180":
+      return createNvidiaRungImpl({ name: rung, bitrate: 8e5 });
+    default:
+      return assertUnreachable12(rung);
+  }
+}
+function createQuadraRung(rung) {
+  switch (rung) {
+    case "h264_1920x1080":
+      return createQuadraRungImpl({ name: rung, bitrate: 5e6 });
+    case "h264_1280x720":
+      return createQuadraRungImpl({ name: rung, bitrate: 25e5 });
+    case "h264_640x360":
+      return createQuadraRungImpl({ name: rung, bitrate: 1e6 });
+    case "h264_320x180":
+      return createQuadraRungImpl({ name: rung, bitrate: 8e5 });
+    default:
+      return assertUnreachable12(rung);
+  }
+}
+function createLoganRung(rung) {
+  switch (rung) {
+    case "h264_1920x1080":
+      return createLoganRungImpl({ name: rung, bitrate: 5e6 });
+    case "h264_1280x720":
+      return createLoganRungImpl({ name: rung, bitrate: 25e5 });
+    case "h264_640x360":
+      return createLoganRungImpl({ name: rung, bitrate: 1e6 });
+    case "h264_320x180":
+      return createLoganRungImpl({ name: rung, bitrate: 8e5 });
+    default:
+      return assertUnreachable12(rung);
+  }
+}
+function createRungImpl({ name, threads, bitrate }) {
+  const codec = {
+    type: "x264",
+    bitrateMode: { value: bitrate, mode: "abr" },
+    keyFrameIntervalMax: 50,
+    keyFrameIntervalMin: 50,
+    sceneCut: 0,
+    preset: "fast",
+    tune: "zerolatency",
+    threads,
+    bframes: 0
+  };
+  return {
+    width: rungWidth(name),
+    height: rungHeight(name),
+    codec,
+    frameRate: { frames: 25, seconds: 1 }
+  };
+}
+function createMa35DHevcRungImpl({ name, bitrate }) {
+  const codec = {
+    type: "amdMA35D-hevc",
+    profile: "main",
+    rateControl: { mode: "cbr", bitrate },
+    gopSize: 50
+  };
+  return {
+    width: rungWidth(name),
+    height: rungHeight(name),
+    codec,
+    frameRate: { frames: 25, seconds: 1 }
+  };
+}
+function createMa35DH264RungImpl({ name, bitrate }) {
+  const codec = {
+    type: "amdMA35D-h264",
+    profile: "main",
+    rateControl: { mode: "cbr", bitrate },
+    gopSize: 50
+  };
+  return {
+    width: rungWidth(name),
+    height: rungHeight(name),
+    codec,
+    frameRate: { frames: 25, seconds: 1 }
+  };
+}
+function createQuadraRungImpl({ name, bitrate }) {
+  const codec = {
+    type: "quadra-h264",
+    intraPeriod: 50,
+    bitrate
+  };
+  return {
+    width: rungWidth(name),
+    height: rungHeight(name),
+    codec,
+    frameRate: { frames: 25, seconds: 1 }
+  };
+}
+function createLoganRungImpl({ name, bitrate }) {
+  const codec = {
+    type: "logan-h264",
+    intraPeriod: 50,
+    bitrate
+  };
+  return {
+    width: rungWidth(name),
+    height: rungHeight(name),
+    codec,
+    frameRate: { frames: 25, seconds: 1 }
+  };
+}
+function createNvidiaRungImpl({ name, bitrate }) {
+  const codec = {
+    type: "nv-h264",
+    idrPeriod: 50,
+    rateControl: {
+      mode: "vbr",
+      averageBitrate: bitrate
+    }
+  };
+  return {
+    width: rungWidth(name),
+    height: rungHeight(name),
+    codec,
+    frameRate: { frames: 25, seconds: 1 }
+  };
+}
+function rungWidth(rungName) {
+  return parseInt(rungName.split("_")[1].split(`x`)[0]);
+}
+function rungHeight(rungName) {
+  return parseInt(rungName.split("_")[1].split(`x`)[1]);
+}
+function assertUnreachable12(_) {
+  throw new Error("Didn't expect to get here");
+}
 
 // build/processor.monetise/info.js
-var import_react37 = __toESM(require_react());
+var import_react39 = __toESM(require_react());
 var import_config7 = __toESM(require_config());
 function info_default24(R) {
   const { defineComponent, Av } = R;
-  const SummaryView8 = import_react37.default.lazy(async () => Promise.resolve().then(() => (init_summary3(), summary_exports3)));
+  const SummaryView8 = import_react39.default.lazy(async () => Promise.resolve().then(() => (init_summary3(), summary_exports3)));
   return defineComponent({
     identifier: "processor.monetise",
     category: "output",
@@ -17966,7 +18292,7 @@ function info_default24(R) {
             state.currentAdvert = void 0;
             break;
           default:
-            assertUnreachable12(evType);
+            assertUnreachable13(evType);
         }
         return { ...state };
       },
@@ -17981,7 +18307,7 @@ function info_default24(R) {
     }
   });
 }
-function assertUnreachable12(_) {
+function assertUnreachable13(_) {
   throw new Error("Didn't expect to get here");
 }
 
@@ -18028,11 +18354,11 @@ function info_default25({ defineComponent, Av, Subtitle, validation: { Z } }) {
 }
 
 // build/util.latency/info.js
-var import_react39 = __toESM(require_react());
+var import_react41 = __toESM(require_react());
 function info_default26(R) {
   const { defineComponent } = R;
-  const InlineView18 = import_react39.default.lazy(async () => Promise.resolve().then(() => (init_inline_view9(), inline_view_exports9)));
-  const SourceNodeSelection2 = import_react39.default.lazy(async () => Promise.resolve().then(() => (init_source_node_selection(), source_node_selection_exports)));
+  const InlineView18 = import_react41.default.lazy(async () => Promise.resolve().then(() => (init_inline_view9(), inline_view_exports9)));
+  const SourceNodeSelection2 = import_react41.default.lazy(async () => Promise.resolve().then(() => (init_source_node_selection(), source_node_selection_exports)));
   return defineComponent({
     identifier: "util.latency-stats",
     category: "output",
@@ -18059,7 +18385,7 @@ function info_default26(R) {
             break;
           }
           default:
-            assertUnreachable13(evType);
+            assertUnreachable14(evType);
         }
         return { ...state };
       },
@@ -18113,15 +18439,15 @@ function info_default26(R) {
     }
   });
 }
-function assertUnreachable13(_) {
+function assertUnreachable14(_) {
   throw new Error("Didn't expect to get here");
 }
 
 // build/util.ma35d/info.js
-var import_react41 = __toESM(require_react());
+var import_react43 = __toESM(require_react());
 function info_default27(R) {
   const { defineComponent } = R;
-  const InlineView18 = import_react41.default.lazy(async () => Promise.resolve().then(() => (init_inline_view10(), inline_view_exports10)));
+  const InlineView18 = import_react43.default.lazy(async () => Promise.resolve().then(() => (init_inline_view10(), inline_view_exports10)));
   return defineComponent({
     identifier: "util.ma35d-stats",
     category: "output",
@@ -18154,7 +18480,7 @@ function info_default27(R) {
             break;
           }
           default:
-            assertUnreachable14(evType);
+            assertUnreachable15(evType);
         }
         return { ...state };
       },
@@ -18165,15 +18491,15 @@ function info_default27(R) {
     }
   });
 }
-function assertUnreachable14(_) {
+function assertUnreachable15(_) {
   throw new Error("Didn't expect to get here");
 }
 
 // build/util.timestamps/info.js
-var import_react43 = __toESM(require_react());
+var import_react45 = __toESM(require_react());
 function info_default28(R) {
   const { defineComponent, All } = R;
-  const InlineView18 = import_react43.default.lazy(async () => Promise.resolve().then(() => (init_inline_view11(), inline_view_exports11)));
+  const InlineView18 = import_react45.default.lazy(async () => Promise.resolve().then(() => (init_inline_view11(), inline_view_exports11)));
   return defineComponent({
     identifier: "util.timestamps",
     category: "output",
@@ -18208,7 +18534,7 @@ function info_default28(R) {
             break;
           }
           default:
-            assertUnreachable15(evType);
+            assertUnreachable16(evType);
         }
         return { ...state };
       },
@@ -18219,7 +18545,7 @@ function info_default28(R) {
     }
   });
 }
-function assertUnreachable15(_) {
+function assertUnreachable16(_) {
   throw new Error("Didn't expect to get here");
 }
 
