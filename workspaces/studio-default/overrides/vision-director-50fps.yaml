@@ -1,0 +1,78 @@
+FIXEDLADDER_0_RUNGS: 
+  - name: h264_1920x1080
+    software:
+      width: 1920
+      height: 1080
+      codec:
+        type: x264
+        bitrateMode:
+          value: 5000
+          mode: abr
+        keyFrameIntervalMax: 50
+        keyFrameIntervalMin: 50
+        sceneCut: 0
+        preset: fast
+        tune: zerolatency
+        threads: 8
+        bframes: 0
+      frameRate:
+        frames: 50
+        seconds: 1
+  - name: h264_1280x720
+    software:
+      width: 1280
+      height: 720
+      codec:
+        type: x264
+        bitrateMode:
+          value: 2500
+          mode: abr
+        keyFrameIntervalMax: 50
+        keyFrameIntervalMin: 50
+        sceneCut: 0
+        preset: fast
+        tune: zerolatency
+        threads: 4
+        bframes: 0
+      frameRate:
+        frames: 50
+        seconds: 1
+  - name: h264_640x360
+    software:
+      width: 640
+      height: 360
+      codec:
+        type: x264
+        bitrateMode:
+          value: 1000
+          mode: abr
+        keyFrameIntervalMax: 50
+        keyFrameIntervalMin: 50
+        sceneCut: 0
+        preset: fast
+        tune: zerolatency
+        threads: 2
+        bframes: 0
+      frameRate:
+        frames: 50
+        seconds: 1
+  - name: h264_320x180
+    software:
+      width: 320
+      height: 180
+      codec:
+        type: x264
+        bitrateMode:
+          value: 800
+          mode: abr
+        keyFrameIntervalMax: 50
+        keyFrameIntervalMin: 50
+        sceneCut: 0
+        preset: fast
+        tune: zerolatency
+        threads: 1
+        bframes: 0
+      frameRate:
+        frames: 50
+        seconds: 1
+
