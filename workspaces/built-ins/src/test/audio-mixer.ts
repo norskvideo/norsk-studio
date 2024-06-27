@@ -58,8 +58,8 @@
 //     }
 
 //     const sendCommand = (command: AudioMixerCommand) => {
-//       const definition = (result?.document.nodes["audio-mixer"].definition as unknown) as AudioMixerDefinition;
-//       const node = result?.nodes["audio-mixer"] as AudioMixer;
+//       const definition = (result?.document.components["audio-mixer"].definition as unknown) as AudioMixerDefinition;
+//       const node = result?.components["audio-mixer"] as AudioMixer;
 //       debuglog("Sending command to node", { id: node.id, command })
 //       definition.handleCommand(node, command)
 //     }
@@ -90,7 +90,7 @@
 //         norsk = await Norsk.connect({ onShutdown: () => { } });
 //         const source = await audio(norsk, "primary", { channelLayout: "stereo" });
 //         result = await go(norsk, compiled);
-//         const mixer = result.nodes['audio-mixer'] as AudioMixer;
+//         const mixer = result.components['audio-mixer'] as AudioMixer;
 //         mixer.subscribe([new StudioNodeSubscriptionSource(source, UnusedSourceDescription, { type: "take-first-stream", select: Audio })]);
 //         await Promise.all([
 //           assertNodeOutputsAudioFrames(norsk, result, 'audio-mixer'),
@@ -123,9 +123,9 @@
 //         const runtime = await defaultRuntime();
 //         const compiled = document.load(__filename, runtime, YAML.stringify(yaml));
 //         result = await go(norsk, compiled);
-//         const mixer = result.nodes['audio-mixer'] as AudioMixer;
-//         const source = result.nodes['source'];
-//         mixer.subscribe([new StudioNodeSubscriptionSource(source, compiled.nodes['source'].yaml, { type: "take-specific-streams", select: Audio, filter: ["one", "two"] }, AvMultiInput.info as unknown as NodeInfo<BaseConfig>)]);
+//         const mixer = result.components['audio-mixer'] as AudioMixer;
+//         const source = result.components['source'];
+//         mixer.subscribe([new StudioNodeSubscriptionSource(source, compiled.components['source'].yaml, { type: "take-specific-streams", select: Audio, filter: ["one", "two"] }, AvMultiInput.info as unknown as NodeInfo<BaseConfig>)]);
 //         await Promise.all([
 //           assertNodeOutputsAudioFrames(norsk, result, 'audio-mixer'),
 //           waitForAssert(
@@ -158,10 +158,10 @@
 //         const compiled = document.load(__filename, runtime, YAML.stringify(yaml));
 
 //         result = await go(norsk, compiled);
-//         const mixer = result.nodes['audio-mixer'] as AudioMixer;
-//         const source = result.nodes['source'];
+//         const mixer = result.components['audio-mixer'] as AudioMixer;
+//         const source = result.components['source'];
 
-//         const sourceYaml = compiled.nodes["source"].yaml;
+//         const sourceYaml = compiled.components["source"].yaml;
 //         sourceYaml.config = { inputs: ['nope', ...sourceConfig.inputs], ...sourceYaml.config } as BaseConfig;
 
 //         mixer.subscribe([new StudioNodeSubscriptionSource(source, sourceYaml, { type: "take-specific-streams", select: Audio, filter: ["one", "two", "nope"] }, AvMultiInput.info as unknown as NodeInfo<BaseConfig>)]);
@@ -194,7 +194,7 @@
 //         const compiled = await testDocument();
 //         const source = await audio(norsk, "primary");
 //         result = await go(norsk, compiled);
-//         const mixer = result.nodes['audio-mixer'] as AudioMixer;
+//         const mixer = result.components['audio-mixer'] as AudioMixer;
 //         mixer.subscribe([new StudioNodeSubscriptionSource(source, UnusedSourceDescription, { type: "take-first-stream", select: Audio })]);
 //         await waitForCondition(() => Object.keys(latestState()?.sources || []).length == 2)
 //         sendCommand({
@@ -209,7 +209,7 @@
 //         const compiled = await testDocument();
 //         const source = await audio(norsk, "primary");
 //         result = await go(norsk, compiled);
-//         const mixer = result.nodes['audio-mixer'] as AudioMixer;
+//         const mixer = result.components['audio-mixer'] as AudioMixer;
 //         mixer.subscribe([new StudioNodeSubscriptionSource(source, UnusedSourceDescription, { type: "take-first-stream", select: Audio })]);
 //         await waitForCondition(() => Object.keys(latestState()?.sources || []).length == 2)
 //         sendCommand({
@@ -225,7 +225,7 @@
 //         const source = await audio(norsk, "primary");
 //         const compiled = await testDocument();
 //         result = await go(norsk, compiled);
-//         const mixer = result.nodes['audio-mixer'] as AudioMixer;
+//         const mixer = result.components['audio-mixer'] as AudioMixer;
 //         mixer.subscribe([new StudioNodeSubscriptionSource(source, UnusedSourceDescription, { type: "take-first-stream", select: Audio })]);
 //         await waitForCondition(() => Object.keys(latestState()?.sources || []).length == 2)
 //         sendCommand({

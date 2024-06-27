@@ -62,12 +62,12 @@ describe("RTMP Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['rtmp'];
+        const source = result.components['rtmp'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['rtmp'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
         ffmpeg = [await Ffmpeg.create(ffmpegCommand({
           transport: rtmpOutput({ port: 5001, app: 'yolo' })
@@ -89,12 +89,12 @@ describe("RTMP Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['rtmp'];
+        const source = result.components['rtmp'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['rtmp'].yaml, { type: 'take-all-streams', select: Av }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-all-streams', select: Av }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
         ffmpeg = [
           await Ffmpeg.create(ffmpegCommand({
@@ -117,12 +117,12 @@ describe("RTMP Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['rtmp'];
+        const source = result.components['rtmp'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['rtmp'].yaml, { type: 'take-all-streams', select: Av }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-all-streams', select: Av }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
         ffmpeg = [
           await Ffmpeg.create(ffmpegCommand({
@@ -163,16 +163,16 @@ describe("RTMP Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['rtmp'];
+        const source = result.components['rtmp'];
         const sink1 = new TraceSink(norsk as Norsk, "sink-1");
         const sink2 = new TraceSink(norsk as Norsk, "sink-2");
         await Promise.all([sink1.initialised, sink2.initialised]);
 
         sink1.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'first' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'first' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
         sink2.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'second' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'second' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
         ffmpeg = [
           await Ffmpeg.create(ffmpegCommand({

@@ -48,7 +48,7 @@ describe("Browser Overlay", () => {
     const compiled = await testDocument();
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const browser = result.nodes["browser"] as BrowserOverlay;
+    const browser = result.components["browser"] as BrowserOverlay;
 
     const videoOpts = {
       resolution: { width: 640, height: 360 },

@@ -75,12 +75,12 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         await waitForAssert(
@@ -108,12 +108,12 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         await waitForCondition(() => sink.streamCount() == 2 && sink.totalMessages() > 25, 10000.0);
@@ -153,12 +153,12 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         await waitForAssert(
@@ -206,12 +206,12 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         await waitForAssert(
@@ -237,12 +237,12 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         await waitForAssert(
@@ -273,12 +273,12 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         await waitForAssert(
@@ -326,12 +326,12 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         await waitForAssert(
@@ -358,12 +358,12 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         // Just wait 5 seconds
@@ -391,12 +391,12 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
 
         sink.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         await waitForAssert(
@@ -447,16 +447,16 @@ describe("SRT Listener Input", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
-        const source = result.nodes['srt'];
+        const source = result.components['srt'];
         const sink1 = new TraceSink(norsk as Norsk, "sink-1");
         const sink2 = new TraceSink(norsk as Norsk, "sink-2");
         await Promise.all([sink1.initialised, sink2.initialised]);
 
         sink1.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'first' }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'first' }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
         sink2.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.nodes['srt'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'second' }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          new StudioNodeSubscriptionSource(source, compiled.components['srt'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'second' }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
 
         await waitForAssert(

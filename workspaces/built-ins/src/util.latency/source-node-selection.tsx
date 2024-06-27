@@ -12,7 +12,7 @@ function SourceNodeSelection(props: SourceNodeSelectionProps) {
   return <div>
     <select defaultValue={props.defaultValue} className={`node-editor-select-input`} id={props.id} onChange={myOnChange} onBlur={myOnChange}>
       <option key="empty" value=''>---</option>
-      {Object.values(props.latestDocument.nodes).map((o, i) => {
+      {Object.values(props.latestDocument.components).map((o, i) => {
         if (o.id == props.id) return <></>
         if (o.info.category === 'output') return;
         return <option key={i} value={o.id}>{o.config.displayName}</option>

@@ -51,7 +51,7 @@ describe("Auto CMAF Output", () => {
     const compiled = document.load(__filename, runtime, YAML.stringify(yaml));
 
     const result = await go(norsk, compiled);
-    const cmaf = result.nodes["cmaf"] as AutoCmaf;
+    const cmaf = result.components["cmaf"] as AutoCmaf;
 
     cmaf.subscribe(sources.map((s) => {
       return new StudioNodeSubscriptionSource(s,

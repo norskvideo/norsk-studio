@@ -55,7 +55,7 @@ describe("TS UDP Output", () => {
     const compiled = await testDocument();
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const udp = result.nodes["udp"] as SimpleSinkWrapper;
+    const udp = result.components["udp"] as SimpleSinkWrapper;
     const source = await videoAndAudio(norsk, 'source');
 
     udp.subscribe([new StudioNodeSubscriptionSource(

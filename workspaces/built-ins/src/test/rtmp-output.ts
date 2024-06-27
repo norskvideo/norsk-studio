@@ -51,7 +51,7 @@ describe("RTMP Output", () => {
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();
     const result = await go(norsk, compiled);
-    const rtmp = result.nodes["rtmp"] as SimpleSinkWrapper;
+    const rtmp = result.components["rtmp"] as SimpleSinkWrapper;
     const source = await videoAndAudio(norsk, 'source');
     rtmp.subscribe([new StudioNodeSubscriptionSource(
       source,

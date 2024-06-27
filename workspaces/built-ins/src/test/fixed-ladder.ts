@@ -41,7 +41,7 @@
 //     compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
 //     norsk = await Norsk.connect({ onShutdown: () => { } });
 //     result = await go(norsk, compiled);
-//     const ladder = result.nodes["ladder"] as SimpleProcessorWrapper;
+//     const ladder = result.components["ladder"] as SimpleProcessorWrapper;
 //     const source = await videoAndAudio(norsk, 'source');
 
 //     ladder.subscribe([new StudioNodeSubscriptionSource(

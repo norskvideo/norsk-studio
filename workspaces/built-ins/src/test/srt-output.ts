@@ -57,7 +57,7 @@ describe("SRT Output", () => {
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();
     const result = await go(norsk, compiled);
-    const srt = result.nodes["srt"] as SimpleSinkWrapper;
+    const srt = result.components["srt"] as SimpleSinkWrapper;
     const source = await videoAndAudio(norsk, 'source');
 
     srt.subscribe([new StudioNodeSubscriptionSource(

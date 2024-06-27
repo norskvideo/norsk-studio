@@ -59,8 +59,8 @@ describe("Multi camera select", () => {
     }
 
     const sendCommand = (command: MultiCameraSelectCommand) => {
-      const definition = (result?.document.nodes["select"].definition as unknown) as MultiCameraSelectDefinition;
-      const node = result?.nodes["select"] as MultiCameraSelect;
+      const definition = (result?.document.components["select"].definition as unknown) as MultiCameraSelectDefinition;
+      const node = result?.components["select"] as MultiCameraSelect;
       debuglog("Sending command to node", { id: node.id, command })
       definition.handleCommand(node, command)
     }
@@ -80,7 +80,7 @@ describe("Multi camera select", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.nodes['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as MultiCameraSelect;
         await Promise.all([
           assertNodeOutputsAudioFrames(norsk, result, 'select'),
           assertNodeOutputsVideoFrames(norsk, result, 'select'),
@@ -105,7 +105,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.nodes['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as MultiCameraSelect;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await Promise.all([
           assertNodeOutputsAudioFrames(norsk, result, 'select'),
@@ -132,7 +132,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.nodes['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as MultiCameraSelect;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
 
         await waitForCondition(() => latestState()?.availableSources.length == 2)
@@ -166,7 +166,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.nodes['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as MultiCameraSelect;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await waitForCondition(() => latestState()?.availableSources.length == 2)
         sendCommand({
@@ -202,7 +202,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.nodes['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as MultiCameraSelect;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await waitForCondition(() => latestState()?.availableSources.length == 2 && latestState()?.activeSource.id == 'fallback')
         sendCommand({
@@ -236,7 +236,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.nodes['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as MultiCameraSelect;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await waitForCondition(() => latestState()?.availableSources.length == 2 && latestState()?.activeSource.id == 'fallback')
         sendCommand({
@@ -280,10 +280,10 @@ describe("Multi camera select", () => {
         const compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
 
         result = await go(norsk, compiled);
-        const switcher = result.nodes['select'] as MultiCameraSelect;
-        const source = result.nodes['source'];
+        const switcher = result.components['select'] as MultiCameraSelect;
+        const source = result.components['source'];
 
-        switcher.subscribe([new StudioNodeSubscriptionSource(source, compiled.nodes['source'].yaml, { type: "take-specific-streams", select: Av, filter: ["one", "two"] }, AvMultiInput.info as unknown as NodeInfo<BaseConfig>)]);
+        switcher.subscribe([new StudioNodeSubscriptionSource(source, compiled.components['source'].yaml, { type: "take-specific-streams", select: Av, filter: ["one", "two"] }, AvMultiInput.info as unknown as NodeInfo<BaseConfig>)]);
 
         await Promise.all([
           assertNodeOutputsAudioFrames(norsk, result, 'select'),
@@ -319,11 +319,11 @@ describe("Multi camera select", () => {
         const compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
 
         result = await go(norsk, compiled);
-        const switcher = result.nodes['select'] as MultiCameraSelect;
-        const source = result.nodes['source'];
+        const switcher = result.components['select'] as MultiCameraSelect;
+        const source = result.components['source'];
 
 
-        const sourceNodeDescription = compiled.nodes['source'].yaml;
+        const sourceNodeDescription = compiled.components['source'].yaml;
         sourceNodeDescription.config = { ...sourceConfig, inputs: ['nope', ...sourceConfig.inputs] } as BaseConfig;
 
         switcher.subscribe([new StudioNodeSubscriptionSource(source, sourceNodeDescription, { type: "take-specific-streams", select: Av, filter: ["one", "two", "nope"] }, AvMultiInput.info as unknown as NodeInfo<BaseConfig>)]);

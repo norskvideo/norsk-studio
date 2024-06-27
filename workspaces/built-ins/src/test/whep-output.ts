@@ -53,7 +53,7 @@ describe("WHEP Output", () => {
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();
     const result = await go(norsk, compiled);
-    const whep = result.nodes["whep"] as SimpleSinkWrapper;
+    const whep = result.components["whep"] as SimpleSinkWrapper;
     const source = await videoAndAudio(norsk, 'source');
     whep.subscribe([new StudioNodeSubscriptionSource(
       source,

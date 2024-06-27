@@ -204,7 +204,7 @@ describe("Cascading Switch", () => {
 				const compiled = await testDocument();
 				norsk = await Norsk.connect({ onShutdown: () => { } });
 				result = await go(norsk, compiled);
-				const switcher = result.nodes['switch'] as CascadingSwitch;
+				const switcher = result.components['switch'] as CascadingSwitch;
 				await Promise.all([
 					assertNodeOutputsAudioFrames(norsk, result, 'switch'),
 					assertNodeOutputsVideoFrames(norsk, result, 'switch'),
@@ -224,7 +224,7 @@ describe("Cascading Switch", () => {
 
 				const source = await videoAndAudio(norsk, "primary");
 				result = await go(norsk, compiled);
-				const switcher = result.nodes['switch'] as CascadingSwitch;
+				const switcher = result.components['switch'] as CascadingSwitch;
 				switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: 'take-all-streams', select: Av })]);
 				await Promise.all([
 					assertNodeOutputsAudioFrames(norsk, result, 'switch'),
@@ -250,7 +250,7 @@ describe("Cascading Switch", () => {
 				const compiled = await testDocument();
 				const source = await videoAndAudio(norsk, "backup");
 				result = await go(norsk, compiled);
-				const switcher = result.nodes['switch'] as CascadingSwitch;
+				const switcher = result.components['switch'] as CascadingSwitch;
 				switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: 'take-all-streams', select: Av })]);
 				await Promise.all([
 					assertNodeOutputsAudioFrames(norsk, result, 'switch'),
@@ -278,7 +278,7 @@ describe("Cascading Switch", () => {
 				const primary = await videoAndAudio(norsk, "primary");
 				const backup = await videoAndAudio(norsk, "backup");
 				result = await go(norsk, compiled);
-				const switcher = result.nodes['switch'] as CascadingSwitch;
+				const switcher = result.components['switch'] as CascadingSwitch;
 				switcher.subscribe([
 					new StudioNodeSubscriptionSource(backup, testSourceDescription(), { type: "take-all-streams", select: Av }),
 					new StudioNodeSubscriptionSource(primary, testSourceDescription(), { type: "take-all-streams", select: Av }),
@@ -304,7 +304,7 @@ describe("Cascading Switch", () => {
 				const primary = await videoAndAudio(norsk, "primary");
 				const backup = await videoAndAudio(norsk, "backup");
 				result = await go(norsk, compiled);
-				const switcher = result.nodes['switch'] as CascadingSwitch;
+				const switcher = result.components['switch'] as CascadingSwitch;
 				switcher.subscribe([
 					new StudioNodeSubscriptionSource(backup, testSourceDescription(), { type: "take-all-streams", select: Av }),
 				]) //, (ctx) => ctx.streams.length >= 6);
