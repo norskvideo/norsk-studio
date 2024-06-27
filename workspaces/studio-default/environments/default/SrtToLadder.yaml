@@ -8,7 +8,7 @@ __layout:
   - id: autocmaf-0
     x: 1344
     y: 544
-nodes:
+components:
   - type: input.srt-listener
     config:
       displayName: srt-listener

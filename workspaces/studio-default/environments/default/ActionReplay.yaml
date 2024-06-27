@@ -11,7 +11,7 @@ __layout:
   - id: whep-0
     x: 1584
     y: 448
-nodes:
+components:
   - type: input.srt-listener
     config:
       port: 5001

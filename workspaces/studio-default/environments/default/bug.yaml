@@ -12,7 +12,7 @@ __layout:
     x: 896
     y: 208
 __globalConfig: {}
-nodes:
+components:
   - type: input.videoTestCard
     config:
       displayName: videoTestCard

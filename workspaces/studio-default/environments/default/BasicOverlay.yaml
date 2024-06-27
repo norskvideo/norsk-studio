@@ -12,7 +12,7 @@ __globalConfig:
   ice-servers:
     - stun:stun.l.google.com:19302
   hardware-acceleration: quadra
-nodes:
+components:
   - type: processor.transform.browserOverlay
     config:
       displayName: browserOverlay

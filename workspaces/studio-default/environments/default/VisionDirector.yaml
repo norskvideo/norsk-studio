@@ -28,9 +28,9 @@ __layout:
     y: 384
   - id: fixedladder-0
     x: 1328
-    y: 176
+    y: 208
 __globalConfig: {}
-nodes:
+components:
   - type: input.srt-listener
     config:
       port: 5001
