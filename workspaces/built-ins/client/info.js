@@ -713,9 +713,9 @@ var init_fullscreen2 = __esm({
   }
 });
 
-// ../../../norsk-studio/lib/shared/shared-views.js
+// ../../node_modules/@norskvideo/norsk-studio/lib/shared/shared-views.js
 var require_shared_views = __commonJS({
-  "../../../norsk-studio/lib/shared/shared-views.js"(exports) {
+  "../../node_modules/@norskvideo/norsk-studio/lib/shared/shared-views.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.GlobalIceServerView = void 0;
@@ -727,9 +727,9 @@ var require_shared_views = __commonJS({
   }
 });
 
-// ../../../norsk-studio/lib/shared/config.js
+// ../../node_modules/@norskvideo/norsk-studio/lib/shared/config.js
 var require_config = __commonJS({
-  "../../../norsk-studio/lib/shared/config.js"(exports) {
+  "../../node_modules/@norskvideo/norsk-studio/lib/shared/config.js"(exports) {
     "use strict";
     var __createBinding = exports && exports.__createBinding || (Object.create ? function(o, m, k, k2) {
       if (k2 === void 0)
