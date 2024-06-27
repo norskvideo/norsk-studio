@@ -4,10 +4,10 @@
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",
-    "build": "npx npm-run-all build:*",
+    "build": "npx npm-run-all build:* && rm -rf build",
     "build:server": "npx tsc",
     "build:client": "npx tsc -p tsconfig-client.json && npx studio-bundle build/info.js client/info.js",
-    "build:css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
+    "build:css": "cp src/style.css client/style.css",
     "build:tailwind": "npx tailwindcss -i src/tailwind.css -o client/tailwind.css",
     "build:eslint": "npx eslint src",
     "test": "mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"

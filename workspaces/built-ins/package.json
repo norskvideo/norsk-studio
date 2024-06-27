@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",
-    "build": "npx studio-wrap-infos src/ && npx npm-run-all build:*",
+    "build": "npx studio-wrap-infos src/ && npx npm-run-all build:* && rm -rf build",
     "build:server": "npx tsc",
     "build:client": "npx tsc -p tsconfig-client.json && npx studio-bundle build/info.js client/info.js",
     "build:copy-css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
