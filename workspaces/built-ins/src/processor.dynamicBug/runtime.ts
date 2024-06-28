@@ -49,7 +49,7 @@ export type DynamicBugEvent = {
 
 // Use the top level working dir and shove a bugs folder inside it
 function bugDir() {
-  return path.join(Config.server.workingDir(), process.env.DYNAMICBUG_FOLDER ?? "bugs");
+  return path.join(Config.server.workingDir(), process.env.DYNAMICBUG_DIRECTORY ?? "bugs");
 }
 
 async function getBugs() {
