@@ -4,6 +4,7 @@ import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerC
 import { errorlog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
+import Config from "@norskvideo/norsk-studio/lib/server/config";
 import { Router } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
@@ -46,14 +47,9 @@ export type DynamicBugEvent = {
   position?: DynamicBugPosition
 }
 
-// Norsk Studio itself really needs the concept of a 'data dir'
-// and I'm wondering if we need the ability to tie requests to the 'active session' if there is one
-// for now we'll just use a hard coded env
-// We might be able to just throw  the sessionid into /bugs, and have the client code aware of it
-// and provide a means for this code to reach out into ActiveSession and retrieve it
-// but anyway, an env var is fine for now
+// Use the top level working dir and shove a bugs folder inside it
 function bugDir() {
-  return path.resolve(process.env.NORSK_DATA_BUGS_DIR || "/mnt/data/bugs");
+  return path.join(Config.server.workingDir(), process.env.DYNAMICBUG_FOLDER ?? "bugs");
 }
 
 async function getBugs() {
@@ -108,7 +104,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     })
     const storage = multer.diskStorage({
       destination: bugDir(),
-      filename: function (_req, file, cb) {
+      filename: function(_req, file, cb) {
         cb(null, path.basename(file.originalname));
       }
     });

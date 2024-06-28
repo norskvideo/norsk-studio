@@ -1,6 +1,6 @@
 server:
   port: 8000
-  working_directory: 'environments/default'
+  working_directory: 'data'
   logs: 'logs'
   library:
     - '@norskvideo/norsk-studio-built-ins'
