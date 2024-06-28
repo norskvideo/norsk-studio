@@ -1,7 +1,12 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import type { DynamicBugState, DynamicBugConfig, DynamicBugCommand, DynamicBugPosition } from "./runtime";
 
-function SummaryView({ state, config, sendCommand }: { state: DynamicBugState, config: DynamicBugConfig, sendCommand: (cmd: DynamicBugCommand) => void }) {
+function SummaryView({ state, sendCommand, httpApi }: {
+  state: DynamicBugState,
+  config: DynamicBugConfig,
+  sendCommand: (cmd: DynamicBugCommand) => void,
+  httpApi: URL
+}) {
 
   const [bug, setBug] = useState(state.activeBug?.file);
   const [position, setPosition] = useState(state.activeBug?.position);
@@ -68,7 +73,7 @@ function SummaryView({ state, config, sendCommand }: { state: DynamicBugState, c
             // Upload a file first
             if (fileToUpload && bug === 'new') {
               const form = new FormData()
-              const url = `http://${document.location.hostname}:${config.apiPort}/bugs`;
+              const url = httpApi.toString() + "/bugs"
               form.append('file', fileToUpload)
               await fetch(url, {
                 method: 'POST',

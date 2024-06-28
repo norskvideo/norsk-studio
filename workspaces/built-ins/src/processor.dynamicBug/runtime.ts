@@ -25,7 +25,6 @@ export type DynamicBugConfig = {
   displayName: string,
   defaultBug?: string
   defaultPosition?: DynamicBugPosition;
-  apiPort: number;
 }
 
 export type DynamicBugState = {
@@ -66,25 +65,19 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     const node = await DynamicBug.create(norsk, cfg, runtime.updates);
     cb(node);
 
-    // Really I'd like to hijack the Norsk Studio express here in some way, shape, or form
-    // but that's going to require some thought
-    const expressApp = express();
-    expressApp.use(express.json());
-    expressApp.use(cors());
-
-    expressApp.get("/active-bug", async (_req, res) => {
+    runtime.router.get("/active-bug", async (_req, res) => {
       res.writeHead(200);
       res.end(JSON.stringify({
         bug: node.bug,
         position: node.position
       }));
     })
-    expressApp.delete("/active-bug", async (req, res) => {
+    runtime.router.delete("/active-bug", async (_req, res) => {
       await node.setupBug(undefined, undefined);
       res.writeHead(200);
       res.end("ok");
     })
-    expressApp.post("/active-bug", async (req, res) => {
+    runtime.router.post("/active-bug", async (req, res) => {
       if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
         if (!["topleft", "topright", "bottomleft", "bottomright"].includes(req.body.position)) {
           res.writeHead(400);
@@ -109,10 +102,10 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
       }
     });
     const upload = multer({ storage })
-    expressApp.post('/bugs', upload.single('file'), (_req, res) => {
+    runtime.router.post('/bugs', upload.single('file'), (_req, res) => {
       res.send('File uploaded successfully')
     })
-    expressApp.get("/bugs", cors({
+    runtime.router.get("/bugs", cors({
       origin: '*',
       optionsSuccessStatus: 200
     }), async (_req, res) => {
@@ -120,8 +113,6 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
       res.writeHead(200);
       res.end(JSON.stringify(images));
     })
-
-    expressApp.listen(cfg.apiPort);
   }
 
   routes(): Router {

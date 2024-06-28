@@ -6,8 +6,7 @@ import React from "react";
 
 export default function({
   defineComponent,
-  Video,
-  validation: { Port, unique }
+  Video
 }: Registration) {
   const BugSelection = React.lazy(async () => import('./bug-selection'));
   const SummaryView = React.lazy(async () => import('./summary-view'));
@@ -73,16 +72,6 @@ export default function({
               { value: 'bottomleft', display: 'Bottom Left' },
               { value: 'bottomright', display: 'Bottom Right' }
             ]
-          }
-        },
-        apiPort: {
-          help: "Port to open the API on",
-          hint: {
-            type: 'numeric',
-            defaultValue: 5000,
-            validation: Port,
-            global: unique('port'),
-            envOverride: true
           }
         }
       }
