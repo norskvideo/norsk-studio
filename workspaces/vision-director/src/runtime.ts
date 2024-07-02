@@ -4,9 +4,10 @@ import {
   , StreamSwitchSmoothNode, VideoTestcardGeneratorNode, audioToPin, videoToPin, ReceiveFromAddress, SourceMediaNode, WhepOutputNode, requireAV, ReceiveFromAddressAuto, selectAudio, selectVideo,
   VideoComposeNode,
   StreamKeyOverrideNode,
+  IceServerSettings,
 } from '@norskvideo/norsk-sdk';
 
-// should probably just re-implement this or... 
+// should probably just re-implement this or...
 import { SilenceSource } from '@norskvideo/norsk-studio-built-ins/lib/input.silence/runtime';
 import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomAutoDuplexNode, SubscriptionOpts } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
@@ -204,8 +205,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
 
     this.whepPreview = await this.norsk.output.whep({
       id: `${this.cfg.id}-preview`,
-      iceServers: this.cfg.__global.iceServers.map((s) =>
-        ({ urls: [s.url], username: s.username, credential: s.credential }))
+      ... webRtcSettings(this.cfg.__global.iceServers),
     });
 
     this.whepPreview?.subscribe([{
@@ -366,8 +366,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
 
         const whep = await this.norsk.output.whep({
           id: `${this.id}-whep-${pin}`,
-          iceServers: this.cfg.__global.iceServers.map((s) =>
-            ({ urls: [s.url], username: s.username, credential: s.credential }))
+          ... webRtcSettings(this.cfg.__global.iceServers),
         })
 
         this.whepOutputs.set(pin, { whep });
@@ -617,4 +616,19 @@ function pinToMultiCameraSource(pin: string): MultiCameraSource {
 
 function multiCameraSourceToPin(source: MultiCameraSource) {
   return pinName(source.id, source.key);
+}
+
+// Copied from built-ins/shared...
+function webRtcSettings(cfg: IceServer[]): {
+  iceServers?: IceServerSettings[],
+  reportedIceServers?: IceServerSettings[]
+} {
+  const iceServers = cfg.map((s) =>
+      ({ urls: [s.url], username: s.username, credential: s.credential }));
+  const reportedIceServers = cfg.filter((s) => s.reportedUrl).map((s) =>
+      ({ urls: [s.reportedUrl ?? ''], username: s.username, credential: s.credential }));
+  return {
+      iceServers: iceServers.length > 0 ? iceServers : undefined,
+      reportedIceServers: reportedIceServers.length > 0 ? reportedIceServers : undefined,
+  }
 }

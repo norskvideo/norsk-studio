@@ -1,9 +1,12 @@
-import { AudioMeasureLevels, AudioMeasureLevelsNode, Norsk, ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, SourceMediaNode, WhepOutputNode, selectVideo } from '@norskvideo/norsk-sdk';
-
+import {
+  AudioMeasureLevels, AudioMeasureLevelsNode, Norsk,
+  ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, SourceMediaNode, WhepOutputNode, selectVideo
+} from '@norskvideo/norsk-sdk';
 import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode, SimpleSinkWrapper, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
+import {webRtcSettings} from '../shared/webrtcSettings';
 
 export type PreviewOutputSettings = {
   id: string;
@@ -69,14 +72,14 @@ class PreviewOutput extends CustomSinkNode {
     const whepCfg: SdkSettings = {
       id: `${this.cfg.id}-whep`,
       bufferDelayMs: this.cfg.bufferDelayMs,
-      iceServers: this.cfg.__global.iceServers.map((s) =>
-        ({ urls: [s.url], username: s.username, credential: s.credential })),
       onPublishStart: () => {
         const url = this.whep?.endpointUrl;
         if (url) {
           this.updates.raiseEvent({ type: 'url-published', url })
         }
-      }
+
+      },
+      ...webRtcSettings(this.cfg.__global.iceServers)
     };
     this.whep = await this.norsk.output.whep(whepCfg);
 

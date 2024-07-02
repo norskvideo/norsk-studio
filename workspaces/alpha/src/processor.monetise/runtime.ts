@@ -4,6 +4,7 @@ import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscri
 import { CustomAutoDuplexNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
+import {webRtcSettings} from '../shared/webrtcSettings'
 
 export type MonetiseOutputSettings = {
   id: string;
@@ -88,14 +89,13 @@ class MonetiseOutput extends CustomAutoDuplexNode {
     const whepCfg: SdkSettings = {
       id: `${this.cfg.id}-whep`,
       bufferDelayMs: 500.0,
-      iceServers: this.cfg.__global.iceServers.map((s) =>
-        ({ urls: [s.url], username: s.username, credential: s.credential }))
+      ... webRtcSettings(this.cfg.__global.iceServers),
     };
     this.whep = await this.norsk.output.whep(whepCfg);
     this.ancillary = await this.norsk.processor.transform.ancillary({ id: `${this.cfg.id}-inject` });
     this.delayed = await this.norsk.processor.transform.jitterBuffer({
       id: `${this.cfg.id}-delay`,
-      // not convinced we even need this at all, 
+      // not convinced we even need this at all,
       // I think the theory is that we hold into the video for a bit before passing it on
       // so that the ancillary data we inject ends up arriving at the same time once in a sync
       // but I think in reality the turnaround is so fast it wouldn't matter

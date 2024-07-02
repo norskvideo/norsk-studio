@@ -3,6 +3,7 @@ import { Norsk, WhepOutputSettings as SdkSettings } from '@norskvideo/norsk-sdk'
 import { OnCreated, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
+import {webRtcSettings} from '../shared/webrtcSettings';
 
 export type WhepOutputSettings = {
   id: string;
@@ -19,8 +20,7 @@ export default class WhepOutputDefinition implements ServerComponentDefinition<W
       const mappedCfg: SdkSettings = {
         id: cfg.id,
         bufferDelayMs: cfg.bufferDelayMs,
-        iceServers: cfg.__global.iceServers.map((s) =>
-          ({ urls: [s.url], username: s.username, credential: s.credential }))
+        ... webRtcSettings(cfg.__global.iceServers),
       };
       const node = await norsk.output.whep(mappedCfg);
       report.registerOutput(cfg.id, node.playerUrl);
