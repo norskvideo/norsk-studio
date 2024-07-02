@@ -89,7 +89,7 @@ class MonetiseOutput extends CustomAutoDuplexNode {
       id: `${this.cfg.id}-whep`,
       bufferDelayMs: 500.0,
       iceServers: this.cfg.__global.iceServers.map((s) =>
-        ({ urls: [s.url], username: s.username, credential: s.password }))
+        ({ urls: [s.url], username: s.username, credential: s.credential }))
     };
     this.whep = await this.norsk.output.whep(whepCfg);
     this.ancillary = await this.norsk.processor.transform.ancillary({ id: `${this.cfg.id}-inject` });

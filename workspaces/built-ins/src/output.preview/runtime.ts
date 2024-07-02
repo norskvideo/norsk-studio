@@ -70,7 +70,7 @@ class PreviewOutput extends CustomSinkNode {
       id: `${this.cfg.id}-whep`,
       bufferDelayMs: this.cfg.bufferDelayMs,
       iceServers: this.cfg.__global.iceServers.map((s) =>
-        ({ urls: [s.url], username: s.username, credential: s.password })),
+        ({ urls: [s.url], username: s.username, credential: s.credential })),
       onPublishStart: () => {
         const url = this.whep?.endpointUrl;
         if (url) {

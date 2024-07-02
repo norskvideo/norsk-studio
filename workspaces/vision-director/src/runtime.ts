@@ -205,7 +205,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     this.whepPreview = await this.norsk.output.whep({
       id: `${this.cfg.id}-preview`,
       iceServers: this.cfg.__global.iceServers.map((s) =>
-        ({ urls: [s.url], username: s.username, credential: s.password }))
+        ({ urls: [s.url], username: s.username, credential: s.credential }))
     });
 
     this.whepPreview?.subscribe([{
@@ -367,7 +367,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
         const whep = await this.norsk.output.whep({
           id: `${this.id}-whep-${pin}`,
           iceServers: this.cfg.__global.iceServers.map((s) =>
-            ({ urls: [s.url], username: s.username, credential: s.password }))
+            ({ urls: [s.url], username: s.username, credential: s.credential }))
         })
 
         this.whepOutputs.set(pin, { whep });

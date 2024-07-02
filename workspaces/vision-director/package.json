@@ -10,7 +10,7 @@
     "build:css": "cp src/style.css client/style.css",
     "build:tailwind": "npx tailwindcss -i src/tailwind.css -o client/tailwind.css",
     "build:eslint": "npx eslint src",
-    "test": "mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
+    "test": "LOG_LEVEL=error mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
   },
   "files": [
     "lib",

@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "esnext",
+    "target": "esnext",
+    "esModuleInterop": false,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "outDir": "./build/"
+  },
+  "include": [
+    "src/info.ts"
+  ],
+  "exclude": []
+}

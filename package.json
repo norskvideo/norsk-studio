@@ -10,6 +10,7 @@
   },
   "workspaces": [
     "workspaces/built-ins",
+    "workspaces/alpha",
     "workspaces/vision-director",
     "workspaces/studio-default"
   ]

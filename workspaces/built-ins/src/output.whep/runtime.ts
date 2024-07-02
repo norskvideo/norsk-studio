@@ -20,7 +20,7 @@ export default class WhepOutputDefinition implements ServerComponentDefinition<W
         id: cfg.id,
         bufferDelayMs: cfg.bufferDelayMs,
         iceServers: cfg.__global.iceServers.map((s) =>
-          ({ urls: [s.url], username: s.username, credential: s.password }))
+          ({ urls: [s.url], username: s.username, credential: s.credential }))
       };
       const node = await norsk.output.whep(mappedCfg);
       report.registerOutput(cfg.id, node.playerUrl);
