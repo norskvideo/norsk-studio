@@ -4,7 +4,7 @@ import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscri
 import { CustomAutoDuplexNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
-import {webRtcSettings} from '../shared/webrtcSettings'
+import {webRtcSettings} from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
 
 export type MonetiseOutputSettings = {
   id: string;

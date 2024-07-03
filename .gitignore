@@ -10,3 +10,5 @@ static/components
 manifest
 _ignore
 norsk-studio-1.0.0.tgz norsk-studio.built-ins-1.0.0.tgz norsk-studio-demo-1.0.0.tgz norsk-studio.vision-director-1.0.0.tgz
+workspaces/*/client
+workspaces/*/build

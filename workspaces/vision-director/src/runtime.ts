@@ -3,8 +3,7 @@ import {
   , Norsk, SampleRate, StreamMetadata
   , StreamSwitchSmoothNode, VideoTestcardGeneratorNode, audioToPin, videoToPin, ReceiveFromAddress, SourceMediaNode, WhepOutputNode, requireAV, ReceiveFromAddressAuto, selectAudio, selectVideo,
   VideoComposeNode,
-  StreamKeyOverrideNode,
-  IceServerSettings,
+  StreamKeyOverrideNode
 } from '@norskvideo/norsk-sdk';
 
 // should probably just re-implement this or...
@@ -15,6 +14,7 @@ import { Context } from '@norskvideo/norsk-sdk';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, IceServer, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
+import {webRtcSettings} from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
 
 export type MultiCameraSelectConfig = {
   id: MediaNodeId,
@@ -616,19 +616,4 @@ function pinToMultiCameraSource(pin: string): MultiCameraSource {
 
 function multiCameraSourceToPin(source: MultiCameraSource) {
   return pinName(source.id, source.key);
-}
-
-// Copied from built-ins/shared...
-function webRtcSettings(cfg: IceServer[]): {
-  iceServers?: IceServerSettings[],
-  reportedIceServers?: IceServerSettings[]
-} {
-  const iceServers = cfg.map((s) =>
-      ({ urls: [s.url], username: s.username, credential: s.credential }));
-  const reportedIceServers = cfg.filter((s) => s.reportedUrl).map((s) =>
-      ({ urls: [s.reportedUrl ?? ''], username: s.username, credential: s.credential }));
-  return {
-      iceServers: iceServers.length > 0 ? iceServers : undefined,
-      reportedIceServers: reportedIceServers.length > 0 ? reportedIceServers : undefined,
-  }
 }
