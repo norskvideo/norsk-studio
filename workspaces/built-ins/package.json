@@ -10,7 +10,7 @@
     "build:copy-css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
     "build:tailwind": "npx tailwindcss -i src/shared/tailwind.css -o client/style.css",
     "build:eslint": "npx eslint src",
-    "test": "LOG_LEVEL=error mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
+    "test": "mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
   },
   "files": [
     "client/*",
@@ -19,12 +19,12 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-mediaconnect": "^3.499.0",
-    "@aws-sdk/client-medialive": "^3.499.0",
-    "@aws-sdk/client-mediapackage": "^3.499.0",
-    "@aws-sdk/client-translate": "^3.535.0",
     "@norskvideo/norsk-sdk": "^1.0.360",
+<<<<<<< HEAD
     "@norskvideo/norsk-studio": "^1.12.1",
+=======
+    "@norskvideo/norsk-studio": "file:../../../studio-core",
+>>>>>>> 670cdc1 (move aws over to its own package, add a test for SRT caller reconnects)
     "@norskvideo/webrtc-client": "^0.1.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",

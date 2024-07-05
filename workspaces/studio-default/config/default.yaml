@@ -4,8 +4,9 @@ server:
   logs: 'logs'
   library:
     - '@norskvideo/norsk-studio-built-ins'
-    - '@norskvideo/norsk-studio-alpha'
     - '@norskvideo/norsk-studio-vision-director'
+    - '@norskvideo/norsk-studio-aws'
+    - '@norskvideo/norsk-studio-alpha'
   developer_mode: true
 
 norsk:

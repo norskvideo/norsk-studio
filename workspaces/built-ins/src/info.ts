@@ -17,8 +17,6 @@ export default function getNodeInfo(r: Registration, type: string) {
   return InitialisedComponents[type];
 }
 
-import input_mediaconnect from "./input.mediaconnect/info";
-AllComponents.push((r: Registration) => input_mediaconnect(r) as unknown as NodeInfo<BaseConfig>);
 import input_rtmp from "./input.rtmp/info";
 AllComponents.push((r: Registration) => input_rtmp(r) as unknown as NodeInfo<BaseConfig>);
 import input_silence from "./input.silence/info";
@@ -33,8 +31,6 @@ import input_videoTestCard from "./input.videoTestCard/info";
 AllComponents.push((r: Registration) => input_videoTestCard(r) as unknown as NodeInfo<BaseConfig>);
 import output_autoCmaf from "./output.autoCmaf/info";
 AllComponents.push((r: Registration) => output_autoCmaf(r) as unknown as NodeInfo<BaseConfig>);
-import output_medialive from "./output.medialive/info";
-AllComponents.push((r: Registration) => output_medialive(r) as unknown as NodeInfo<BaseConfig>);
 import output_preview from "./output.preview/info";
 AllComponents.push((r: Registration) => output_preview(r) as unknown as NodeInfo<BaseConfig>);
 import output_rtmp from "./output.rtmp/info";
@@ -47,8 +43,6 @@ import output_udpTs from "./output.udpTs/info";
 AllComponents.push((r: Registration) => output_udpTs(r) as unknown as NodeInfo<BaseConfig>);
 import output_whep from "./output.whep/info";
 AllComponents.push((r: Registration) => output_whep(r) as unknown as NodeInfo<BaseConfig>);
-import processor_aws_transcribe from "./processor.aws-transcribe/info";
-AllComponents.push((r: Registration) => processor_aws_transcribe(r) as unknown as NodeInfo<BaseConfig>);
 import processor_browserOverlay from "./processor.browserOverlay/info";
 AllComponents.push((r: Registration) => processor_browserOverlay(r) as unknown as NodeInfo<BaseConfig>);
 import processor_cascadingSwitch from "./processor.cascadingSwitch/info";
