@@ -1,9 +1,9 @@
-import { BrowserInputNode, Norsk, StreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
+import { BrowserInputNode, Norsk, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-import { CustomAutoDuplexNode } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
+import { CreatedMediaNode, OnCreated, RelatedMediaNodes, ServerComponentDefinition, StudioNodeSubscriptionSource } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
+import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 
 export type BrowserOverlayConfig = {
   __global: {
@@ -19,19 +19,27 @@ export default class BrowserOverlayDefinition implements ServerComponentDefiniti
     const node = await BrowserOverlay.create(norsk, cfg);
     cb(node);
   }
+
 }
+
+
 
 //
 // And everything below this line is Norsk
 // 
 
-export class BrowserOverlay extends CustomAutoDuplexNode {
+export class BrowserOverlay implements CreatedMediaNode {
+  compose?: VideoComposeNode<"video" | "overlay">;
   browser?: BrowserInputNode;
+  currentVideo?: VideoStreamMetadata;
   norsk: Norsk;
 
-  cfg: BrowserOverlayConfig;
+  control: ContextPromiseControl = new ContextPromiseControl(this.handleContext.bind(this));
   videoSource?: StudioNodeSubscriptionSource;
+  cfg: BrowserOverlayConfig;
   initialised: Promise<void>;
+  id: string;
+  relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
 
   static async create(norsk: Norsk, cfg: BrowserOverlayConfig) {
     const node = new BrowserOverlay(norsk, cfg);
@@ -40,27 +48,58 @@ export class BrowserOverlay extends CustomAutoDuplexNode {
   }
 
   constructor(norsk: Norsk, cfg: BrowserOverlayConfig) {
-    super(cfg.id);
+    this.id = cfg.id;
     this.cfg = cfg;
     this.norsk = norsk;
     this.initialised = this.initialise();
   }
 
   async initialise() {
-    const compose = await this.norsk.processor.transform.videoCompose(
-      (streams: StreamMetadata[]) => {
-        if (streams.length != 1) { return undefined; }
-        if (streams[0].message.case != "video") { return undefined; }
-        debuglog("Setting up compose for overlay node", { stream: streams[0] })
+    // Nothing to do
+  }
 
-        return {
+  subscribe(sources: StudioNodeSubscriptionSource[]) {
+    this.videoSource = sources[0];
+    this.control.setSources(sources);
+  }
+
+  async handleContext() {
+    const video = this.videoSource?.latestStreams()[0]?.metadata;
+    if (!video || !this.videoSource || video.message.case !== 'video') {
+      await this.compose?.close();
+      await this.browser?.close();
+      this.compose = undefined;
+      this.browser = undefined;
+      return;
+    } else {
+      const nextVideo = video.message.value;
+      debuglog("Creating nodes for browser overlay", { id: this.id, metadata: nextVideo });
+      if (this.currentVideo) {
+        if (nextVideo.height !== this.currentVideo.height || nextVideo.width !== this.currentVideo.width) {
+          debuglog("Closing nodes for browser overlay because of metadata change", { id: this.id, old: this.currentVideo, new: nextVideo });
+          await this.compose?.close();
+          await this.browser?.close();
+          this.currentVideo = undefined;
+        }
+      }
+
+      if (!this.compose) {
+        const thisCompose = this.compose = await this.norsk.processor.transform.videoCompose<"video" | "overlay">({
           id: `${this.cfg.id}-compose`,
-          referenceStream: 'source',
+          onCreate: (n) => {
+            this.relatedMediaNodes.addInput(n);
+            this.relatedMediaNodes.addOutput(n);
+          },
+          onClose: () => {
+            this.relatedMediaNodes.removeInput(thisCompose);
+            this.relatedMediaNodes.removeOutput(thisCompose);
+          },
+          referenceStream: 'video',
           referenceResolution: { width: 100, height: 100 },
           hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ["quadra", "nvidia"]),
           parts: [
             {
-              pin: "source",
+              pin: "video",
               opacity: 1.0,
               zIndex: 0,
               sourceRect: { x: 0, y: 0, width: 100, height: 100 },
@@ -73,87 +112,37 @@ export class BrowserOverlay extends CustomAutoDuplexNode {
               destRect: { x: 0, y: 0, width: 100, height: 100 }
             }
           ],
-          outputResolution: { width: streams[0].message.value.width, height: streams[0].message.value.height }
-        }
-      });
-    this.setup({ input: compose, output: [compose] });
+          outputResolution: { width: nextVideo.width, height: nextVideo.height }
+        })
+      }
+      if (!this.browser) {
+        const thisBrowser = this.browser = await this.norsk.input.browser({
+          onCreate: (n) => {
+            this.relatedMediaNodes.addInput(n);
+          },
+          onClose: () => {
+            this.relatedMediaNodes.removeInput(thisBrowser);
+          },
+          id: `${this.cfg.id}-browser`,
+          url: this.cfg.url,
+          resolution: { width: nextVideo.width, height: nextVideo.height },
+          sourceName: `${this.id}-browser`,
+          frameRate: nextVideo.frameRate ?? { frames: 25, seconds: 1 }
+        })
+      }
+      this.compose.subscribeToPins([
+        { source: this.browser, sourceSelector: videoToPin<"video" | "overlay">("overlay") },
+        this.videoSource.selectVideoToPin<"video" | "overlay">("video")[0]
+      ])
+    }
   }
 
-  override subscribe(sources: StudioNodeSubscriptionSource[]) {
-    this.videoSource = sources[0];
-
-    this.innerInput?.subscribeToPins(
-      this.videoSource.selectVideoToPin("source")
-      ,
-      (ctx) => {
-        if (ctx.streams.length == 1) {
-          // We'll accept, and we'll also fire off the browser source
-          // we won't block tho, who cares if the first few frames don't have an overlay??
-          void this.startBrowserSource(ctx.streams[0]);
-          return "accept";
-        } else {
-          // allow null contexts through so compose can shut itself down
-          return "accept";
-        }
-      });
-  }
-
-  async startBrowserSource(videoMetadata: StreamMetadata) {
-    if (videoMetadata.message.case != "video")
-      throw "Browser overlay component only accepts video";
-    if (!this.videoSource)
-      throw "Video source wasn't created"; // really need to work out how to structure those base classes better..
-
-    debuglog("Spinning up browser input for overla node", { metadata: videoMetadata })
-    // Start a browser source that matches resolution and framerate
-    // ?Leave the id server-side?
-    this.browser = await this.norsk.input.browser({
-      id: `${this.cfg.id}-browser`,
-      url: this.cfg.url,
-      resolution: { width: videoMetadata.message.value.width, height: videoMetadata.message.value.height },
-      sourceName: `${this.id}-browser`,
-      frameRate: videoMetadata.message.value.frameRate ?? { frames: 25, seconds: 1 }
-    });
-
-    // Check the sub, if we lose the original video
-    // then we want to stop the browser so compose can tidy itself up
-    this.innerInput?.subscribeToPins(
-      this.videoSource.selectVideoToPin<"source" | "overlay">("source").concat([
-        {
-          source: this.browser,
-          sourceSelector: videoToPin("overlay")
-        }
-      ]),
-      (ctx) => {
-        // If there is only reference, that's fine
-        // If there is only browser, we need to stop the browser
-        // if there is null, that's fine
-        if (ctx.streams.length == 0) { return "accept"; } // compose should flush
-        if (ctx.streams.length == 2) {
-          return "accept";
-        }
-
-        // I think we can assume that if we only see this
-        // that we can shut down, because to get this created, the context
-        // from the *source* should already exist in the controller
-        if (ctx.streams[0].streamKey?.sourceName == "browser") {
-          void this.stopBrowserSource();
-          return "accept"; // but allow it anyway
-        }
-        throw "Unknown number of streams encountered in browser overlay component";
-
-      });
-  }
-
-  override async close() {
-    await this.stopBrowserSource();
-    await super.close();
-  }
-
-  async stopBrowserSource() {
-    debuglog("Stopping browser source", { id: this.id })
+  async close() {
     await this.browser?.close();
+    await this.compose?.close();
     this.browser = undefined;
+    this.compose = undefined;
   }
+
 }
 
