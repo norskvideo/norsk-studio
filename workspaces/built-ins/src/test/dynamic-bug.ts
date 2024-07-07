@@ -23,14 +23,14 @@ async function defaultRuntime(): Promise<RuntimeSystem> {
 
 describe("Dynamic Bug", () => {
 
-  async function testDocument() {
+  async function testDocument(cfg?: Omit<DynamicBugConfig, "id" | "displayName" | "__global">) {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
         new YamlNodeBuilder<DynamicBugConfig, DynamicBugState, DynamicBugCommand, DynamicBugEvent>
           ('bug',
             DynamicBugInfo(RegistrationConsts),
-            {
+            cfg ?? {
 
             }
           ).reify())
@@ -122,6 +122,117 @@ describe("Dynamic Bug", () => {
     await Promise.all([
       await waitForAssert(() => sink.streamCount() == 1, () => sink.streamCount() == 1, 10000, 500),
       assertNodeOutputsVideoFrames(norsk, result, "bug", videoOptsTwo),
+    ])
+  })
+
+  it("Dynamic bug with initial configured image", async () => {
+    const compiled = await testDocument({
+      defaultBug: "test.png",
+      defaultPosition: "bottomleft"
+    });
+    norsk = await Norsk.connect({ onShutdown: () => { } });
+    const result = await go(norsk, compiled);
+    const bug = result.components["bug"] as DynamicBug;
+    const sink = new TraceSink(norsk as Norsk, "sink");
+    await sink.initialised;
+
+    const videoOpts = {
+      resolution: { width: 640, height: 360 },
+      frameRate: { frames: 25, seconds: 1 }
+    }
+
+    const source = await videoAndAudio(norsk, 'source', videoOpts);
+
+    bug.subscribe([new StudioNodeSubscriptionSource(source,
+      testSourceDescription(),
+      {
+        type: 'take-all-streams', select: ['video']
+      })
+    ])
+
+    function latestState() {
+      return result.runtimeState.latest["bug"] as DynamicBugState;
+    }
+
+    await Promise.all([
+      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
+      waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.file == "test.png"),
+      waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.position == "bottomleft")
+    ])
+  })
+  it("Dynamic bug with no configured image, configured during run", async () => {
+    const compiled = await testDocument({
+    });
+    norsk = await Norsk.connect({ onShutdown: () => { } });
+    const result = await go(norsk, compiled);
+    const bug = result.components["bug"] as DynamicBug;
+    const sink = new TraceSink(norsk as Norsk, "sink");
+    await sink.initialised;
+
+
+    const videoOpts = {
+      resolution: { width: 640, height: 360 },
+      frameRate: { frames: 25, seconds: 1 }
+    }
+
+    const source = await videoAndAudio(norsk, 'source', videoOpts);
+
+    bug.subscribe([new StudioNodeSubscriptionSource(source,
+      testSourceDescription(),
+      {
+        type: 'take-all-streams', select: ['video']
+      })
+    ])
+
+    await bug.setupBug("test.png", "bottomleft")
+
+    function latestState() {
+      return result.runtimeState.latest["bug"] as DynamicBugState;
+    }
+
+    await Promise.all([
+      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
+      waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.file == "test.png"),
+      waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.position == "bottomleft")
+    ])
+  })
+
+  it("Dynamic bug with configured image, re-configured during run", async () => {
+    const compiled = await testDocument({
+      defaultBug: "test.png",
+      defaultPosition: "bottomleft"
+    });
+    norsk = await Norsk.connect({ onShutdown: () => { } });
+    const result = await go(norsk, compiled);
+    const bug = result.components["bug"] as DynamicBug;
+    const sink = new TraceSink(norsk as Norsk, "sink");
+    await sink.initialised;
+
+
+    const videoOpts = {
+      resolution: { width: 640, height: 360 },
+      frameRate: { frames: 25, seconds: 1 }
+    }
+
+    const source = await videoAndAudio(norsk, 'source', videoOpts);
+
+    bug.subscribe([new StudioNodeSubscriptionSource(source,
+      testSourceDescription(),
+      {
+        type: 'take-all-streams', select: ['video']
+      })
+    ])
+
+    await bug.setupBug("test2.png", "bottomleft")
+
+    function latestState() {
+      return result.runtimeState.latest["bug"] as DynamicBugState;
+    }
+
+    await Promise.all([
+      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
+      waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.file == "test2.png"),
+      waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.position == "bottomleft")
     ])
   })
 });

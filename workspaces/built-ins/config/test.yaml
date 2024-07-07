@@ -1,0 +1,2 @@
+server:
+  working_directory: "test"
