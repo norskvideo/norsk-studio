@@ -20,7 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@norskvideo/norsk-sdk": "^1.0.360",
-    "@norskvideo/norsk-studio": "^1.10.0"
+    "@norskvideo/norsk-studio": "^1.12.0"
   },
   "main": "lib/index.js",
   "devDependencies": {
