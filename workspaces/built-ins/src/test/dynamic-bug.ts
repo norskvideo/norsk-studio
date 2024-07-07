@@ -235,4 +235,70 @@ describe("Dynamic Bug", () => {
       waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.position == "bottomleft")
     ])
   })
+
+  it("Dynamic bug with configured image, re-configured during run, source reset", async () => {
+    const compiled = await testDocument({
+      defaultBug: "test.png",
+      defaultPosition: "bottomleft"
+    });
+    norsk = await Norsk.connect({ onShutdown: () => { } });
+    const result = await go(norsk, compiled);
+    const bug = result.components["bug"] as DynamicBug;
+    const sink = new TraceSink(norsk as Norsk, "sink");
+    await sink.initialised;
+
+    sink.subscribe([
+      new StudioNodeSubscriptionSource(bug, compiled.components['bug'].yaml,
+        { type: 'take-all-streams', select: ["audio", "video"] }, DynamicBugInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+    ])
+
+    const videoOptsOne = {
+      resolution: { width: 640, height: 360 },
+      frameRate: { frames: 25, seconds: 1 }
+    }
+
+    const videoOptsTwo = {
+      resolution: { width: 800, height: 600 },
+      frameRate: { frames: 25, seconds: 1 }
+    }
+
+    const sourceOne = await videoAndAudio(norsk, 'sourceOne', videoOptsOne);
+
+    bug.subscribe([new StudioNodeSubscriptionSource(sourceOne,
+      testSourceDescription(),
+      {
+        type: 'take-all-streams', select: ['video']
+      })
+    ])
+
+
+    function latestState() {
+      return result.runtimeState.latest["bug"] as DynamicBugState;
+    }
+
+
+    await bug.setupBug("test2.png", "bottomleft")
+    await waitForCondition(() => latestState().activeBug?.file == "test2.png");
+    await waitForCondition(() => sink.streamCount() == 1, 10000.0);
+    await sourceOne.close();
+
+    await waitForCondition(() => sink.streamCount() == 0, 10000.0);
+
+    const sourceTwo = await videoAndAudio(norsk, 'sourceTwo', videoOptsTwo);
+
+    bug.subscribe([new StudioNodeSubscriptionSource(sourceTwo,
+      testSourceDescription(),
+      {
+        type: 'take-all-streams', select: ['video']
+      })
+    ])
+
+    // Browser overlay outputs the same as it gets in, only with extra browser overlay
+    await Promise.all([
+      await waitForAssert(() => sink.streamCount() == 1, () => sink.streamCount() == 1, 10000, 500),
+      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOptsTwo),
+      waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.file == "test2.png"),
+      waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.position == "bottomleft")
+    ])
+  })
 });
