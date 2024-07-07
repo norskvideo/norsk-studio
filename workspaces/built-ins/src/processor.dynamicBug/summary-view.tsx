@@ -1,12 +1,8 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import type { DynamicBugState, DynamicBugConfig, DynamicBugCommand, DynamicBugPosition } from "./runtime";
+import { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
-function SummaryView({ state, sendCommand, httpApi }: {
-  state: DynamicBugState,
-  config: DynamicBugConfig,
-  sendCommand: (cmd: DynamicBugCommand) => void,
-  httpApi: URL
-}) {
+function SummaryView({ state, sendCommand, httpApi }: ViewProps<DynamicBugConfig, DynamicBugState, DynamicBugCommand>) {
 
   const [bug, setBug] = useState(state.activeBug?.file);
   const [position, setPosition] = useState(state.activeBug?.position);

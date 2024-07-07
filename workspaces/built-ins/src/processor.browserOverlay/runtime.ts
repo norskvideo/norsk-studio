@@ -82,6 +82,7 @@ export class BrowserOverlay implements CreatedMediaNode {
           this.currentVideo = undefined;
         }
       }
+      this.currentVideo = nextVideo;
 
       if (!this.compose) {
         const thisCompose = this.compose = await this.norsk.processor.transform.videoCompose<"video" | "overlay">({
