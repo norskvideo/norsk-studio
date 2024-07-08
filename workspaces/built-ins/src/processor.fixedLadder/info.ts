@@ -176,7 +176,7 @@ export const rungNames: RungName[] =
     'h264_320x180'
   ];
 
-function createSoftwareRung(rung: RungName) {
+export function createSoftwareRung(rung: RungName) {
   switch (rung) {
     case 'h264_1920x1080':
       return createRungImpl({ name: rung, threads: 8, bitrate: 5_000 });
@@ -191,7 +191,7 @@ function createSoftwareRung(rung: RungName) {
   }
 }
 
-function createMa35dRung(rung: RungName) {
+export function createMa35dRung(rung: RungName) {
   switch (rung) {
     case 'h264_1920x1080':
       return createMa35DHevcRungImpl({ name: rung, bitrate: 10_000 });
@@ -206,7 +206,7 @@ function createMa35dRung(rung: RungName) {
   }
 }
 
-function createNvidiaRung(rung: RungName) {
+export function createNvidiaRung(rung: RungName) {
   switch (rung) {
     case 'h264_1920x1080':
       return createNvidiaRungImpl({ name: rung, bitrate: 5_000_000 });
@@ -221,7 +221,7 @@ function createNvidiaRung(rung: RungName) {
   }
 }
 
-function createQuadraRung(rung: RungName) {
+export function createQuadraRung(rung: RungName) {
   switch (rung) {
     case 'h264_1920x1080':
       return createQuadraRungImpl({ name: rung, bitrate: 5_000_000 });
@@ -236,7 +236,7 @@ function createQuadraRung(rung: RungName) {
   }
 }
 
-function createLoganRung(rung: RungName) {
+export function createLoganRung(rung: RungName) {
   switch (rung) {
     case 'h264_1920x1080':
       return createLoganRungImpl({ name: rung, bitrate: 5_000_000 });
