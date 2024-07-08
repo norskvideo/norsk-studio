@@ -13,6 +13,7 @@ import { Av, BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { expect } from "chai";
 import { RtmpInputEvent, RtmpInputSettings, RtmpInputState } from "../input.rtmp/runtime";
+import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();
@@ -140,60 +141,99 @@ describe("RTMP Input", () => {
         )
       })
     });
-  });
 
-  impl("RTMP Input with two stream names", {
-    id: 'rtmp',
-    displayName: 'rtmp',
-    port: 5001,
-    appName: 'yolo',
-    streamNames: ['first', 'second']
-  }, async (testDocument, _cfg) => {
-
-    let norsk: Norsk | undefined = undefined;
-    let ffmpeg: Ffmpeg[] = [];
-
-    afterEach(async () => {
-      await norsk?.close();
-      await Promise.all(ffmpeg.map(async (f) => f.stop()));
-    })
-
-    describe("Both sources connect", () => {
-      it("should be able to select those streams", async () => {
+    describe("source re-connects with the right id", () => {
+      it("Should re-output the stream with the right id", async () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
         const source = result.components['rtmp'];
-        const sink1 = new TraceSink(norsk as Norsk, "sink-1");
-        const sink2 = new TraceSink(norsk as Norsk, "sink-2");
-        await Promise.all([sink1.initialised, sink2.initialised]);
+        const sink = new TraceSink(norsk as Norsk, "sink");
+        await sink.initialised;
 
-        sink1.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'first' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
-        ])
-        sink2.subscribe([
-          new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'second' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+        sink.subscribe([
+          new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-all-streams', select: Av }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
         ffmpeg = [
           await Ffmpeg.create(ffmpegCommand({
             transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'first' })
           })),
+        ];
+
+        await waitForCondition(() => sink.streamCount() == 2);
+        await ffmpeg[0].stop();
+        await waitForCondition(() => sink.streamCount() == 0);
+
+        ffmpeg = [
           await Ffmpeg.create(ffmpegCommand({
-            transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'second' })
-          }))
+            transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'first' })
+          })),
         ];
         await waitForAssert(
-          () => sink1.streamCount() == 2 && sink1.totalMessages() > 25 && sink2.streamCount() == 2 && sink2.totalMessages() > 25,
+          () => sink.streamCount() == 2 && sink.totalMessages() > 25,
           () => {
-            expect(sink1.streamCount()).equal(2);
-            expect(sink2.streamCount()).equal(2);
-            expect(sink1.messages.find((m) => m.streamKey.sourceName == 'first')).exist;
-            expect(sink2.messages.find((m) => m.streamKey.sourceName == 'second')).exist;
+            expect(sink.streamCount()).equals(2);
+            expect(sink.messages.find((m) => m.streamKey.sourceName == 'first')).exist;
           },
           10000.0,
           10.0
         )
       })
+    });
+
+    impl("RTMP Input with two stream names", {
+      id: 'rtmp',
+      displayName: 'rtmp',
+      port: 5001,
+      appName: 'yolo',
+      streamNames: ['first', 'second']
+    }, async (testDocument, _cfg) => {
+
+      let norsk: Norsk | undefined = undefined;
+      let ffmpeg: Ffmpeg[] = [];
+
+      afterEach(async () => {
+        await norsk?.close();
+        await Promise.all(ffmpeg.map(async (f) => f.stop()));
+      })
+
+      describe("Both sources connect", () => {
+        it("should be able to select those streams", async () => {
+          norsk = await Norsk.connect({ onShutdown: () => { } });
+          const compiled = await testDocument();
+          const result = await go(norsk, compiled);
+          const source = result.components['rtmp'];
+          const sink1 = new TraceSink(norsk as Norsk, "sink-1");
+          const sink2 = new TraceSink(norsk as Norsk, "sink-2");
+          await Promise.all([sink1.initialised, sink2.initialised]);
+
+          sink1.subscribe([
+            new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'first' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          ])
+          sink2.subscribe([
+            new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'second' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          ])
+          ffmpeg = [
+            await Ffmpeg.create(ffmpegCommand({
+              transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'first' })
+            })),
+            await Ffmpeg.create(ffmpegCommand({
+              transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'second' })
+            }))
+          ];
+          await waitForAssert(
+            () => sink1.streamCount() == 2 && sink1.totalMessages() > 25 && sink2.streamCount() == 2 && sink2.totalMessages() > 25,
+            () => {
+              expect(sink1.streamCount()).equal(2);
+              expect(sink2.streamCount()).equal(2);
+              expect(sink1.messages.find((m) => m.streamKey.sourceName == 'first')).exist;
+              expect(sink2.messages.find((m) => m.streamKey.sourceName == 'second')).exist;
+            },
+            10000.0,
+            10.0
+          )
+        })
+      });
     });
   });
 });
