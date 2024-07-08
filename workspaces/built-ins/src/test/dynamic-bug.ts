@@ -4,7 +4,9 @@ import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-sy
 import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
-import go from '@norskvideo/norsk-studio/lib/runtime/execution';
+import { AddressInfo } from 'net';
+import { Server } from 'http';
+import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { DynamicBugCommand, DynamicBugConfig, DynamicBugEvent, DynamicBugState } from "../processor.dynamicBug/runtime";
 import { videoAndAudio, testSourceDescription } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import { DynamicBug } from "../processor.dynamicBug/runtime";
@@ -14,11 +16,29 @@ import DynamicBugInfo from "../processor.dynamicBug/info";
 import { BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
+import fetch from "node-fetch";
+
+import express from 'express';
+import { expect } from "chai";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();
   await registerAll(runtime);
   return runtime;
+}
+
+const videoOpts = {
+  resolution: { width: 640, height: 360 },
+  frameRate: { frames: 25, seconds: 1 }
+}
+const videoOptsOne = {
+  resolution: { width: 640, height: 360 },
+  frameRate: { frames: 25, seconds: 1 }
+}
+
+const videoOptsTwo = {
+  resolution: { width: 800, height: 600 },
+  frameRate: { frames: 25, seconds: 1 }
 }
 
 describe("Dynamic Bug", () => {
@@ -40,11 +60,11 @@ describe("Dynamic Bug", () => {
     return compiled;
   }
 
-  let norsk: Norsk | undefined = undefined;
+  let norsk: Norsk = undefined!;
 
   afterEach(async () => {
+    console.log("closing norsk");
     await norsk?.close();
-    norsk = undefined;
   })
 
   it("Dynamic bug with no configuration, passthrough", async () => {
@@ -55,10 +75,6 @@ describe("Dynamic Bug", () => {
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
-    const videoOpts = {
-      resolution: { width: 640, height: 360 },
-      frameRate: { frames: 25, seconds: 1 }
-    }
 
     const source = await videoAndAudio(norsk, 'source', videoOpts);
 
@@ -86,15 +102,6 @@ describe("Dynamic Bug", () => {
         { type: 'take-all-streams', select: ["audio", "video"] }, DynamicBugInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
     ])
 
-    const videoOptsOne = {
-      resolution: { width: 640, height: 360 },
-      frameRate: { frames: 25, seconds: 1 }
-    }
-
-    const videoOptsTwo = {
-      resolution: { width: 800, height: 600 },
-      frameRate: { frames: 25, seconds: 1 }
-    }
 
     const sourceOne = await videoAndAudio(norsk, 'sourceOne', videoOptsOne);
 
@@ -136,11 +143,6 @@ describe("Dynamic Bug", () => {
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
-    const videoOpts = {
-      resolution: { width: 640, height: 360 },
-      frameRate: { frames: 25, seconds: 1 }
-    }
-
     const source = await videoAndAudio(norsk, 'source', videoOpts);
 
     bug.subscribe([new StudioNodeSubscriptionSource(source,
@@ -168,12 +170,6 @@ describe("Dynamic Bug", () => {
     const bug = result.components["bug"] as DynamicBug;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
-
-
-    const videoOpts = {
-      resolution: { width: 640, height: 360 },
-      frameRate: { frames: 25, seconds: 1 }
-    }
 
     const source = await videoAndAudio(norsk, 'source', videoOpts);
 
@@ -207,12 +203,6 @@ describe("Dynamic Bug", () => {
     const bug = result.components["bug"] as DynamicBug;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
-
-
-    const videoOpts = {
-      resolution: { width: 640, height: 360 },
-      frameRate: { frames: 25, seconds: 1 }
-    }
 
     const source = await videoAndAudio(norsk, 'source', videoOpts);
 
@@ -252,16 +242,6 @@ describe("Dynamic Bug", () => {
         { type: 'take-all-streams', select: ["audio", "video"] }, DynamicBugInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
     ])
 
-    const videoOptsOne = {
-      resolution: { width: 640, height: 360 },
-      frameRate: { frames: 25, seconds: 1 }
-    }
-
-    const videoOptsTwo = {
-      resolution: { width: 800, height: 600 },
-      frameRate: { frames: 25, seconds: 1 }
-    }
-
     const sourceOne = await videoAndAudio(norsk, 'sourceOne', videoOptsOne);
 
     bug.subscribe([new StudioNodeSubscriptionSource(sourceOne,
@@ -300,5 +280,113 @@ describe("Dynamic Bug", () => {
       waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.file == "test2.png"),
       waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.position == "bottomleft")
     ])
+  })
+
+  describe("http api", () => {
+
+    let port = 0;
+    let result: RunResult = undefined!;
+    let listener: Server = undefined!;
+    let bug: DynamicBug = undefined!;
+
+    beforeEach(async () => {
+      console.log("opening norsk");
+      const compiled = await testDocument();
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      const app = express();
+      app.use(express.json());
+      result = await go(norsk, compiled, app);
+      listener = app.listen(0);
+      const address = listener.address() as AddressInfo;
+      port = address.port;
+      bug = result.components["bug"] as DynamicBug;
+      const sink = new TraceSink(norsk as Norsk, "sink");
+      await sink.initialised;
+
+      const source = await videoAndAudio(norsk, 'source', videoOpts);
+
+      bug.subscribe([new StudioNodeSubscriptionSource(source,
+        testSourceDescription(),
+        {
+          type: 'take-all-streams', select: ['video']
+        })
+      ])
+      sink.subscribe([
+        new StudioNodeSubscriptionSource(bug, compiled.components['bug'].yaml,
+          { type: 'take-all-streams', select: ["audio", "video"] }, DynamicBugInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+      ])
+      await waitForCondition(() => sink.streamCount() == 1, 10000.0);
+    })
+
+    afterEach(async () => {
+      listener.close();
+    })
+
+    it("Setting active bug via the http api", async () => {
+      const httpResult = await fetch(`http://localhost:${port}/bug/active-bug`, {
+        method: 'POST',
+        body: JSON.stringify({
+          bug: 'test.png',
+          position: 'bottomleft'
+        })
+      });
+      const body = await httpResult.text();
+
+      function latestState() {
+        return result.runtimeState.latest["bug"] as DynamicBugState;
+      }
+
+      expect(body).equal("ok");
+
+      await Promise.all([
+        assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
+        waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.file == "test.png"),
+        waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.position == "bottomleft")
+      ])
+    })
+
+    it("Clearing active bug via empty post to the http api", async () => {
+      await bug.setupBug("test.png", "bottomleft")
+
+      function latestState() {
+        return result.runtimeState.latest["bug"] as DynamicBugState;
+      }
+
+      const httpResult = await fetch(`http://localhost:${port}/bug/active-bug`, {
+        method: 'POST',
+        body: JSON.stringify({
+        })
+      });
+      const body = await httpResult.text();
+
+      expect(body).equal("ok");
+
+      await Promise.all([
+        assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
+        waitForAssert(() => latestState().activeBug?.file == undefined, () => latestState().activeBug?.file == undefined),
+        waitForAssert(() => latestState().activeBug?.file == undefined, () => latestState().activeBug?.position == undefined),
+      ])
+    })
+
+    it("Clearing active bug via delete to the http api", async () => {
+      await bug.setupBug("test.png", "bottomleft")
+
+      function latestState() {
+        return result.runtimeState.latest["bug"] as DynamicBugState;
+      }
+
+      const httpResult = await fetch(`http://localhost:${port}/bug/active-bug`, {
+        method: 'delete'
+      });
+      const body = await httpResult.text();
+
+      expect(body).equal("ok");
+
+      await Promise.all([
+        assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
+        waitForAssert(() => latestState().activeBug?.file == undefined, () => latestState().activeBug?.file == undefined),
+        waitForAssert(() => latestState().activeBug?.file == undefined, () => latestState().activeBug?.position == undefined),
+      ])
+    })
   })
 });
