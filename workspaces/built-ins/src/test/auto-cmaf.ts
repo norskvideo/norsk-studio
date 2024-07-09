@@ -16,6 +16,7 @@ import { RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/clien
 import { CreatedMediaNode, StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { testRuntime } from "@norskvideo/norsk-studio/lib/test/_util/runtime";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
+import { SimpleInputWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = await testRuntime();
@@ -24,7 +25,7 @@ async function defaultRuntime(): Promise<RuntimeSystem> {
 }
 
 describe("Auto CMAF Output", () => {
-  async function sharedSetup(norsk: Norsk, sources: CreatedMediaNode[]): Promise<RunResult> {
+  async function sharedSetup(norsk: Norsk, sources: CreatedMediaNode[]) {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
@@ -49,14 +50,31 @@ describe("Auto CMAF Output", () => {
     const result = await go(norsk, compiled);
     const cmaf = result.components["cmaf"] as AutoCmaf;
 
-    cmaf.subscribe(sources.map((s) => {
-      return new StudioNodeSubscriptionSource(s,
-        testSourceDescription(),
-        {
-          type: 'take-first-stream', select: ["video", "audio"]
-        })
-    }))
-    return result;
+    function doSubscribe() {
+      cmaf.subscribe(sources.map((s) => {
+        return new StudioNodeSubscriptionSource(s,
+          testSourceDescription(),
+          {
+            type: 'take-first-stream', select: ["video", "audio"]
+          })
+      }))
+    }
+
+    // This is what norsk studio itself does
+    sources.forEach((s) => {
+      s.relatedMediaNodes.onChange(() => {
+        doSubscribe();
+      })
+    })
+
+    doSubscribe();
+
+    function setSources(newSources: CreatedMediaNode[]) {
+      sources = newSources;
+      doSubscribe();
+    }
+
+    return { doSubscribe, setSources, ...result };
   }
 
   async function awaitCompleteManifest(url: string, expectedStreams: number) {
@@ -76,7 +94,7 @@ describe("Auto CMAF Output", () => {
               v.audio.forEach((a) => { if (a.uri) acc.add(a.uri) });
               return acc;
             }, new Set())
-            if (current.size >= expectedStreams) {
+            if (current.size === expectedStreams) {
               clearInterval(i);
               r(master);
             }
@@ -180,6 +198,90 @@ describe("Auto CMAF Output", () => {
 
       expect(sourceTwoManifest.variants).length(1);
       expect(sourceTwoManifest.variants[0]?.audio).length(1);
+
+    })
+  });
+
+  describe("Stream within a source goes away", () => {
+    let norsk: Norsk | undefined = undefined;
+    let result: RunResult = undefined!;
+    let video1: SimpleInputWrapper = undefined!;
+    let video2: SimpleInputWrapper = undefined!;
+    let video3: SimpleInputWrapper = undefined!;
+    let audio1: SimpleInputWrapper = undefined!;
+    let audio2: SimpleInputWrapper = undefined!;
+
+    afterEach(async () => {
+      await norsk?.close();
+    })
+
+    beforeEach(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
+      video2 = await video(norsk, 'source2-video', { renditionName: "high", sourceName: "source2" });
+      video3 = await video(norsk, 'source1-video-low', { renditionName: "low", sourceName: "source1" });
+      audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
+      audio2 = await audio(norsk, 'source2-audio', { renditionName: "default", sourceName: "source2" });
+      result = await sharedSetup(norsk, [video1, video2, audio1, audio2, video3]);
+    })
+
+    it("Spins up a multi-variant playlist with all the streams", async () => {
+      await waitForCondition(() => result?.registeredOutputs.length === 3);
+
+      const source1 = result?.registeredOutputs.find((s) => s.url?.endsWith("source1-1.m3u8"));
+      const source2 = result?.registeredOutputs.find((s) => s.url?.endsWith("source2-1.m3u8"));
+
+      await awaitCompleteManifest(source1!.url!, 3)
+      await awaitCompleteManifest(source2!.url!, 2)
+
+      await video3.close();
+
+      const sourceOneManifest = await awaitCompleteManifest(source1!.url!, 2)
+      const sourceTwoManifest = await awaitCompleteManifest(source2!.url!, 2)
+
+      expect(sourceOneManifest.variants).length(1);
+      expect(sourceOneManifest.variants[0]?.audio).length(1);
+
+      expect(sourceTwoManifest.variants).length(1);
+      expect(sourceTwoManifest.variants[0]?.audio).length(1);
+
+
+    })
+  });
+
+  describe("Stream within a source goes away and comes back", () => {
+    let norsk: Norsk = undefined!;
+    let result: RunResult & { setSources: (sources: CreatedMediaNode[]) => void } = undefined!;
+    let video1: SimpleInputWrapper = undefined!;
+    let video2: SimpleInputWrapper = undefined!;
+    let audio1: SimpleInputWrapper = undefined!;
+
+    after(async () => {
+      await norsk?.close();
+    })
+
+    before(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
+      video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
+      audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
+      result = await sharedSetup(norsk, [video1, video2, audio1]);
+    })
+
+    it("Spins up a multi-variant playlist with all the streams", async () => {
+      await waitForCondition(() => result?.registeredOutputs.length === 2);
+      const source1 = result?.registeredOutputs.find((s) => s.url?.endsWith("source1-1.m3u8"));
+      await awaitCompleteManifest(source1!.url!, 3)
+      await video2.close();
+      await awaitCompleteManifest(source1!.url!, 2)
+      video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
+
+      result.setSources([video1, video2, audio1]);
+
+      const sourceOneManifest = await awaitCompleteManifest(source1!.url!, 3)
+
+      expect(sourceOneManifest.variants).length(2);
+      expect(sourceOneManifest.variants[0]?.audio).length(1);
 
     })
   });

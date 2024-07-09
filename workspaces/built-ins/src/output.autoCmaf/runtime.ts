@@ -189,6 +189,7 @@ export class AutoCmaf extends CustomSinkNode {
       }
     });
 
+
     const subscribes: Promise<unknown>[] = [];
     const creations = streams.map(async (stream) => {
       const existing = this.currentMedia.find((e) => streamKeysAreEqual(e.key, stream.key));
@@ -330,6 +331,23 @@ export class AutoCmaf extends CustomSinkNode {
           assertUnreachable(stream.metadata.message);
       }
     });
+
+    const deletions = this.currentMedia.filter((x) => {
+      const stillExists = streams.find((y) => streamKeysAreEqual(y.key, x.key));
+      if (stillExists) return false;
+      return true;
+    })
+
+    // We'll stop the nodes, but leave the data in the collection until they're actually closed
+    // or we'll end up with clashes if the stream re-appears while we're stopping it
+    // deletions also get done before recursion to double enforce this
+    for (const deletion of deletions) {
+      const node = deletion?.node;
+      deletion.node = undefined;
+      await node?.close();
+      this.currentMedia = this.currentMedia.filter((x) =>
+        !streamKeysAreEqual(x.key, deletion.key))
+    }
 
     const thisResponse = this.pendingResponses.shift();
 
