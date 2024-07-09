@@ -4,7 +4,7 @@ import React from "react";
 const InlineView = React.lazy(async () => import('./inline-view'));
 const SummaryView = React.lazy(async () => import('./summary-view'));
 
-const defaultPort = 5001;
+const defaultPort = 1935;
 
 export default function({
   defineComponent,
