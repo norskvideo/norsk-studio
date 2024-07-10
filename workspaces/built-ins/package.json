@@ -20,11 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@norskvideo/norsk-sdk": "^1.0.360",
-<<<<<<< HEAD
-    "@norskvideo/norsk-studio": "^1.12.1",
-=======
-    "@norskvideo/norsk-studio": "file:../../../studio-core",
->>>>>>> 670cdc1 (move aws over to its own package, add a test for SRT caller reconnects)
+    "@norskvideo/norsk-studio": "^1.13.0",
     "@norskvideo/webrtc-client": "^0.1.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
