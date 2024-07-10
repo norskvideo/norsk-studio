@@ -10,7 +10,7 @@
     "build:copy-css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
     "build:tailwind": "npx tailwindcss -i src/shared/tailwind.css -o client/style.css",
     "build:eslint": "npx eslint src",
-    "test": "NODE_ENV=test mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
+    "test": "LOG_LEVEL=${LOG_LEVEL:-error} NODE_ENV=test mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
   },
   "files": [
     "client/*",

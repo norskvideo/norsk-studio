@@ -6,7 +6,8 @@ import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscri
 import { CustomSinkNode, SimpleSinkWrapper, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
-import {webRtcSettings} from '../shared/webrtcSettings';
+import { webRtcSettings } from '../shared/webrtcSettings';
+import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 
 export type PreviewOutputSettings = {
   id: string;
@@ -48,7 +49,7 @@ export default class WhepOutputDefinition implements ServerComponentDefinition<P
   }
 }
 
-class PreviewOutput extends CustomSinkNode {
+export class PreviewOutput extends CustomSinkNode {
   initialised: Promise<void>;
   norsk: Norsk;
   updates: RuntimeUpdates<PreviewOutputState, PreviewOutputEvent>;
@@ -58,6 +59,7 @@ class PreviewOutput extends CustomSinkNode {
   encoder?: SourceMediaNode;
   whep?: WhepOutputNode;
   audioLevels?: AudioMeasureLevelsNode;
+  context: ContextPromiseControl = new ContextPromiseControl(this.subscribeImpl.bind(this));
 
   constructor(norsk: Norsk, { updates, shared }: StudioRuntime<PreviewOutputState, PreviewOutputEvent>, cfg: PreviewOutputSettings) {
     super(cfg.id);
@@ -69,19 +71,6 @@ class PreviewOutput extends CustomSinkNode {
   }
 
   async initialise() {
-    const whepCfg: SdkSettings = {
-      id: `${this.cfg.id}-whep`,
-      bufferDelayMs: this.cfg.bufferDelayMs,
-      onPublishStart: () => {
-        const url = this.whep?.endpointUrl;
-        if (url) {
-          this.updates.raiseEvent({ type: 'url-published', url })
-        }
-
-      },
-      ...webRtcSettings(this.cfg.__global.iceServers)
-    };
-    this.whep = await this.norsk.output.whep(whepCfg);
 
     this.audioLevels = await this.norsk.processor.control.audioMeasureLevels({
       id: `${this.cfg.id}-audiolevels`,
@@ -100,38 +89,76 @@ class PreviewOutput extends CustomSinkNode {
         })
       }
     });
-    this.registerInput(this.whep);
     this.registerInput(this.audioLevels)
   }
 
   override subscribe(sources: StudioNodeSubscriptionSource[], _opts?: SubscriptionOpts | undefined): void {
-    void this.subscribeImpl(sources);
+    this.context.setSources(sources);
   }
 
   async subscribeImpl(sources: StudioNodeSubscriptionSource[]) {
     // can probably just have 's.hasMedia("video")'
-    const videoSource = sources.filter((s) => s.streams.select.includes("video"))[0];
-    const audioSource = sources.filter((s) => s.streams.select.includes("audio"))[0];
+    const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0);
+    const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0);
 
-    if (!this.encoder) {
-      debuglog("Finding preview encode for preview node", this.id);
-      this.encoder = await this.shared.previewEncode(videoSource.selectVideo()[0], this.cfg.__global.hardware)
-      this.registerInput(this.encoder);
+    if (videoSource) {
+      if (!this.encoder) {
+        debuglog("Finding preview encode for preview node", this.id);
+        this.encoder = await this.shared.previewEncode(videoSource.selectVideo()[0], this.cfg.__global.hardware)
+        this.registerInput(this.encoder);
+      }
+    } else {
+      this.encoder = undefined;
     }
 
-    // Audio into levels
-    this.audioLevels?.subscribe(audioSource.selectAudio())
+    if (audioSource) {
+      // Audio into levels
+      this.audioLevels?.subscribe(audioSource.selectAudio())
+    } else {
+      this.audioLevels?.subscribe([])
+    }
 
-    const subscriptions: ReceiveFromAddressAuto[] = [{
-      source: this.encoder,
-      sourceSelector: selectVideo
-    }];
+    const subscriptions: ReceiveFromAddressAuto[] = [];
 
-    if (audioSource?.source.relatedMediaNodes.output) {
+    if (this.encoder) {
+      subscriptions.push({
+        source: this.encoder,
+        sourceSelector: selectVideo
+      });
+    }
+
+    if (audioSource) {
       subscriptions.push(audioSource.selectAudio()[0]);
     }
 
-    // And then whep gets encoded + original audio
-    this.whep?.subscribe(subscriptions, (ctx) => ctx.streams.length == subscriptions.length);
+    const whepCfg: SdkSettings = {
+      id: `${this.cfg.id}-whep`,
+      bufferDelayMs: this.cfg.bufferDelayMs,
+      onPublishStart: () => {
+        const url = this.whep?.endpointUrl;
+        if (url) {
+          this.updates.raiseEvent({ type: 'url-published', url })
+        }
+
+      },
+      ...webRtcSettings(this.cfg.__global.iceServers)
+    };
+
+    // In theory this can work for audio only or video only workflows
+    if (!this.whep && subscriptions.length > 0) {
+      this.whep = await this.norsk.output.whep(whepCfg);
+
+      // And then whep gets encoded + original audio
+      this.whep?.subscribe(subscriptions, (ctx) => ctx.streams.length == subscriptions.length);
+    }
+
+    if (subscriptions.length == 0) {
+      await this.whep?.close();
+      this.whep = undefined;
+      this.updates.update({})
+    }
+    if (subscriptions.length == 1 && !audioSource) {
+      this.updates.update({ url: this.whep?.endpointUrl })
+    }
   }
 }
