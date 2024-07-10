@@ -17,6 +17,7 @@ import { CreatedMediaNode, StudioNodeSubscriptionSource } from "@norskvideo/nors
 import { testRuntime } from "@norskvideo/norsk-studio/lib/test/_util/runtime";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
 import { SimpleInputWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
+import { waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = await testRuntime();
@@ -225,7 +226,7 @@ describe("Auto CMAF Output", () => {
       result = await sharedSetup(norsk, [video1, video2, audio1, audio2, video3]);
     })
 
-    it("Spins up a multi-variant playlist with all the streams", async () => {
+    it("Removes the media stream from the multivariant", async () => {
       await waitForCondition(() => result?.registeredOutputs.length === 3);
 
       const source1 = result?.registeredOutputs.find((s) => s.url?.endsWith("source1-1.m3u8"));
@@ -249,7 +250,8 @@ describe("Auto CMAF Output", () => {
     })
   });
 
-  describe("Stream within a source goes away and comes back", () => {
+  function streamGoesAwayAndComesBack(wait: boolean) {
+
     let norsk: Norsk = undefined!;
     let result: RunResult & { setSources: (sources: CreatedMediaNode[]) => void } = undefined!;
     let video1: SimpleInputWrapper = undefined!;
@@ -268,12 +270,15 @@ describe("Auto CMAF Output", () => {
       result = await sharedSetup(norsk, [video1, video2, audio1]);
     })
 
-    it("Spins up a multi-variant playlist with all the streams", async () => {
+    it("Removes the stream from the multi-variant then re-adds it", async () => {
       await waitForCondition(() => result?.registeredOutputs.length === 2);
       const source1 = result?.registeredOutputs.find((s) => s.url?.endsWith("source1-1.m3u8"));
       await awaitCompleteManifest(source1!.url!, 3)
       await video2.close();
-      await awaitCompleteManifest(source1!.url!, 2)
+
+      if (wait)
+        await awaitCompleteManifest(source1!.url!, 2)
+
       video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
 
       result.setSources([video1, video2, audio1]);
@@ -282,8 +287,113 @@ describe("Auto CMAF Output", () => {
 
       expect(sourceOneManifest.variants).length(2);
       expect(sourceOneManifest.variants[0]?.audio).length(1);
+    })
+  }
+
+  describe("Stream within a source goes away and comes back, wait", () => {
+    streamGoesAwayAndComesBack(true);
+  });
+
+  describe("Stream within a source goes away and comes back, no wait", () => {
+    streamGoesAwayAndComesBack(true);
+  });
+
+  describe("Whole source goes away", () => {
+    let norsk: Norsk = undefined!;
+    let result: RunResult & { setSources: (sources: CreatedMediaNode[]) => void } = undefined!;
+    let video1: SimpleInputWrapper = undefined!;
+    let video2: SimpleInputWrapper = undefined!;
+    let audio1: SimpleInputWrapper = undefined!;
+
+    after(async () => {
+      await norsk?.close();
+    })
+
+    before(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
+      video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
+      audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
+      result = await sharedSetup(norsk, [video1, video2, audio1]);
+    })
+
+    it("Removes the multivariant", async () => {
+      await waitForCondition(() => result?.registeredOutputs.length === 2);
+      const source1 = result?.registeredOutputs.find((s) => s.url?.endsWith("source1-1.m3u8"));
+      await awaitCompleteManifest(source1!.url!, 3)
+
+      await audio1.close();
+      await video2.close();
+      await video1.close();
+
+      async function playlistExists() {
+        const response = await fetch(source1!.url!);
+        return response.status == 200;
+      }
+
+      await waitForAssert(async () => !(await playlistExists()), async () => !(await playlistExists()));
+    })
+  });
+
+
+  function wholeSourceGoesAwayComesBack(wait: boolean) {
+
+    let norsk: Norsk = undefined!;
+    let result: RunResult & { setSources: (sources: CreatedMediaNode[]) => void } = undefined!;
+    let video1: SimpleInputWrapper = undefined!;
+    let video2: SimpleInputWrapper = undefined!;
+    let audio1: SimpleInputWrapper = undefined!;
+
+    after(async () => {
+      await norsk?.close();
+    })
+
+    before(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
+      video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
+      audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
+      result = await sharedSetup(norsk, [video1, video2, audio1]);
+    })
+
+    it("Re-creates the multivariant", async () => {
+      await waitForCondition(() => result?.registeredOutputs.length === 2);
+      const source1 = result?.registeredOutputs.find((s) => s.url?.endsWith("source1-1.m3u8"));
+      await awaitCompleteManifest(source1!.url!, 3)
+
+      await audio1.close();
+      await video2.close();
+      await video1.close();
+
+      async function playlistExists() {
+        const response = await fetch(source1!.url!);
+        return response.status == 200;
+      }
+
+      if (wait)
+        await waitForCondition(async () => !(await playlistExists()));
+
+      video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
+      video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
+      audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
+      result.setSources([video1, video2, audio1]);
+
+      const finalManifest = await awaitCompleteManifest(source1!.url!, 3)
+      expect(finalManifest.variants).length(2);
+      expect(finalManifest.variants[0]?.audio).length(1);
 
     })
+
+  }
+
+  // Happy path
+  describe("Whole source goes away and comes back again, wait", () => {
+    wholeSourceGoesAwayComesBack(true);
+  });
+
+  // Did we write the async stuff properly so we don't end up with clashes?
+  describe("Whole source goes away and comes back again, no wait", () => {
+    wholeSourceGoesAwayComesBack(false);
   });
 });
 

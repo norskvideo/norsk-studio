@@ -4,6 +4,7 @@ import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { CreatedMediaNode, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { ReportBuilder } from '@norskvideo/norsk-studio/lib/runtime/execution';
+import { infolog } from '@norskvideo/norsk-studio/lib/server/logging';
 
 
 export type AutoCmafS3Destination = {
@@ -357,18 +358,29 @@ export class AutoCmaf extends CustomSinkNode {
 
     await Promise.all(creations);
 
-    this.mv?.subscribe(
-      this.currentMedia.flatMap((m) => {
-        if (m.key.programNumber == this.defaultProgramNumber && m.key.sourceName == this.defaultSourceName && m.node) return [{ source: m.node, sourceSelector: selectPlaylist }];
-        return [];
-      }));
+    const defaultSources = this.currentMedia.flatMap((m) => {
+      if (m.key.programNumber == this.defaultProgramNumber && m.key.sourceName == this.defaultSourceName && m.node) return [{ source: m.node, sourceSelector: selectPlaylist }];
+      return [];
+    });
+
+    if (defaultSources.length == 0 && this.defaultSourceName != '') {
+      infolog("Resetting default multivariant because there are no streams");
+      this.defaultProgramNumber = 0;
+      this.defaultSourceName = '';
+    }
+    this.mv?.subscribe(defaultSources);
 
     for (const mv of this.currentMultiVariants) {
-      mv.node?.subscribe(
-        this.currentMedia.flatMap((m) => {
-          if (m.key.programNumber == mv.programNumber && m.key.sourceName == mv.sourceName && m.node) return [{ source: m.node, sourceSelector: selectPlaylist }];
-          return [];
-        }));
+      const sources = this.currentMedia.flatMap((m) => {
+        if (m.key.programNumber == mv.programNumber && m.key.sourceName == mv.sourceName && m.node) return [{ source: m.node, sourceSelector: selectPlaylist }];
+        return [];
+      })
+      if (sources.length == 0) {
+        infolog("Removing multi-variant because all streams have gone")
+        await mv.node?.close();
+        this.currentMultiVariants = this.currentMultiVariants.filter((m) => m != mv);
+      }
+      mv.node?.subscribe(sources);
     }
 
     await Promise.all(subscribes);
