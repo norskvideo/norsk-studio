@@ -11,7 +11,7 @@ import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/l
 import puppeteer, { Browser, Page } from 'puppeteer';
 import WhepInfo from "../output.whep/info";
 import { Av, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
-import { SimpleSinkWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
+import { SimpleInputWrapper, SimpleSinkWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
@@ -42,19 +42,21 @@ describe("WHEP Output", () => {
   let norsk: Norsk | undefined = undefined;
   let browser: Browser | undefined = undefined;
   let page: Page | undefined = undefined;
+  let whep: SimpleSinkWrapper = undefined!;
+  let source: SimpleInputWrapper = undefined!;
 
-  after(async () => {
+  afterEach(async () => {
     await norsk?.close();
     await page?.close();
     await browser?.close();
   })
 
-  before(async () => {
+  beforeEach(async () => {
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();
     const result = await go(norsk, compiled);
-    const whep = result.components["whep"] as SimpleSinkWrapper;
-    const source = await videoAndAudio(norsk, 'source');
+    whep = result.components["whep"] as SimpleSinkWrapper;
+    source = await videoAndAudio(norsk, 'source');
     whep.subscribe([new StudioNodeSubscriptionSource(
       source,
       testSourceDescription(),
@@ -63,11 +65,72 @@ describe("WHEP Output", () => {
   })
 
 
-  it("Should be running a WHEP output", async () => {
+  it("With a source", async () => {
     browser = await puppeteer.launch({
       headless: 'new',
       executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
     });
+
+    page = await browser.newPage();
+
+    await new Promise<void>((r) => {
+      async function doIt() {
+        await page?.goto('http://localhost:8080/whep/whep/whep.html');
+        // Video only appears if SDP and stuff negotiate properly so..
+        await page?.waitForSelector('video', { timeout: 100.0 })
+          .catch(() => {
+            setTimeout(doIt, 100.0);
+          }).then((v) => {
+            expect(v).exist;
+            r();
+          });
+      }
+      void doIt();
+    })
+  })
+
+  it("Without a source", async () => {
+    whep.subscribe([])
+    browser = await puppeteer.launch({
+      headless: 'new',
+      executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
+    });
+
+    await source.close();
+
+    page = await browser.newPage();
+
+    await new Promise<void>((r) => {
+      async function doIt() {
+        await page?.goto('http://localhost:8080/whep/whep/whep.html');
+        // Video only appears if SDP and stuff negotiate properly so..
+        await page?.waitForSelector('video', { timeout: 1000.0 })
+          .catch(() => {
+
+          }).then((v) => {
+            expect(v).not.exist;
+            r();
+          });
+      }
+      void doIt();
+    })
+  })
+
+  it("With a changing source", async () => {
+    whep.subscribe([])
+    browser = await puppeteer.launch({
+      headless: 'new',
+      executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
+    });
+
+    await source.close();
+    source = await videoAndAudio(norsk!, 'source');
+
+    whep.subscribe([new StudioNodeSubscriptionSource(
+      source,
+      testSourceDescription(),
+      { type: "take-all-streams", select: Av }
+    )])
 
     page = await browser.newPage();
 
