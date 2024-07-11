@@ -14,7 +14,7 @@ import { Context } from '@norskvideo/norsk-sdk';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, IceServer, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
-import {webRtcSettings} from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
+import { webRtcSettings } from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
 
 export type MultiCameraSelectConfig = {
   id: MediaNodeId,
@@ -35,11 +35,18 @@ export type MultiCameraSelectConfig = {
 
 export type MultiCameraSelectState = {
   activeSource: MultiCameraSource,
-  availableSources: MultiCameraSource[],
+  availableSources: MultiCameraSourceInfo[],
   knownSources: MultiCameraSource[],
   previewPlayerUrl?: string,
   players: { source: MultiCameraSource, player: string }[];
 }
+
+
+export type MultiCameraSourceInfo = {
+  resolution: { width: number, height: number },
+  frameRate?: { frames: number, seconds: number },
+  wentLiveAt: number;
+} & MultiCameraSource;
 
 export type MultiCameraSource = {
   id: string,
@@ -51,7 +58,7 @@ export type MultiCameraSelectEvent = {
   activeSource: MultiCameraSource
 } | {
   type: 'source-online'
-  source: MultiCameraSource
+  source: MultiCameraSourceInfo
 } | {
   type: 'source-offline'
   source: MultiCameraSource
@@ -97,7 +104,7 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
       updates.raiseEvent({ type: 'active-source-changed', activeSource });
     }
 
-    const onSourceOnline = (source: MultiCameraSource) => {
+    const onSourceOnline = (source: MultiCameraSourceInfo) => {
       updates.raiseEvent({ type: 'source-online', source });
     }
 
@@ -121,6 +128,54 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
     if (node.whepPreview?.endpointUrl)
       updates.raiseEvent({ type: 'preview-player-online', url: node.whepPreview?.endpointUrl })
 
+    runtime.router.get("/status", (_req, res) => {
+      const latest = updates.latest();
+      const patched = {
+        available: latest.availableSources.map((f) =>
+        ({
+          source: multiCameraSourceToPin(f),
+          resolution: f.resolution,
+          frameRate: f.frameRate,
+          age: (new Date().valueOf() - f.wentLiveAt) / 1000.0
+        })
+        ),
+        active: multiCameraSourceToPin(latest.activeSource)
+      };
+      res.send(JSON.stringify(patched))
+    })
+
+    runtime.router.post("/active", (req, res) => {
+      const source = req.body.source;
+      let fadeMs = req.body.fadeMs ?? 500;
+      if (!source) {
+        res.writeHead(400);
+        res.end("no source");
+        return;
+      }
+      const latest = updates.latest();
+      const converted = pinToMultiCameraSource(source);
+      const exists = latest.availableSources.find((s) => s.id == converted.id && s.key == converted.key)
+
+      if (!exists) {
+        res.writeHead(400);
+        res.end("source isn't active or doesn't exist");
+        return;
+      }
+
+      if (typeof fadeMs === 'number') {
+        if (fadeMs > 1000.0) {
+          res.writeHead(400);
+          res.end("fadeMs too large");
+          return;
+        }
+      } else {
+        fadeMs = undefined;
+      }
+      node.setActiveSource(converted, []);
+      res.writeHead(200);
+      res.end("ok");
+    })
+
     cb(node);
   }
   handleCommand(node: MultiCameraSelect, command: MultiCameraSelectCommand) {
@@ -142,7 +197,7 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
 
 type MultiCameraSelectConfigComplete = {
   onActiveSourceChanged: (source: MultiCameraSource) => void,
-  onSourceOnline: (source: MultiCameraSource) => void,
+  onSourceOnline: (source: MultiCameraSourceInfo) => void,
   onSourceOffline: (source: MultiCameraSource) => void,
   onSourcesDiscovered: (sources: MultiCameraSource[]) => void,
   onPlayerOnline: (ev: { source: MultiCameraSource, url: string }) => void,
@@ -205,7 +260,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
 
     this.whepPreview = await this.norsk.output.whep({
       id: `${this.cfg.id}-preview`,
-      ... webRtcSettings(this.cfg.__global.iceServers),
+      ...webRtcSettings(this.cfg.__global.iceServers),
     });
 
     this.whepPreview?.subscribe([{
@@ -366,12 +421,26 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
 
         const whep = await this.norsk.output.whep({
           id: `${this.id}-whep-${pin}`,
-          ... webRtcSettings(this.cfg.__global.iceServers),
+          ...webRtcSettings(this.cfg.__global.iceServers),
         })
 
-        this.whepOutputs.set(pin, { whep });
-        this.cfg?.onSourceOnline(current);
-        this.cfg?.onPlayerOnline({ source: current, url: whep.endpointUrl });
+        const streams = allStreams.get(pin);
+        const video = streams?.find((f) => f.message.case == "video");
+
+        if (video && video.message.case == "video") {
+          this.whepOutputs.set(pin, { whep });
+          this.cfg?.onSourceOnline({
+            resolution: {
+              width: video.message.value.width,
+              height: video.message.value.height
+            },
+            frameRate: video.message.value.frameRate,
+            wentLiveAt: new Date().valueOf(),
+            ...current
+          });
+          this.cfg?.onPlayerOnline({ source: current, url: whep.endpointUrl });
+        }
+
       }
     }
     void this.setupPreviewPlayers();
