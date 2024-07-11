@@ -1,11 +1,12 @@
-import { Norsk, requireAV, selectAll } from '@norskvideo/norsk-sdk';
+import { Norsk } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { OnCreated, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSourceNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 
 import express, { Response } from 'express';
 import { DescribeFlowCommand, Flow, ListFlowsCommand, ListedFlow, MediaConnectClient, MediaConnectServiceException, Output } from '@aws-sdk/client-mediaconnect';
 import { errorlog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 
 
 export type MediaConnectConfig = {
@@ -16,8 +17,8 @@ export type MediaConnectConfig = {
 }
 
 export default class MediaConnectSourceDefinition implements ServerComponentDefinition<MediaConnectConfig, MediaConnectSource> {
-  async create(norsk: Norsk, cfg: MediaConnectConfig, cb: OnCreated<MediaConnectSource>) {
-    const node = await MediaConnectSource.create(norsk, cfg);
+  async create(norsk: Norsk, cfg: MediaConnectConfig, cb: OnCreated<MediaConnectSource>, runtime: StudioRuntime) {
+    const node = await MediaConnectSource.create(norsk, cfg, runtime);
     cb(node);
   }
 
@@ -78,17 +79,19 @@ export class MediaConnectSource extends CustomSourceNode {
   norsk: Norsk;
   cfg: MediaConnectConfig;
   initialised: Promise<void>;
+  runtime: StudioRuntime;
 
-  static async create(norsk: Norsk, cfg: MediaConnectConfig) {
-    const node = new MediaConnectSource(cfg, norsk);
+  static async create(norsk: Norsk, cfg: MediaConnectConfig, runtime: StudioRuntime) {
+    const node = new MediaConnectSource(cfg, norsk, runtime);
     await node.initialised;
     return node;
   }
 
-  constructor(cfg: MediaConnectConfig, norsk: Norsk) {
+  constructor(cfg: MediaConnectConfig, norsk: Norsk, runtime: StudioRuntime) {
     super(cfg.id);
     this.norsk = norsk;
     this.cfg = cfg;
+    this.runtime = runtime;
     this.initialised = this.initialise();
   }
 
@@ -102,43 +105,49 @@ export class MediaConnectSource extends CustomSourceNode {
       client.destroy();
     } catch (e) {
       errorlog("Failed to retrieve flow from AWS, cannot start media node", e);
+      this.runtime.updates.setAlert('failed-to-start', { message: 'Failed to retrieve flow from AWS, component cannot start', level: 'error' })
       return;
     }
     output = flow?.Outputs?.find((o) => o.OutputArn == this.cfg.outputArn);
 
     if (!flow || !output) {
-      errorlog("Failed to load flow and output details, cannot start node", this.id, this.cfg);
+      this.runtime.updates.setAlert('failed-to-start', { message: 'Failed to retrieve flow from AWS, component cannot start', level: 'error' })
       return;
     }
 
     if (!output.ListenerAddress) {
-      errorlog("No listener address on flow output, cannot start", this.id, this.cfg);
+      this.runtime.updates.setAlert('failed-to-start', { message: 'No listener address on flow output, component cannot start', level: 'error' })
       return;
     }
 
     if (!output.Port) {
-      errorlog("No listener port on flow output, cannot start", this.id, this.cfg);
+      this.runtime.updates.setAlert('failed-to-start', { message: 'No port on flow output, component cannot start', level: 'error' })
       return;
     }
+    this.runtime.updates.setAlert('disconnected', { message: 'Not connected to SRT endpoint', level: 'error' })
     const srt = await this.norsk.input.srt({
       id: `${this.id}-srt`,
       mode: 'caller',
       ip: output.ListenerAddress,
       port: output.Port,
-      sourceName: this.id
+      sourceName: this.id,
+      onConnection: () => {
+        this.runtime.updates.clearAlert('disconnected');
+        return { accept: true, sourceName: this.id }
+      },
+      onConnectionStatusChange: (status) => {
+        switch (status) {
+          case 'disconnected':
+            this.runtime.updates.setAlert('disconnected', { message: 'Disconnected from SRT endpoint', level: 'error' })
+            break;
+          default:
+            assertUnreachable(status);
+        }
+
+      }
     })
 
-    // TODO this is bodged in for NAB AWS purposes
-    const align = await this.norsk.processor.transform.streamAlign({
-      id: `${this.id}-align`,
-      frameRate: { frames: 25, seconds: 1 },
-      sampleRate: 96000,
-      syncAv: true
-    })
-    align.subscribe([{
-      source: srt, sourceSelector: selectAll
-    }], requireAV);
-    this.setup({ output: [align] });
+    this.setup({ output: [srt] });
   }
 
   override async close() {

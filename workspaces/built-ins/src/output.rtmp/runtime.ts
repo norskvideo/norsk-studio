@@ -54,8 +54,12 @@ class RtmpOutput extends CustomSinkNode {
       bufferDelayMs: this.cfg.bufferDelayMs,
       avDelayMs: this.cfg.avDelayMs,
       retryConnectionTimeout: this.cfg.retryConnectionTimeout,
-      onPublishStart: () => { this.updates.raiseEvent({ type: "rtmp-server-connected-and-publishing" }) },
+      onPublishStart: () => {
+        this.updates.clearAlert('connection-error');
+        this.updates.raiseEvent({ type: "rtmp-server-connected-and-publishing" })
+      },
       onConnectionFailure: (reason: RtmpConnectionFailureReason) => {
+        this.updates.setAlert('connection-error', { level: 'error', message: "Failed to connect" });
         switch (reason) {
           case RtmpConnectionFailureReason.RtmpConnectionFailedRetry:
             this.updates.raiseEvent({ type: "rtmp-server-connection-failed-retry" })
@@ -66,7 +70,7 @@ class RtmpOutput extends CustomSinkNode {
       }
     }
     this.rtmp = await this.norsk.output.rtmp(rtmpCfg)
-    this.setup({ sink: this.rtmp }, { requireOneOfEverything: true });
+    this.setup({ sink: this.rtmp, updates: this.updates }, { requireOneOfEverything: true });
   }
 }
 

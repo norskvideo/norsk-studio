@@ -152,7 +152,7 @@ export class MediaLiveOutput extends CustomSinkNode {
       bufferDelayMs: 5000.0,
       avDelayMs: 50.0, // with a buffer delay this is really just for ancillary
     })
-    this.setup({ sink: udp });
+    this.setup({ sink: udp }, { requireOneOfEverything: true });
     void this.loadOutputInformation();
   }
 

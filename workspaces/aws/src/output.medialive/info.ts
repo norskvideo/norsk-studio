@@ -15,15 +15,6 @@ export default function({ defineComponent, validation: { Z }, All }: Registratio
     category: 'output',
     name: "Media Live Output",
     subscription: {
-      // Only one of each
-      // do we care about doing sub validation seeing as this is an SRT output?
-      // maybe this one is a quick chat with @nwolverson
-      // accepts: {
-      //   type: "single-stream",
-      //   media: ["audio", "video", "subtitle"]
-      // }
-
-      // I don't know, can be at least audio+video+2 subs
       accepts: {
         type: "multi-stream",
         media: All
