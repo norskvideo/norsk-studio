@@ -12,6 +12,7 @@
     "workspaces/built-ins",
     "workspaces/alpha",
     "workspaces/vision-director",
-    "workspaces/studio-default"
+    "workspaces/studio-default",
+    "workspaces/aws"
   ]
 }
