@@ -1,0 +1,56 @@
+name: Run Tests
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted
+
+    steps:
+    - name: Checkout the head commit of the branch
+      uses: actions/checkout@v2
+
+    - name: Write license file
+      id: create-json
+      uses: jsdaniell/create-json@v1.2.3
+      with:
+        name: "norsk_license.json"
+        json: ${{ secrets.NORSK_LICENSE }}
+
+    # this would just be a service but you can't override the entry point, dull..
+    - name: Run Norsk 
+      uses: gacts/run-and-post-run@v1
+      with:
+        run: "docker run  --name norsk -d --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly -p 6791:6791 -p 6790:6790 -p 8080:8080 norskvideo/norsk --license-file /mnt/license.json"
+        post: docker stop norsk 
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v4
+    - name: Run the Magic Nix Cache
+      uses: DeterminateSystems/magic-nix-cache-action@v2
+
+    - name: Nix env
+      uses: rrbutani/use-nix-shell-action@v1
+      with:
+        file: shell.nix
+
+    - name: Run Build (With Latest)
+      run: "npm install --workspaces @norskvideo/norsk-sdk@latest && npm install @norskvideo/norsk-studio@latest && npm install && npm run build"
+
+    - name: Run Built-in Tests 
+      run: "npm run test --workspace workspaces/built-ins"
+      timeout-minutes: 10
+
+    - name: Run Vision Director Tests 
+      run: "npm run test --workspace workspaces/vision-director"
+      timeout-minutes: 10
+
+    - name: Dump norsk logs
+      uses: jwalton/gh-docker-logs@v2
+      with:
+        images: 'norsk'
