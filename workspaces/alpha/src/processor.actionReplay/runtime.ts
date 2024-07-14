@@ -1,5 +1,5 @@
 import {
-  AudioEncodeNode, AudioStreamMetadata, CmafAudioOutputNode, CmafDestinationSettings, CmafMultiVariantOutputNode, CmafVideoOutputNode, FrameStorePlayerNode, FrameStoreRecorderNode, Norsk, SourceMediaNode, StreamKey, StreamMetadataOverrideNode, StreamSwitchSmoothNode, SubscriptionError,
+  AudioEncodeNode, AudioStreamMetadata, CmafAudioOutputNode, CmafDestinationSettings, CmafMultiVariantOutputNode, CmafVideoOutputNode, MediaStorePlayerNode, MediaStoreRecorderNode, Norsk, SourceMediaNode, StreamKey, StreamMetadataOverrideNode, StreamSwitchSmoothNode, SubscriptionError,
   VideoStreamMetadata, avToPin, selectAV, selectAudio, selectExactKey, selectPlaylist, selectVideo
 } from '@norskvideo/norsk-sdk';
 
@@ -83,10 +83,10 @@ export class ActionReplay {
   mvCmaf?: CmafMultiVariantOutputNode;
 
   // Need a framestore recorder into which we'll place the last X
-  writer?: FrameStoreRecorderNode;
+  writer?: MediaStoreRecorderNode;
 
   // And a reader from which we'll read the current replay
-  reader?: FrameStorePlayerNode;
+  reader?: MediaStorePlayerNode;
 
   currentSource?: StudioNodeSubscriptionSource;
 
@@ -138,18 +138,18 @@ export class ActionReplay {
     const smooth = this.smooth;
     const currentSource = this.currentSource;
 
-    this.reader = await this.norsk.input.frameStore({
+    this.reader = await this.norsk.mediaStore.player({
       id: `${this.id}-reader`,
-      name: `${this.id}-store`,
-      streamSelection: [
-        this.videoStreamKey,
-        this.audioStreamKey
-      ],
       cuts: [{
         durationMs: duration * 1000,
-        startDateTime: new Date((new Date()).getTime() - (from * 1000))
+        startDateTime: new Date((new Date()).getTime() - (from * 1000)),
+        mediaStoreName: `${this.id}-store`,
+        streamSelection: [
+          [this.videoStreamKey, this.videoStreamKey],
+          [this.audioStreamKey, this.audioStreamKey]
+        ],
+        trimPartialGops: false
       }],
-      trimPartialSegments: true,
       sourceName: `${this.id}-cut`,
       onCreate: (node) => {
         smooth.subscribeToPins(
@@ -223,7 +223,7 @@ export class ActionReplay {
     this.relatedMediaNodes.addInput(this.smooth);
 
     const dir = tmpdir();
-    this.writer = await this.norsk.output.frameStore({
+    this.writer = await this.norsk.mediaStore.recorder({
       id: `${this.id}-store`,
       name: `${this.id}-store`,
       path: dir, // TODO: ambient locations
