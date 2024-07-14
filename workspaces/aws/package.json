@@ -1,6 +1,6 @@
 {
   "name": "@norskvideo/norsk-studio-aws",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",
