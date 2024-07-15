@@ -52,11 +52,10 @@ describe("RTMP Input", () => {
 
     let norsk: Norsk | undefined = undefined;
 
-    afterEach(async () => {
-      await norsk?.close();
-    })
-
     describe("A single source connects with no stream id", () => {
+      after(async () => {
+        await norsk?.close();
+      })
       it("Should output no streams", async () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
 
@@ -198,11 +197,10 @@ describe("RTMP Input", () => {
 
       let norsk: Norsk | undefined = undefined;
 
-      afterEach(async () => {
-        await norsk?.close();
-      })
-
       describe("Both sources connect", () => {
+        after(async () => {
+          await norsk?.close();
+        })
         it("should be able to select those streams", async () => {
           norsk = await Norsk.connect({ onShutdown: () => { } });
           const compiled = await testDocument();
