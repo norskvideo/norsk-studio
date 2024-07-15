@@ -1,4 +1,4 @@
-import { Norsk } from "@norskvideo/norsk-sdk";
+import { Norsk, requireAV, selectAV } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
 import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
 import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
@@ -6,7 +6,6 @@ import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { TraceSink, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
-import { Ffmpeg, ffmpegCommand, rtmpOutput } from "@norskvideo/norsk-studio/lib/test/_util/ffmpeg";
 
 import RtmpInfo from "../input.rtmp/info";
 import { Av, BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
@@ -14,6 +13,7 @@ import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/exten
 import { expect } from "chai";
 import { RtmpInputEvent, RtmpInputSettings, RtmpInputState } from "../input.rtmp/runtime";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
+import { _videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();
@@ -51,16 +51,15 @@ describe("RTMP Input", () => {
   }, (testDocument, _cfg) => {
 
     let norsk: Norsk | undefined = undefined;
-    let ffmpeg: Ffmpeg[] = [];
 
     afterEach(async () => {
       await norsk?.close();
-      await Promise.all(ffmpeg.map(async (f) => f.stop()));
     })
 
     describe("A single source connects with no stream id", () => {
       it("Should output no streams", async () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
+
         const compiled = await testDocument();
         const result = await go(norsk, compiled);
         const source = result.components['rtmp'];
@@ -70,10 +69,14 @@ describe("RTMP Input", () => {
         sink.subscribe([
           new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
-        ffmpeg = [await Ffmpeg.create(ffmpegCommand({
-          transport: rtmpOutput({ port: 5001, app: 'yolo' })
-        }))
-        ];
+
+        const av = await _videoAndAudio(norsk!, "source");
+        const rtmp = await norsk!.output.rtmp({
+          id: "av-srt",
+          url: 'rtmp://127.0.0.1:5001/yolo'
+        })
+        rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
+
         await waitForAssert(
           () => false,
           () => {
@@ -97,11 +100,12 @@ describe("RTMP Input", () => {
         sink.subscribe([
           new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-all-streams', select: Av }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
-        ffmpeg = [
-          await Ffmpeg.create(ffmpegCommand({
-            transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'wrong' })
-          })),
-        ];
+        const av = await _videoAndAudio(norsk!, "source");
+        const rtmp = await norsk!.output.rtmp({
+          id: "av-rtmp",
+          url: 'rtmp://127.0.0.1:5001/yolo/wrong'
+        })
+        rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
         await waitForAssert(
           () => false,
           () => {
@@ -125,11 +129,12 @@ describe("RTMP Input", () => {
         sink.subscribe([
           new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-all-streams', select: Av }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
-        ffmpeg = [
-          await Ffmpeg.create(ffmpegCommand({
-            transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'first' })
-          })),
-        ];
+        const av = await _videoAndAudio(norsk!, "source");
+        const rtmp = await norsk!.output.rtmp({
+          id: "av-rtmp",
+          url: 'rtmp://127.0.0.1:5001/yolo/first'
+        })
+        rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
         await waitForAssert(
           () => sink.streamCount() == 2 && sink.totalMessages() > 25,
           () => {
@@ -154,21 +159,23 @@ describe("RTMP Input", () => {
         sink.subscribe([
           new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-all-streams', select: Av }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
         ])
-        ffmpeg = [
-          await Ffmpeg.create(ffmpegCommand({
-            transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'first' })
-          })),
-        ];
+        const av = await _videoAndAudio(norsk!, "source");
+        const rtmp = await norsk!.output.rtmp({
+          id: "av-rtmp1",
+          url: 'rtmp://127.0.0.1:5001/yolo/first'
+        })
+        rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
 
         await waitForCondition(() => sink.streamCount() == 2);
-        await ffmpeg[0].stop();
+        await rtmp.close();
         await waitForCondition(() => sink.streamCount() == 0);
 
-        ffmpeg = [
-          await Ffmpeg.create(ffmpegCommand({
-            transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'first' })
-          })),
-        ];
+        const rtmp2 = await norsk!.output.rtmp({
+          id: "av-rtmp2",
+          url: 'rtmp://127.0.0.1:5001/yolo/first'
+        })
+        rtmp2.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
+        console.log('waiting');
         await waitForAssert(
           () => sink.streamCount() == 2 && sink.totalMessages() > 25,
           () => {
@@ -190,11 +197,9 @@ describe("RTMP Input", () => {
     }, async (testDocument, _cfg) => {
 
       let norsk: Norsk | undefined = undefined;
-      let ffmpeg: Ffmpeg[] = [];
 
       afterEach(async () => {
         await norsk?.close();
-        await Promise.all(ffmpeg.map(async (f) => f.stop()));
       })
 
       describe("Both sources connect", () => {
@@ -208,19 +213,24 @@ describe("RTMP Input", () => {
           await Promise.all([sink1.initialised, sink2.initialised]);
 
           sink1.subscribe([
-            new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'first' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+            new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml,
+              { type: 'take-specific-stream', select: ["audio", "video"], filter: 'first' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
           ])
           sink2.subscribe([
-            new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'second' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+            new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml,
+              { type: 'take-specific-stream', select: ["audio", "video"], filter: 'second' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
           ])
-          ffmpeg = [
-            await Ffmpeg.create(ffmpegCommand({
-              transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'first' })
-            })),
-            await Ffmpeg.create(ffmpegCommand({
-              transport: rtmpOutput({ port: 5001, app: 'yolo', str: 'second' })
-            }))
-          ];
+          const av = await _videoAndAudio(norsk!, "source");
+          const rtmp = await norsk!.output.rtmp({
+            id: "av-rtmp1",
+            url: 'rtmp://127.0.0.1:5001/yolo/first'
+          })
+          rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
+          const rtmp2 = await norsk!.output.rtmp({
+            id: "av-rtmp2",
+            url: 'rtmp://127.0.0.1:5001/yolo/second'
+          })
+          rtmp2.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
           await waitForAssert(
             () => sink1.streamCount() == 2 && sink1.totalMessages() > 25 && sink2.streamCount() == 2 && sink2.totalMessages() > 25,
             () => {
