@@ -513,7 +513,7 @@ describe("SRT Listener Input", () => {
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
         srt2 = await norsk!.output.srt({
-          id: "av-srt-1",
+          id: "av-srt-2",
           mode: "caller",
           ip: "127.0.0.1",
           port: 5001,
