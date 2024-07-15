@@ -24,7 +24,9 @@
     "@aws-sdk/client-mediapackage": "^3.499.0",
     "@aws-sdk/client-translate": "^3.535.0",
     "@norskvideo/norsk-sdk": "^1.0.365",
-    "@norskvideo/norsk-studio": "^1.16.0"
+    "@norskvideo/norsk-studio": "^1.16.0",
+    "install": "^0.13.0",
+    "npm": "^10.8.2"
   },
   "main": "lib/index.js",
   "devDependencies": {
