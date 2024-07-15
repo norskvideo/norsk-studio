@@ -1,4 +1,4 @@
-import { Norsk } from "@norskvideo/norsk-sdk";
+import { Norsk, SourceMediaNode, SrtOutputNode, StreamMetadataOverrideNode, selectAV } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
 import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
 import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
@@ -7,12 +7,12 @@ import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { TraceSink, assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import { SrtInputSettings } from "../input.srt-caller/runtime";
-import { Ffmpeg, ffmpegCommand, srtOutput } from "@norskvideo/norsk-studio/lib/test/_util/ffmpeg";
 
 import SrtInfo from "../input.srt-caller/info";
 import { BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
+import { _videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();
@@ -42,27 +42,32 @@ describe("SRT Caller Input", () => {
   }
 
   let norsk: Norsk | undefined = undefined;
-  let ffmpeg: Ffmpeg | undefined = undefined;
+  let srt: SrtOutputNode | undefined = undefined;
+  let av: StreamMetadataOverrideNode | undefined = undefined;
 
   before(async () => {
-    // By spinning it up in advance, we increase the chance of getting the first keyframe..
-    ffmpeg = await Ffmpeg.create(ffmpegCommand({
-      transport: srtOutput({ port: 5001, mode: 'listener' })
-    }));
+    norsk = await Norsk.connect({ onShutdown: () => { } });
+    av = await _videoAndAudio(norsk!, "source");
+    srt = await norsk!.output.srt({
+      id: "av-srt-output",
+      mode: "listener",
+      ip: "0.0.0.0",
+      port: 5001
+    })
+    srt.subscribe([{ source: av, sourceSelector: selectAV }])
   });
 
   after(async () => {
     await norsk?.close();
-    await ffmpeg?.stop();
   })
 
   it("Should output some frames", async () => {
-    norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();
-    const nodes = await go(norsk, compiled);
+    const nodes = await go(norsk!, compiled);
+
     await Promise.all([
-      await assertNodeOutputsAudioFrames(norsk, nodes, 'srt'),
-      await assertNodeOutputsVideoFrames(norsk, nodes, 'srt')
+      await assertNodeOutputsAudioFrames(norsk!, nodes, 'srt'),
+      await assertNodeOutputsVideoFrames(norsk!, nodes, 'srt')
     ])
   })
 });
@@ -89,24 +94,28 @@ describe("SRT Caller Reconnect", () => {
   }
 
   let norsk: Norsk | undefined = undefined;
-  let ffmpeg: Ffmpeg | undefined = undefined;
+  let srt: SrtOutputNode | undefined = undefined;
+  let av: SourceMediaNode | undefined = undefined;
 
   before(async () => {
-    // By spinning it up in advance, we increase the chance of getting the first keyframe..
-    ffmpeg = await Ffmpeg.create(ffmpegCommand({
-      transport: srtOutput({ port: 5001, mode: 'listener' })
-    }));
+    norsk = await Norsk.connect({ onShutdown: () => { } });
+    av = await _videoAndAudio(norsk!, "source");
+    srt = await norsk!.output.srt({
+      id: "av-srt-output",
+      mode: "listener",
+      ip: "0.0.0.0",
+      port: 5001
+    })
+    srt.subscribe([{ source: av, sourceSelector: selectAV }])
   });
 
   after(async () => {
     await norsk?.close();
-    await ffmpeg?.stop();
   })
 
   it("Should output some frames", async () => {
-    norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();
-    const nodes = await go(norsk, compiled);
+    const nodes = await go(norsk!, compiled);
     const source = nodes.components['srt'];
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
@@ -117,18 +126,21 @@ describe("SRT Caller Reconnect", () => {
     ])
 
     await waitForCondition(() => sink.streamCount() == 2 && sink.totalMessages() > 25, 10000.0);
-    await ffmpeg?.stop();
+    await srt?.close();
     await waitForCondition(() => sink.streamCount() == 0, 10000.0);
 
-    // And spin ffmpeg up again
-    ffmpeg = await Ffmpeg.create(ffmpegCommand({
-      transport: srtOutput({ port: 5001, mode: 'listener' })
-    }));
+    srt = await norsk!.output.srt({
+      id: "av-srt-output",
+      mode: "listener",
+      ip: "0.0.0.0",
+      port: 5001
+    })
+    srt.subscribe([{ source: av!, sourceSelector: selectAV }])
 
     await Promise.all([
       await waitForAssert(() => sink.streamCount() == 2, () => sink.streamCount() == 2, 10000, 500),
-      await assertNodeOutputsAudioFrames(norsk, nodes, 'srt'),
-      await assertNodeOutputsVideoFrames(norsk, nodes, 'srt')
+      await assertNodeOutputsAudioFrames(norsk!, nodes, 'srt'),
+      await assertNodeOutputsVideoFrames(norsk!, nodes, 'srt')
     ])
   })
 });

@@ -1,4 +1,4 @@
-import { Norsk } from "@norskvideo/norsk-sdk";
+import { Norsk, SourceMediaNode, SrtOutputNode, selectAV } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
 import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
 import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
@@ -7,13 +7,13 @@ import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { TraceSink, assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import { SrtInputEvent, SrtInputSettings, SrtInputState } from "../input.srt-listener/runtime";
-import { Ffmpeg, ffmpegCommand, srtOutput } from "@norskvideo/norsk-studio/lib/test/_util/ffmpeg";
 
 import SrtInfo from "../input.srt-listener/info";
 import { BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { expect } from "chai";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
+import { _videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();
@@ -54,27 +54,29 @@ describe("SRT Listener Input", () => {
   }, (testDocument, _cfg) => {
 
     let norsk: Norsk | undefined = undefined;
-    let ffmpeg: Ffmpeg[] = [];
 
     afterEach(async () => {
       await norsk?.close();
-      await Promise.all(ffmpeg.map(async (f) => f.stop()));
     })
 
 
     describe("A single source connects", () => {
       before(async () => {
-        ffmpeg = [await Ffmpeg.create(ffmpegCommand({
-          transport: srtOutput({ port: 5001, mode: 'caller' })
-        }))
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        const av = await _videoAndAudio(norsk!, "source");
+        const srt = await norsk!.output.srt({
+          id: "av-srt",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001
+        })
+        srt.subscribe([{ source: av, sourceSelector: selectAV }])
       });
 
 
       it("Should output frames with that source name", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
@@ -96,18 +98,25 @@ describe("SRT Listener Input", () => {
     })
 
     describe("A single source connects, disconnects and connects again", () => {
+      let srt: SrtOutputNode | undefined = undefined;
+      let av: SourceMediaNode | undefined = undefined;
+
       before(async () => {
-        ffmpeg = [await Ffmpeg.create(ffmpegCommand({
-          transport: srtOutput({ port: 5001, mode: 'caller' })
-        }))
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        av = await _videoAndAudio(norsk!, "source");
+        srt = await norsk!.output.srt({
+          id: "av-srt",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001
+        })
+        srt.subscribe([{ source: av, sourceSelector: selectAV }])
       });
 
 
       it("Should still output frames with that source name", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
@@ -117,11 +126,15 @@ describe("SRT Listener Input", () => {
         ])
 
         await waitForCondition(() => sink.streamCount() == 2 && sink.totalMessages() > 25, 10000.0);
-        await ffmpeg[0].stop();
+        await srt!.close();
 
-        ffmpeg = [await Ffmpeg.create(ffmpegCommand({
-          transport: srtOutput({ port: 5001, mode: 'caller' })
-        }))]
+        srt = await norsk!.output.srt({
+          id: "av-srt",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001
+        })
+        srt.subscribe([{ source: av!, sourceSelector: selectAV }])
 
         await waitForAssert(
           () => sink.streamCount() == 2 && sink.totalMessages() > 50,
@@ -138,21 +151,32 @@ describe("SRT Listener Input", () => {
     })
 
     describe("A second source connects", () => {
+      let srt1: SrtOutputNode | undefined = undefined;
+      let srt2: SrtOutputNode | undefined = undefined;
+
+      let av: SourceMediaNode | undefined = undefined;
       before(async () => {
-        ffmpeg = [
-          await Ffmpeg.create(ffmpegCommand({
-            transport: srtOutput({ port: 5001, mode: 'caller' })
-          })),
-          await Ffmpeg.create(ffmpegCommand({
-            transport: srtOutput({ port: 5001, mode: 'caller' })
-          })),
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        av = await _videoAndAudio(norsk!, "source");
+        srt1 = await norsk!.output.srt({
+          id: "av-srt-1",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001
+        })
+        srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
+        srt2 = await norsk!.output.srt({
+          id: "av-srt-2",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001
+        })
+        srt2.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
 
       it("Should only output frames with the first source name", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
@@ -185,27 +209,32 @@ describe("SRT Listener Input", () => {
   }, (testDocument, _cfg) => {
 
     let norsk: Norsk | undefined = undefined;
-    let ffmpeg: Ffmpeg[] = [];
 
     afterEach(async () => {
       await norsk?.close();
-      await Promise.all(ffmpeg.map(async (f) => f.stop()));
     })
 
 
     describe("A single source connects", () => {
+      let srt1: SrtOutputNode | undefined = undefined;
+      let av: SourceMediaNode | undefined = undefined;
       before(async () => {
-        ffmpeg = [await Ffmpeg.create(ffmpegCommand({
-          transport: srtOutput({ port: 5001, mode: 'caller' })
-        }))
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        av = await _videoAndAudio(norsk!, "source");
+        srt1 = await norsk!.output.srt({
+          id: "av-srt-1",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001
+        })
+        srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
 
 
+
       it("Should output frames with the first source name", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
@@ -226,17 +255,25 @@ describe("SRT Listener Input", () => {
       })
     });
     describe("A single source connects with explicit source name", () => {
+      let srt1: SrtOutputNode | undefined = undefined;
+      let av: SourceMediaNode | undefined = undefined;
       before(async () => {
-        ffmpeg = [await Ffmpeg.create(ffmpegCommand({
-          transport: srtOutput({ port: 5001, mode: 'caller', streamId: 'second' })
-        }))
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        av = await _videoAndAudio(norsk!, "source");
+        srt1 = await norsk!.output.srt({
+          id: "av-srt-1",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001,
+          streamId: 'second'
+        })
+        srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
 
+
       it("Should output frames with the explicit source name", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
@@ -257,22 +294,33 @@ describe("SRT Listener Input", () => {
       })
     });
     describe("A second source connects", () => {
+      let srt1: SrtOutputNode | undefined = undefined;
+      let srt2: SrtOutputNode | undefined = undefined;
+      let av: SourceMediaNode | undefined = undefined;
+
       before(async () => {
-        ffmpeg = [
-          await Ffmpeg.create(ffmpegCommand({
-            transport: srtOutput({ port: 5001, mode: 'caller' })
-          })),
-          await Ffmpeg.create(ffmpegCommand({
-            transport: srtOutput({ port: 5001, mode: 'caller' })
-          })),
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        av = await _videoAndAudio(norsk!, "source");
+        srt1 = await norsk!.output.srt({
+          id: "av-srt-1",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001
+        })
+        srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
+        srt2 = await norsk!.output.srt({
+          id: "av-srt-2",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001
+        })
+        srt2.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
 
 
       it("Should output frames with both source names", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
@@ -306,26 +354,31 @@ describe("SRT Listener Input", () => {
   }, (testDocument, _cfg) => {
 
     let norsk: Norsk | undefined = undefined;
-    let ffmpeg: Ffmpeg[] = [];
 
     afterEach(async () => {
       await norsk?.close();
-      await Promise.all(ffmpeg.map(async (f) => f.stop()));
     })
 
 
     describe("A single source connects with no stream id", () => {
+      let srt1: SrtOutputNode | undefined = undefined;
+      let av: SourceMediaNode | undefined = undefined;
+
       before(async () => {
-        ffmpeg = [await Ffmpeg.create(ffmpegCommand({
-          transport: srtOutput({ port: 5001, mode: 'caller' })
-        }))
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        av = await _videoAndAudio(norsk!, "source");
+        srt1 = await norsk!.output.srt({
+          id: "av-srt-1",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001
+        })
+        srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
 
       it("Should output no streams", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
@@ -346,18 +399,26 @@ describe("SRT Listener Input", () => {
     });
 
     describe("a single source connects with the wrong stream id", () => {
+      let srt1: SrtOutputNode | undefined = undefined;
+      let av: SourceMediaNode | undefined = undefined;
+
       before(async () => {
-        ffmpeg = [
-          await Ffmpeg.create(ffmpegCommand({
-            transport: srtOutput({ port: 5001, mode: 'caller', streamId: 'wrong' })
-          })),
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        av = await _videoAndAudio(norsk!, "source");
+        srt1 = await norsk!.output.srt({
+          id: "av-srt-1",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001,
+          streamId: 'wrong'
+        })
+        srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
 
+
       it("Should output no streams", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
@@ -379,18 +440,25 @@ describe("SRT Listener Input", () => {
     })
 
     describe("a single source connects with the right stream id", () => {
+      let srt1: SrtOutputNode | undefined = undefined;
+      let av: SourceMediaNode | undefined = undefined;
+
       before(async () => {
-        ffmpeg = [
-          await Ffmpeg.create(ffmpegCommand({
-            transport: srtOutput({ port: 5001, mode: 'caller', streamId: 'first' })
-          })),
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        av = await _videoAndAudio(norsk!, "source");
+        srt1 = await norsk!.output.srt({
+          id: "av-srt-1",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001,
+          streamId: 'first'
+        })
+        srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
 
       it("Should output the stream with the right id", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink = new TraceSink(norsk as Norsk, "sink");
         await sink.initialised;
@@ -422,31 +490,42 @@ describe("SRT Listener Input", () => {
   }, (testDocument, _cfg) => {
 
     let norsk: Norsk | undefined = undefined;
-    let ffmpeg: Ffmpeg[] = [];
 
     afterEach(async () => {
       await norsk?.close();
-      await Promise.all(ffmpeg.map(async (f) => f.stop()));
     })
 
 
     describe("Both sources connect", () => {
+      let srt1: SrtOutputNode | undefined = undefined;
+      let srt2: SrtOutputNode | undefined = undefined;
+      let av: SourceMediaNode | undefined = undefined;
+
       before(async () => {
-        ffmpeg = [
-          await Ffmpeg.create(ffmpegCommand({
-            transport: srtOutput({ port: 5001, mode: 'caller', streamId: 'first' })
-          })),
-          await Ffmpeg.create(ffmpegCommand({
-            transport: srtOutput({ port: 5001, mode: 'caller', streamId: 'second' })
-          }))
-        ];
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        av = await _videoAndAudio(norsk!, "source");
+        srt1 = await norsk!.output.srt({
+          id: "av-srt-1",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001,
+          streamId: 'first'
+        })
+        srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
+        srt2 = await norsk!.output.srt({
+          id: "av-srt-1",
+          mode: "caller",
+          ip: "127.0.0.1",
+          port: 5001,
+          streamId: 'second'
+        })
+        srt2.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
 
 
       it("should be able to select those streams", async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
-        const result = await go(norsk, compiled);
+        const result = await go(norsk!, compiled);
         const source = result.components['srt'];
         const sink1 = new TraceSink(norsk as Norsk, "sink-1");
         const sink2 = new TraceSink(norsk as Norsk, "sink-2");
