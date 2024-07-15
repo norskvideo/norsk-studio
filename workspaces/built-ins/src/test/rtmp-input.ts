@@ -45,7 +45,7 @@ describe("RTMP Input", () => {
   impl("RTMP Input with one streamid", {
     id: 'rtmp',
     displayName: "rtmp",
-    port: 5001,
+    port: 65403,
     appName: 'yolo',
     streamNames: ['first']
   }, (testDocument, _cfg) => {
@@ -73,7 +73,7 @@ describe("RTMP Input", () => {
         const av = await _videoAndAudio(norsk!, "source");
         const rtmp = await norsk!.output.rtmp({
           id: "av-srt",
-          url: 'rtmp://127.0.0.1:5001/yolo'
+          url: 'rtmp://127.0.0.1:65403/yolo'
         })
         rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
 
@@ -103,7 +103,7 @@ describe("RTMP Input", () => {
         const av = await _videoAndAudio(norsk!, "source");
         const rtmp = await norsk!.output.rtmp({
           id: "av-rtmp",
-          url: 'rtmp://127.0.0.1:5001/yolo/wrong'
+          url: 'rtmp://127.0.0.1:65403/yolo/wrong'
         })
         rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
         await waitForAssert(
@@ -132,7 +132,7 @@ describe("RTMP Input", () => {
         const av = await _videoAndAudio(norsk!, "source");
         const rtmp = await norsk!.output.rtmp({
           id: "av-rtmp",
-          url: 'rtmp://127.0.0.1:5001/yolo/first'
+          url: 'rtmp://127.0.0.1:65403/yolo/first'
         })
         rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
         await waitForAssert(
@@ -162,7 +162,7 @@ describe("RTMP Input", () => {
         const av = await _videoAndAudio(norsk!, "source");
         const rtmp = await norsk!.output.rtmp({
           id: "av-rtmp1",
-          url: 'rtmp://127.0.0.1:5001/yolo/first'
+          url: 'rtmp://127.0.0.1:65403/yolo/first'
         })
         rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
 
@@ -172,7 +172,7 @@ describe("RTMP Input", () => {
 
         const rtmp2 = await norsk!.output.rtmp({
           id: "av-rtmp2",
-          url: 'rtmp://127.0.0.1:5001/yolo/first'
+          url: 'rtmp://127.0.0.1:65403/yolo/first'
         })
         rtmp2.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
         console.log('waiting');
@@ -191,7 +191,7 @@ describe("RTMP Input", () => {
     impl("RTMP Input with two stream names", {
       id: 'rtmp',
       displayName: 'rtmp',
-      port: 5001,
+      port: 65403,
       appName: 'yolo',
       streamNames: ['first', 'second']
     }, async (testDocument, _cfg) => {
@@ -223,12 +223,12 @@ describe("RTMP Input", () => {
           const av = await _videoAndAudio(norsk!, "source");
           const rtmp = await norsk!.output.rtmp({
             id: "av-rtmp1",
-            url: 'rtmp://127.0.0.1:5001/yolo/first'
+            url: 'rtmp://127.0.0.1:65403/yolo/first'
           })
           rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
           const rtmp2 = await norsk!.output.rtmp({
             id: "av-rtmp2",
-            url: 'rtmp://127.0.0.1:5001/yolo/second'
+            url: 'rtmp://127.0.0.1:65403/yolo/second'
           })
           rtmp2.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
           await waitForAssert(

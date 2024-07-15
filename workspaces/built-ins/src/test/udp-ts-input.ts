@@ -28,7 +28,7 @@ describe("UDP TS Input", () => {
             UdpTsInfo(RegistrationConsts),
             {
               sourceName: 'foo',
-              port: 5001,
+              port: 65403,
               ip: '127.0.0.1'
             }
           ).reify())
@@ -52,7 +52,7 @@ describe("UDP TS Input", () => {
     const av = await _videoAndAudio(norsk!, "source");
     const udp = await norsk!.output.udpTs({
       id: "av-srt",
-      port: 5001,
+      port: 65403,
       destinationIp: '127.0.0.1',
       interface: 'any'
     })

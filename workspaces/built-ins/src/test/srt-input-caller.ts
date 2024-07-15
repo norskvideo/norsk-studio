@@ -30,7 +30,7 @@ describe("SRT Caller Input", () => {
             SrtInfo(RegistrationConsts),
             {
               sourceName: 'foo',
-              port: 5001,
+              port: 65403,
               ip: '127.0.0.1',
               socketOptions: {}
             }
@@ -52,7 +52,7 @@ describe("SRT Caller Input", () => {
       id: "av-srt-output",
       mode: "listener",
       ip: "0.0.0.0",
-      port: 5001
+      port: 65403
     })
     srt.subscribe([{ source: av, sourceSelector: selectAV }])
   });
@@ -82,7 +82,7 @@ describe("SRT Caller Reconnect", () => {
             SrtInfo(RegistrationConsts),
             {
               sourceName: 'foo',
-              port: 5001,
+              port: 65403,
               ip: '127.0.0.1',
               socketOptions: {}
             }
@@ -104,7 +104,7 @@ describe("SRT Caller Reconnect", () => {
       id: "av-srt-output",
       mode: "listener",
       ip: "0.0.0.0",
-      port: 5001
+      port: 65403
     })
     srt.subscribe([{ source: av, sourceSelector: selectAV }])
   });
@@ -133,7 +133,7 @@ describe("SRT Caller Reconnect", () => {
       id: "av-srt-output",
       mode: "listener",
       ip: "0.0.0.0",
-      port: 5001
+      port: 65403
     })
     srt.subscribe([{ source: av!, sourceSelector: selectAV }])
 

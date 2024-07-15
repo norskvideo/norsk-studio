@@ -31,7 +31,7 @@ describe("RTMP Output", () => {
         new YamlNodeBuilder<RtmpOutputSettings, RtmpOutputState, object, RtmpOutputEvent>
           ('rtmp',
             RtmpInfo(RegistrationConsts),
-            { url: "rtmp://127.0.0.1:5001/norsk/output" }
+            { url: "rtmp://127.0.0.1:65403/norsk/output" }
           ).reify())
       .reify();
 
@@ -47,7 +47,7 @@ describe("RTMP Output", () => {
   })
 
   it("Provides an RTMP output when there is a stream", async () => {
-    ffprobe = getStreams('rtmp://127.0.0.1:5001/norsk/output');
+    ffprobe = getStreams('rtmp://127.0.0.1:65403/norsk/output');
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();
     const result = await go(norsk, compiled);
@@ -74,7 +74,7 @@ describe("RTMP Output", () => {
       { type: "take-first-stream", select: Video }
     )], { requireOneOfEverything: true })
 
-    ffprobe = getStreams('rtmp://127.0.0.1:5001/norsk/output');
+    ffprobe = getStreams('rtmp://127.0.0.1:65403/norsk/output');
     const streams1 = await ffprobe;
     expect(streams1 ?? []).lengthOf(1);
     const source2 = await videoAndAudio(norsk, 'source2');
@@ -83,7 +83,7 @@ describe("RTMP Output", () => {
       testSourceDescription(),
       { type: "take-first-stream", select: Av }
     )], { requireOneOfEverything: true })
-    ffprobe = getStreams('rtmp://127.0.0.1:5001/norsk/output');
+    ffprobe = getStreams('rtmp://127.0.0.1:65403/norsk/output');
     const streams2 = await ffprobe;
     expect(streams2 ?? []).lengthOf(2);
 

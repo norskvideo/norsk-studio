@@ -32,7 +32,7 @@ describe("SRT Output", () => {
           ('srt',
             SrtInfo(RegistrationConsts),
             {
-              port: 5001,
+              port: 65403,
               ip: '0.0.0.0',
               mode: 'listener',
               socketOptions: {}
@@ -52,7 +52,7 @@ describe("SRT Output", () => {
   it("Should output some frames", async () => {
     // I think we could be even smarter about this
     // and spin it up and wait for the standard 'debug' text t be output
-    const ffprobe = getStreams('srt://127.0.0.1:5001?connect_timeout=10000');
+    const ffprobe = getStreams('srt://127.0.0.1:65403?connect_timeout=10000');
 
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();

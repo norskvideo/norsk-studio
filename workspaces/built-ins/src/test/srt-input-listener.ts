@@ -46,7 +46,7 @@ describe("SRT Listener Input", () => {
   impl("Permissive SRT Listener with one stream", {
     id: 'srt',
     displayName: 'srt',
-    port: 5001,
+    port: 65403,
     ip: '0.0.0.0',
     sourceNames: 'permissive',
     streamIds: ['first'],
@@ -68,7 +68,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001
+          port: 65403
         })
         srt.subscribe([{ source: av, sourceSelector: selectAV }])
       });
@@ -108,7 +108,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001
+          port: 65403
         })
         srt.subscribe([{ source: av, sourceSelector: selectAV }])
       });
@@ -132,7 +132,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001
+          port: 65403
         })
         srt.subscribe([{ source: av!, sourceSelector: selectAV }])
 
@@ -162,14 +162,14 @@ describe("SRT Listener Input", () => {
           id: "av-srt-1",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001
+          port: 65403
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
         srt2 = await norsk!.output.srt({
           id: "av-srt-2",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001
+          port: 65403
         })
         srt2.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
@@ -201,7 +201,7 @@ describe("SRT Listener Input", () => {
   impl("Permissive SRT Listener with two streams", {
     id: 'srt',
     displayName: 'srt',
-    port: 5001,
+    port: 65403,
     ip: '0.0.0.0',
     sourceNames: 'permissive',
     streamIds: ['first', 'second'],
@@ -225,7 +225,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt-1",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001
+          port: 65403
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
@@ -264,7 +264,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt-1",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001,
+          port: 65403,
           streamId: 'second'
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
@@ -305,14 +305,14 @@ describe("SRT Listener Input", () => {
           id: "av-srt-1",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001
+          port: 65403
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
         srt2 = await norsk!.output.srt({
           id: "av-srt-2",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001
+          port: 65403
         })
         srt2.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
@@ -346,7 +346,7 @@ describe("SRT Listener Input", () => {
   impl("Restrictive SRT Listener with one streamid", {
     id: 'srt',
     displayName: 'srt',
-    port: 5001,
+    port: 65403,
     ip: '0.0.0.0',
     sourceNames: 'strict',
     streamIds: ['first'],
@@ -371,7 +371,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt-1",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001
+          port: 65403
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
       });
@@ -409,7 +409,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt-1",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001,
+          port: 65403,
           streamId: 'wrong'
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
@@ -450,7 +450,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt-1",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001,
+          port: 65403,
           streamId: 'first'
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
@@ -482,7 +482,7 @@ describe("SRT Listener Input", () => {
   impl("Restrictive SRT Listener with two streamids", {
     id: 'srt',
     displayName: 'srt',
-    port: 5001,
+    port: 65403,
     ip: '0.0.0.0',
     sourceNames: 'strict',
     streamIds: ['first', 'second'],
@@ -508,7 +508,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt-1",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001,
+          port: 65403,
           streamId: 'first'
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
@@ -516,7 +516,7 @@ describe("SRT Listener Input", () => {
           id: "av-srt-2",
           mode: "caller",
           ip: "127.0.0.1",
-          port: 5001,
+          port: 65403,
           streamId: 'second'
         })
         srt2.subscribe([{ source: av!, sourceSelector: selectAV }])
