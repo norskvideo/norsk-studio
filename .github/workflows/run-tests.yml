@@ -26,7 +26,7 @@ jobs:
     - name: Run Norsk 
       uses: gacts/run-and-post-run@v1
       with:
-        run: "docker run  --name norsk -d --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly -p 6791:6791 -p 6790:6790 -p 8080:8080 norskvideo/norsk --license-file /mnt/license.json"
+        run: "docker run  --name norsk -d --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly -p 6791:6791 -p 6790:6790 -p 8080:8080 -p 5001:5001 -p 5001:5001/udp -p 1935:1935 norskvideo/norsk --license-file /mnt/license.json"
         post: docker stop norsk 
 
     - name: Install Nix
