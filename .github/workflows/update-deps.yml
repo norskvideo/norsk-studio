@@ -26,6 +26,7 @@ jobs:
 
     - name: Run auto dependency update 
       uses: romoh/dependencies-autoupdate@v1.2
+      continue-on-error: true
       with: 
         token: ${{secrets.GITHUB_TOKEN}}
         update-command: "'npm install --workspaces @norskvideo/norsk-sdk@latest && npm install --workspaces @norskvideo/norsk-studio@latest && npm install && npm run build'"
