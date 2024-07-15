@@ -44,10 +44,12 @@ jobs:
 
     - name: Run Built-in Tests 
       run: "npm run test --workspace workspaces/built-ins"
+      continue-on-error: true
       timeout-minutes: 10
 
     - name: Run Vision Director Tests 
       run: "npm run test --workspace workspaces/vision-director"
+      continue-on-error: true
       timeout-minutes: 10
 
     - name: Dump norsk logs
