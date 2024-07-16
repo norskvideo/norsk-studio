@@ -88,6 +88,9 @@ describe("RTMP Input", () => {
     });
 
     describe("a single source connects with the wrong stream id", () => {
+      after(async () => {
+        await norsk?.close();
+      })
       it("Should output no streams", async () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
@@ -117,6 +120,9 @@ describe("RTMP Input", () => {
     })
 
     describe("a single source connects with the right stream id", () => {
+      after(async () => {
+        await norsk?.close();
+      })
       it("Should output the stream with the right id", async () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
@@ -147,6 +153,9 @@ describe("RTMP Input", () => {
     });
 
     describe("source re-connects with the right id", () => {
+      after(async () => {
+        await norsk?.close();
+      })
       it("Should re-output the stream with the right id", async () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await testDocument();
