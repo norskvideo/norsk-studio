@@ -123,7 +123,7 @@ export class ActionReplay {
       debuglog("Multiple replay attempts started, ignoring", { from, duration })
       return;
     }
-    if (!this.smooth || !this.currentSource || !this.currentSource.source.relatedMediaNodes.output) {
+    if (!this.writer || !this.smooth || !this.currentSource || !this.currentSource.source.relatedMediaNodes.output) {
       errorlog("Attempt to do replay before node is set up???", { from, duration })
       return;
     }
@@ -138,23 +138,19 @@ export class ActionReplay {
     const smooth = this.smooth;
     const currentSource = this.currentSource;
 
+    const cut = this.writer?.cutListEntry({
+      durationMs: duration * 1000,
+      startDateTime: new Date((new Date()).getTime() - (from * 1000)),
+      streamSelection: [
+        [this.videoStreamKey, this.videoStreamKey],
+        [this.audioStreamKey, this.audioStreamKey]
+      ],
+      trimPartialGops: false
+    })
+
     this.reader = await this.norsk.mediaStore.player({
       id: `${this.id}-reader`,
-      cuts: [{
-        mediaStoreName: `${this.id}-store`,
-        cut: {
-          type: 'asset',
-          cut: {
-            durationMs: duration * 1000,
-            startTimeMs: (new Date()).getTime() - (from * 1000),
-            streamSelection: [
-              [this.videoStreamKey, this.videoStreamKey],
-              [this.audioStreamKey, this.audioStreamKey]
-            ],
-            trimPartialGops: false
-          }
-        }
-      }],
+      cuts: [cut],
       sourceName: `${this.id}-cut`,
       onCreate: (node) => {
         smooth.subscribeToPins(
