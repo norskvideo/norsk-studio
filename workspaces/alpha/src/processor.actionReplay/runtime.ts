@@ -141,14 +141,19 @@ export class ActionReplay {
     this.reader = await this.norsk.mediaStore.player({
       id: `${this.id}-reader`,
       cuts: [{
-        durationMs: duration * 1000,
-        startDateTime: new Date((new Date()).getTime() - (from * 1000)),
         mediaStoreName: `${this.id}-store`,
-        streamSelection: [
-          [this.videoStreamKey, this.videoStreamKey],
-          [this.audioStreamKey, this.audioStreamKey]
-        ],
-        trimPartialGops: false
+        cut: {
+          type: 'asset',
+          cut: {
+            durationMs: duration * 1000,
+            startTimeMs: (new Date()).getTime() - (from * 1000),
+            streamSelection: [
+              [this.videoStreamKey, this.videoStreamKey],
+              [this.audioStreamKey, this.audioStreamKey]
+            ],
+            trimPartialGops: false
+          }
+        }
       }],
       sourceName: `${this.id}-cut`,
       onCreate: (node) => {
