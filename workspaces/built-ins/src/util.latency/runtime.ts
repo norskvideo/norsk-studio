@@ -1,4 +1,4 @@
-import { IntervalTimestamp, Norsk, SinkMediaNode, StreamTimestampReportNode, selectAll } from '@norskvideo/norsk-sdk';
+import { Interval, Norsk, SinkMediaNode, StreamTimestampReportNode, selectAll } from '@norskvideo/norsk-sdk';
 
 import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 
@@ -40,8 +40,8 @@ class LatencyStatsOutput implements CreatedMediaNode {
   sourceTimestamps?: StreamTimestampReportNode;
   sinkTimestamps?: StreamTimestampReportNode;
 
-  latestSourceTimestamp?: IntervalTimestamp;
-  latestSinkTimestamp?: IntervalTimestamp;
+  latestSourceTimestamp?: Interval;
+  latestSinkTimestamp?: Interval;
 
   created: boolean = false;
 

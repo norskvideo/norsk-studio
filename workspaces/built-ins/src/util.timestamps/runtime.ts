@@ -1,4 +1,4 @@
-import { IntervalTimestamp, Norsk, SinkMediaNode, StreamKey } from '@norskvideo/norsk-sdk';
+import { Interval, Norsk, SinkMediaNode, StreamKey } from '@norskvideo/norsk-sdk';
 
 import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode, SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
@@ -62,7 +62,7 @@ class TimestampOutput extends CustomSinkNode {
     this.setup({ sink: node })
   }
 
-  async onTimestamp(key: StreamKey, timestamp: IntervalTimestamp) {
+  async onTimestamp(key: StreamKey, timestamp: Interval) {
     this.updates.raiseEvent({
       type: 'new-timestamp',
       key: `${key.programNumber}-${key.sourceName}-${key.streamId}-${key.renditionName}`,
