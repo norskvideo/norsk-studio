@@ -5,11 +5,11 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s '{
   "content": "Norsk Studio Defaults - Tests",
   "embeds": [ { "title": (if .[0].stats.failures == 0 then "Built-ins: Success" else "Built-ins: Failure" end)
               , "color": (if .[0].stats.failures == 0 then 5763719 else 15548997 end)
-              , "description": (if .[0].stats.failures == 0 then "All tests passed" else .[0].failures.title end) 
+              , "description": (if .[0].stats.failures == 0 then "All tests passed" else [.[0].failures.[].title] | join("\r\n - ")) 
               },
               { "title": (if .[1].stats.failures == 0 then "Vision Director: Success" else "Vision Director: Failure" end)
               , "color": (if .[1].stats.failures == 0 then 5763719 else 15548997 end)
-              , "description": (if .[1].stats.failures == 0 then "All tests passed" else .[1].failures.title end) 
+              , "description": (if .[1].stats.failures == 0 then "All tests passed" else [.[1].failures.[].title] | join("\r\n - ")) 
               }            
            ]
     }' > discord.json
