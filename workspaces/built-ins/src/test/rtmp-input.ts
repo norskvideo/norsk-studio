@@ -183,7 +183,6 @@ describe("RTMP Input", () => {
           url: 'rtmp://127.0.0.1:65403/yolo/first'
         })
         rtmp2.subscribe([{ source: av, sourceSelector: selectAV }], requireAV)
-        console.log('waiting');
         await waitForAssert(
           () => sink.streamCount() == 2 && sink.totalMessages() > 25,
           () => {
