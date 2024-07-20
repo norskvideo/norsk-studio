@@ -330,7 +330,7 @@ describe("SRT Listener Input", () => {
         ])
 
         await waitForAssert(
-          () => sink.streamCount() == 4 && sink.totalMessages() > 25,
+          () => sink.streamCount() == 4 && sink.totalMessages() > 50,
           () => {
             expect(sink.streamCount()).equals(4);
             expect(sink.messages.find((m) => m.streamKey.sourceName == 'first')).exist;
