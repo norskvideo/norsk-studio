@@ -21,6 +21,12 @@ async function defaultRuntime(): Promise<RuntimeSystem> {
   return runtime;
 }
 
+describe("A failing test", () => {
+  it("A test can fail", () => {
+    expect(true).equal(false);
+  })
+});
+
 describe("RTMP Input", () => {
 
   function impl(desc: string, cfg: RtmpInputSettings, cb: (d: () => Promise<document.CompiledDocument>, cfg: RtmpInputSettings) => void) {
