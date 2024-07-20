@@ -42,15 +42,16 @@ jobs:
     - name: Run Build (With Latest)
       run: "npm install --workspaces @norskvideo/norsk-sdk@latest && npm install @norskvideo/norsk-studio@latest && npm install && npm run build"
 
-    - name: Run Built-in Tests 
-      run: "npm run test --workspace workspaces/built-ins"
-      continue-on-error: true
-      timeout-minutes: 10
+    - name: Run Tests 
+      run: "./scripts/gh-tests.sh"
+      timeout-minutes: 20
 
-    - name: Run Vision Director Tests 
-      run: "npm run test --workspace workspaces/vision-director"
-      continue-on-error: true
-      timeout-minutes: 10
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      if: always()
+      with:
+        webhook-url: ${{ secrets.DISCORD_URL }}
+        raw-data: discord.json
 
     - name: Dump norsk logs
       uses: jwalton/gh-docker-logs@v2
