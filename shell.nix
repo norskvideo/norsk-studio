@@ -44,6 +44,7 @@ mkShell {
     nodePackages.vscode-langservers-extracted
     esbuild # presumably we can get this from NPM too???
     rsync
+    jq
    ];
 
   # shellHook = (if stdenv.isLinux then ''
