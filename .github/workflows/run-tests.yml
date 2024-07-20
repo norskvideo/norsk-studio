@@ -55,32 +55,32 @@ jobs:
         raw-data: discord.json
 
     - name: Dump norsk logs
-      if: failure()
+      if: always()
       uses: jwalton/gh-docker-logs@v2
       with:
         images: 'norsk'
         dest: './logs'
 
     - name: Tar logs
-      if: failure()
+      if: always()
       run: tar cvzf ./logs.tgz ./logs
 
     - name: Upload VD report to GitHub
-      if: failure()
+      if: always()
       uses: actions/upload-artifact@master
       with:
         name: vd.json
         path: ./vd.json
 
     - name: Upload Built-in report to GitHub
-      if: failure()
+      if: always()
       uses: actions/upload-artifact@master
       with:
         name: built-ins.json
         path: ./built-ins.json
 
     - name: Upload docker logs to GitHub
-      if: failure()
+      if: always()
       uses: actions/upload-artifact@master
       with:
         name: logs.tgz
