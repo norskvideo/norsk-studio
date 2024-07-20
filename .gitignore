@@ -13,3 +13,6 @@ norsk-studio-1.0.0.tgz norsk-studio.built-ins-1.0.0.tgz norsk-studio-demo-1.0.0.
 workspaces/*/client
 workspaces/*/build
 *.tgz
+built-ins.json
+discord.json
+vd.json

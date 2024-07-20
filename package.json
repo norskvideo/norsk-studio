@@ -14,5 +14,8 @@
     "workspaces/vision-director",
     "workspaces/studio-default",
     "workspaces/aws"
-  ]
+  ],
+  "devDependencies": {
+    "mocha-json-output-reporter": "^2.1.0"
+  }
 }
