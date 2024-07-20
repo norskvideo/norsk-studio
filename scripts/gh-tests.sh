@@ -3,6 +3,7 @@ LOG_LEVEL=error npm test --workspace workspaces/built-ins -- --reporter mocha-js
 LOG_LEVEL=error npm test --workspace workspaces/vision-director -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/vd.json
 cat $PWD/built-ins.json $PWD/vd.json | jq -s '{ 
   "content": "Norsk Studio Defaults - Tests",
+  "avatar-url": "https://i.imgur.com/HzrYPqf.png",
   "username": "Not Jaynkings",
   "embeds": [ { "title": (if .[0].stats.failures == 0 then "Built-ins: Success" else "Built-ins: Failure" end)
               , "color": (if .[0].stats.failures == 0 then 5763719 else 15548997 end)
@@ -15,3 +16,4 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s '{
            ]
     }' > discord.json
 cat discord.json
+
