@@ -57,6 +57,7 @@ describe("SRT Listener Input", () => {
 
     afterEach(async () => {
       await norsk?.close();
+      await new Promise(f => setTimeout(f, 1000));
     })
 
 
@@ -212,6 +213,7 @@ describe("SRT Listener Input", () => {
 
     afterEach(async () => {
       await norsk?.close();
+      await new Promise(f => setTimeout(f, 1000));
     })
 
 
@@ -357,6 +359,7 @@ describe("SRT Listener Input", () => {
 
     afterEach(async () => {
       await norsk?.close();
+      await new Promise(f => setTimeout(f, 1000));
     })
 
 
@@ -493,6 +496,7 @@ describe("SRT Listener Input", () => {
 
     afterEach(async () => {
       await norsk?.close();
+      await new Promise(f => setTimeout(f, 1000));
     })
 
 

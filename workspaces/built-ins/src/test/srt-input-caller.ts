@@ -59,6 +59,7 @@ describe("SRT Caller Input", () => {
 
   after(async () => {
     await norsk?.close();
+    await new Promise(f => setTimeout(f, 1000));
   })
 
   it("Should output some frames", async () => {
@@ -111,6 +112,7 @@ describe("SRT Caller Reconnect", () => {
 
   after(async () => {
     await norsk?.close();
+    await new Promise(f => setTimeout(f, 1000));
   })
 
   it("Should output some frames", async () => {
