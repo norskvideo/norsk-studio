@@ -79,6 +79,20 @@ jobs:
         name: built-ins.json
         path: ./built-ins.json
 
+    - name: Upload Built-in logs to GitHub
+      if: always()
+      uses: actions/upload-artifact@master
+      with:
+        name: built-ins.log
+        path: workspaces/built-ins/logs/debug.log
+
+    - name: Upload VD logs to GitHub
+      if: always()
+      uses: actions/upload-artifact@master
+      with:
+        name: vd.log
+        path: workspaces/vision-director/logs/debug.log
+
     - name: Upload docker logs to GitHub
       if: always()
       uses: actions/upload-artifact@master
