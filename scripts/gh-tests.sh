@@ -4,7 +4,7 @@ LOG_LEVEL=error npm test --workspace workspaces/vision-director -- --reporter mo
 cat $PWD/built-ins.json $PWD/vd.json | jq -s '{ 
   "content": "Norsk Studio Defaults - Tests",
   "avatar_url": "https://i.imgur.com/HzrYPqf.png",
-  "username": "Not Jaynkings",
+  "username": "Evil Jenkins",
   "embeds": [ { "title": (if .[0].stats.failures == 0 then "Built-ins: Success" else "Built-ins: Failure" end)
               , "color": (if .[0].stats.failures == 0 then 5763719 else 15548997 end)
               , "description": (if .[0].stats.failures == 0 then "All tests passed" else ("Failures \r\n===\r\n- " + ([.[0].failures.[].title] | join("\r\n- "))) end) 
