@@ -1,16 +1,16 @@
-{ pkgs ? import <nixpkgs> {} }:
+# { pkgs ? import <nixpkgs> {} }:
 let
 
   # try to keep this in line with Norsk
-  # pinnedNixHash = "fa9a51752f1b5de583ad5213eb621be071806663";
-  # pinnedNix =
-  #   builtins.fetchGit {
-  #     name = "nixpkgs-pinned";
-  #     url = "https://github.com/NixOS/nixpkgs.git";
-  #     rev = "${pinnedNixHash}";
-  #   };
+  pinnedNixHash = "fa9a51752f1b5de583ad5213eb621be071806663";
+  pinnedNix =
+    builtins.fetchGit {
+      name = "nixpkgs-pinned";
+      url = "https://github.com/NixOS/nixpkgs.git";
+      rev = "${pinnedNixHash}";
+    };
 
-  nixpkgs = pkgs;
+  nixpkgs = import pinnedNix {};
 
   ffmpegForTests = nixpkgs.ffmpeg-full;
 
