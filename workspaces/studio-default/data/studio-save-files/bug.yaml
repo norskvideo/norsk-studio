@@ -8,7 +8,7 @@ __layout:
   - id: whep-0
     x: 1440
     y: 176
-  - id: dynamicbug-1
+  - id: dynamicbug
     x: 896
     y: 208
 __globalConfig: {}
@@ -39,7 +39,7 @@ components:
       bufferDelayMs: 500
       id: whep-0
     subscriptions:
-      - source: dynamicbug-1
+      - source: dynamicbug
         streams:
           type: take-first-stream
           select:
@@ -53,9 +53,8 @@ components:
     config:
       displayName: dynamicBug
       defaultBug: smile.png
-      defaultOrientation: topleft
-      apiPort: 5000
-      id: dynamicbug-1
+      defaultPosition: topleft
+      id: dynamicbug
     subscriptions:
       - source: videotestcard-0
         streams:

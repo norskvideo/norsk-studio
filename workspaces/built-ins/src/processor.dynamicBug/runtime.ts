@@ -182,12 +182,8 @@ export class DynamicBug implements CreatedMediaNode {
       // may as well just shut everything down 
       // cos we can't do anything without the video
       await this.composeNode?.close();
-      await this.imageSource?.close();
-      await this.oldImageSource?.close();
       this.composeNode = undefined;
       this.currentVideo = undefined;
-      this.imageSource = undefined;
-      this.oldImageSource = undefined;
       return;
     } else {
       const nextVideo = video.message.value;
@@ -252,6 +248,7 @@ export class DynamicBug implements CreatedMediaNode {
               this.videoPart(nextVideo.width, nextVideo.height),
             ]
           })
+          debuglog("Closing old image source for bug", { id: this.id, oldNode: this.oldImageSource?.id, newNode: this.imageSource?.id })
           void this.oldImageSource?.close();
           this.oldImageSource = undefined;
           await this.handleContext();
@@ -302,6 +299,7 @@ export class DynamicBug implements CreatedMediaNode {
   async setupBug(bug?: string, position?: DynamicBugPosition) {
     this.position = position;
     if (!bug || bug === "") {
+      debuglog("Clearing bug", { id: this.id })
       this.doSubs();
       await this.imageSource?.close();
       this.imageSource = undefined;
@@ -310,6 +308,7 @@ export class DynamicBug implements CreatedMediaNode {
       await this.contexts.schedule();
       return;
     } else if (bug !== this.bug) {
+      debuglog("Changing bug", { id: this.id, bug, position })
       this.bug = bug;
       this.activeImage = this.activeImage == "a" ? "b" : "a";
       this.oldImageSource = this.imageSource;
@@ -319,6 +318,10 @@ export class DynamicBug implements CreatedMediaNode {
         fileName: path.join(bugDir(), bug)
       })
       this.setSources();
+    } else {
+      debuglog("Changing bug position", { id: this.id, bug, position })
+      this.position = position;
+      await this.contexts.schedule();
     }
     this.updates.raiseEvent({ type: 'bug-changed', file: bug, position })
   }
