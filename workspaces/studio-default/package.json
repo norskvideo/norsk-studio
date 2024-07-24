@@ -1,6 +1,6 @@
 {
   "name": "norsk-studio-demo",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "",
   "scripts": {
     "clean": "echo nothing to do",
