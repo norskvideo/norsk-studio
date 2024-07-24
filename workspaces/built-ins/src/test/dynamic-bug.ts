@@ -41,6 +41,10 @@ const videoOptsTwo = {
   frameRate: { frames: 25, seconds: 1 }
 }
 
+function apiUrl(id: string, port : number) : string{
+  return `http://localhost:${port}/live/api/${id}/active-bug`
+}
+
 describe("Dynamic Bug", () => {
 
   async function testDocument(cfg?: Omit<DynamicBugConfig, "id" | "displayName" | "__global">) {
@@ -323,7 +327,7 @@ describe("Dynamic Bug", () => {
     })
 
     it("Setting active bug via the http api", async () => {
-      const httpResult = await fetch(`http://localhost:${port}/bug/active-bug`, {
+      const httpResult = await fetch(apiUrl(bug.id, port), {
         method: 'POST',
         body: JSON.stringify({
           bug: 'test.png',
@@ -352,7 +356,7 @@ describe("Dynamic Bug", () => {
         return result.runtimeState.latest["bug"] as DynamicBugState;
       }
 
-      const httpResult = await fetch(`http://localhost:${port}/bug/active-bug`, {
+      const httpResult = await fetch(apiUrl(bug.id, port), {
         method: 'POST',
         body: JSON.stringify({
         })
@@ -375,7 +379,7 @@ describe("Dynamic Bug", () => {
         return result.runtimeState.latest["bug"] as DynamicBugState;
       }
 
-      const httpResult = await fetch(`http://localhost:${port}/bug/active-bug`, {
+      const httpResult = await fetch(apiUrl(bug.id, port), {
         method: 'delete'
       });
       const body = await httpResult.text();
