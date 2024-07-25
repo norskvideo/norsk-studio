@@ -36,8 +36,7 @@ export default class MediaConnectSourceDefinition implements ServerComponentDefi
         handleAwsException(e, res);
         return;
       }
-      res.writeHead(200);
-      res.end(JSON.stringify(flows));
+      res.send(JSON.stringify(flows));
     })
     router.get("/flows/:arn", async (req, res) => {
       let flow: Flow | undefined = undefined;
@@ -52,12 +51,10 @@ export default class MediaConnectSourceDefinition implements ServerComponentDefi
         return;
       }
       if (!flow) {
-        res.writeHead(404);
-        res.end("Flow not found?");
+        res.status(404).send("Flow not found?");
         return;
       }
-      res.writeHead(200);
-      res.end(JSON.stringify(flow));
+      res.send(JSON.stringify(flow));
     })
     return router;
   }
@@ -67,11 +64,9 @@ export default class MediaConnectSourceDefinition implements ServerComponentDefi
 function handleAwsException(e: unknown, res: Response) {
   errorlog("AWS exception", e);
   if (e instanceof MediaConnectServiceException) {
-    res.writeHead(e?.$metadata?.httpStatusCode ?? 500);
-    res.end(JSON.stringify(e));
+    res.status(e?.$metadata?.httpStatusCode ?? 500).send(JSON.stringify(e));
   } else {
-    res.writeHead(500);
-    res.end(JSON.stringify(e));
+    res.status(500).send(JSON.stringify(e));
   }
 }
 

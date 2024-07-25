@@ -58,8 +58,7 @@ export default class AwsTranscribeDefinition implements ServerComponentDefinitio
         warninglog("Error fetching AWS translate languages, proceeding with builtin", e);
       }
 
-      res.writeHead(200);
-      res.end(JSON.stringify({ transcribe, translate }));
+      res.send(JSON.stringify({ transcribe, translate }));
     })
     return router;
   }

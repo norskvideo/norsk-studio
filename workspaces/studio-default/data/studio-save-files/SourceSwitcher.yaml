@@ -1,0 +1,231 @@
+__layout:
+  - id: srt_cameras
+    x: 448
+    y: 432
+  - id: source_switcher
+    x: 880
+    y: 432
+  - id: lower_third
+    x: 1344
+    y: 192
+  - id: encode_ladder
+    x: 1760
+    y: 192
+  - id: hls_and_dash
+    x: 2256
+    y: 432
+  - id: camera1
+    x: 704
+    y: -176
+  - id: camera2
+    x: 1200
+    y: -176
+  - id: camera3
+    x: 1696
+    y: -176
+  - id: live_camera
+    x: 1344
+    y: 688
+__globalConfig: {}
+components:
+  - type: input.srt-listener
+    config:
+      displayName: SRT Cameras
+      port: 5001
+      ip: 0.0.0.0
+      passphrase: ""
+      socketOptions: {}
+      sourceNames: strict
+      streamIds:
+        - camera1
+        - camera2
+        - camera3
+      id: srt_cameras
+    subscriptions: []
+  - type: processor.control.multiCameraSelect
+    config:
+      displayName: Source Switcher
+      resolution:
+        width: 1280
+        height: 720
+      frameRate:
+        frames: 25
+        seconds: 1
+      sampleRate: 48000
+      channelLayout: stereo
+      id: source_switcher
+    subscriptions:
+      - source: srt_cameras
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+            - audio
+          filter:
+            - camera1
+            - camera2
+            - camera3
+  - type: processor.transform.browserOverlay
+    config:
+      displayName: Lower Third
+      url: https://app.singular.live/output/6CTPhPRe7yc5lkxgUixA5q/Default?aspect=9:5
+      id: lower_third
+    subscriptions:
+      - source: source_switcher
+        streams:
+          type: take-first-stream
+          select:
+            - video
+  - type: processor.transform.fixedLadder
+    config:
+      displayName: Encode Ladder
+      rungs:
+        - name: h264_1280x720
+          software:
+            width: 1280
+            height: 720
+            codec:
+              type: x264
+              bitrateMode:
+                value: 2500
+                mode: abr
+              keyFrameIntervalMax: 50
+              keyFrameIntervalMin: 50
+              sceneCut: 0
+              preset: fast
+              tune: zerolatency
+              threads: 4
+              bframes: 0
+            frameRate:
+              frames: 25
+              seconds: 1
+          quadra:
+            width: 1280
+            height: 720
+            codec:
+              type: quadra-h264
+              intraPeriod: 50
+              bitrate: 2500000
+            frameRate:
+              frames: 25
+              seconds: 1
+          logan:
+            width: 1280
+            height: 720
+            codec:
+              type: logan-h264
+              intraPeriod: 50
+              bitrate: 2500000
+            frameRate:
+              frames: 25
+              seconds: 1
+          nvidia:
+            width: 1280
+            height: 720
+            codec:
+              type: nv-h264
+              idrPeriod: 50
+              rateControl:
+                mode: vbr
+                averageBitrate: 2500000
+            frameRate:
+              frames: 25
+              seconds: 1
+          ma35d:
+            width: 1280
+            height: 720
+            codec:
+              type: amdMA35D-h264
+              profile: main
+              rateControl:
+                mode: cbr
+                bitrate: 5000
+              gopSize: 50
+            frameRate:
+              frames: 25
+              seconds: 1
+      id: encode_ladder
+    subscriptions:
+      - source: lower_third
+        streams:
+          type: take-first-stream
+          select:
+            - video
+  - type: output.autoCmaf
+    config:
+      displayName: HLS and DASH
+      name: default
+      sessionId: true
+      segments:
+        retentionPeriod: 60
+        defaultSegmentCount: 0
+        targetSegmentDuration: 4
+        targetPartDuration: 1
+      s3Destinations: []
+      id: hls_and_dash
+    subscriptions:
+      - source: encode_ladder
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+          filter:
+            - h264_1280x720
+            - h264_640x360
+            - h264_320x180
+      - source: source_switcher
+        streams:
+          type: take-first-stream
+          select:
+            - audio
+  - type: output.preview
+    config:
+      displayName: Camera1
+      bufferDelayMs: 500
+      id: camera1
+    subscriptions:
+      - source: srt_cameras
+        streams:
+          type: take-specific-stream
+          select:
+            - video
+            - audio
+          filter: camera1
+  - type: output.preview
+    config:
+      displayName: Camera2
+      bufferDelayMs: 500
+      id: camera2
+    subscriptions:
+      - source: srt_cameras
+        streams:
+          type: take-specific-stream
+          select:
+            - audio
+            - video
+          filter: camera2
+  - type: output.preview
+    config:
+      displayName: Camera3
+      bufferDelayMs: 500
+      id: camera3
+    subscriptions:
+      - source: srt_cameras
+        streams:
+          type: take-specific-stream
+          select:
+            - audio
+            - video
+          filter: camera3
+  - type: output.preview
+    config:
+      displayName: Live Camera
+      bufferDelayMs: 500
+      id: live_camera
+    subscriptions:
+      - source: source_switcher
+        streams:
+          type: take-first-stream
+          select:
+            - video
+            - audio

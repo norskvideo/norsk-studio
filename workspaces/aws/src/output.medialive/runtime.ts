@@ -55,8 +55,7 @@ export default class MediaConnectSourceDefinition implements ServerComponentDefi
         handleAwsException(e, res);
         return;
       }
-      res.writeHead(200);
-      res.end(JSON.stringify(channels));
+      res.send(JSON.stringify(channels));
     })
 
     router.get('/inputs/:id', async (req, res) => {
@@ -70,12 +69,10 @@ export default class MediaConnectSourceDefinition implements ServerComponentDefi
         return;
       }
       if (!input) {
-        res.writeHead(404);
-        res.end("Input not found?");
+        res.status(404).send("Input not found?");
         return;
       }
-      res.writeHead(200);
-      res.end(JSON.stringify(input));
+      res.send(JSON.stringify(input));
     })
 
     return router;
@@ -85,11 +82,9 @@ export default class MediaConnectSourceDefinition implements ServerComponentDefi
 // 1999 called and asked for its Java back
 function handleAwsException(e: unknown, res: Response) {
   if (e instanceof MediaLiveServiceException) {
-    res.writeHead(e?.$metadata?.httpStatusCode ?? 500);
-    res.end(JSON.stringify(e));
+    res.status(e?.$metadata?.httpStatusCode ?? 500).send(JSON.stringify(e));
   } else {
-    res.writeHead(500);
-    res.end(JSON.stringify(e));
+    res.status(500).send(JSON.stringify(e));
   }
 }
 

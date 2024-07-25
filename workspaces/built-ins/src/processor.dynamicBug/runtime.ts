@@ -67,34 +67,29 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     cb(node);
 
     runtime.router.get("/active-bug", async (_req, res) => {
-      res.writeHead(200);
-      res.end(JSON.stringify({
+      res.send(JSON.stringify({
         bug: node.bug,
         position: node.position
       }));
     })
     runtime.router.delete("/active-bug", async (_req, res) => {
       await node.setupBug(undefined, undefined);
-      res.writeHead(200);
-      res.end("ok");
+      res.send("ok");
     })
     runtime.router.post("/active-bug", async (req, res) => {
       if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
         if (!["topleft", "topright", "bottomleft", "bottomright"].includes(req.body.position)) {
-          res.writeHead(400);
-          res.end("bad position");
+          res.status(400).send("bad position");
           return;
         }
         const images = await getBugs();
         if (!images.includes(req.body.bug)) {
-          res.writeHead(400);
-          res.end("bad bug");
+          res.status(400).send("bad bug");
           return;
         }
       }
       await node.setupBug(req.body.bug, req.body.position);
-      res.writeHead(200);
-      res.end("ok");
+      res.send("ok");
     })
     const storage = multer.diskStorage({
       destination: bugDir(),
@@ -111,8 +106,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
       optionsSuccessStatus: 200
     }), async (_req, res) => {
       const images = await getBugs();
-      res.writeHead(200);
-      res.end(JSON.stringify(images));
+      res.send(JSON.stringify(images));
     })
   }
 
@@ -122,8 +116,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
 
     router.get("/bugs", async (_req, res) => {
       const images = await getBugs();
-      res.writeHead(200);
-      res.end(JSON.stringify(images));
+      res.send(JSON.stringify(images));
     })
     return router;
   }
@@ -179,7 +172,7 @@ export class DynamicBug implements CreatedMediaNode {
   async handleContext() {
     const video = this.videoSource?.latestStreams()[0]?.metadata;
     if (!video || !this.videoSource || video.message.case !== 'video') {
-      // may as well just shut everything down 
+      // may as well just shut everything down
       // cos we can't do anything without the video
       await this.composeNode?.close();
       this.composeNode = undefined;

@@ -148,8 +148,7 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
       const source = req.body.source;
       let fadeMs = req.body.fadeMs ?? 500;
       if (!source) {
-        res.writeHead(400);
-        res.end("no source");
+        res.status(400).send("no source");
         return;
       }
       const latest = updates.latest();
@@ -157,23 +156,20 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
       const exists = latest.availableSources.find((s) => s.id == converted.id && s.key == converted.key)
 
       if (!exists) {
-        res.writeHead(400);
-        res.end("source isn't active or doesn't exist");
+        res.status(400).send("source isn't active or doesn't exist");
         return;
       }
 
       if (typeof fadeMs === 'number') {
         if (fadeMs > 1000.0) {
-          res.writeHead(400);
-          res.end("fadeMs too large");
+          res.status(400).send("fadeMs too large");
           return;
         }
       } else {
         fadeMs = undefined;
       }
       node.setActiveSource(converted, []);
-      res.writeHead(200);
-      res.end("ok");
+      res.send("ok");
     })
 
     cb(node);
