@@ -41,8 +41,8 @@ const videoOptsTwo = {
   frameRate: { frames: 25, seconds: 1 }
 }
 
-function apiUrl(id: string, port : number) : string{
-  return `http://localhost:${port}/live/api/${id}/active-bug`
+function apiUrl(id: string, port: number): string {
+  return `http://127.0.0.1:${port}/${id}/active-bug`
 }
 
 describe("Dynamic Bug", () => {
@@ -300,9 +300,15 @@ describe("Dynamic Bug", () => {
       const app = express();
       app.use(express.json());
       result = await go(norsk, compiled, app);
-      listener = app.listen(0);
-      const address = listener.address() as AddressInfo;
-      port = address.port;
+      await new Promise<void>((r) => {
+        listener = app.listen(0, '127.0.0.1', () => {
+          const address = listener.address() as AddressInfo;
+          port = address.port;
+          r();
+        });
+      });
+      // const address = listener.address() as AddressInfo;
+      // port = address.port;
       bug = result.components["bug"] as DynamicBug;
       const sink = new TraceSink(norsk as Norsk, "sink");
       await sink.initialised;
