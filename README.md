@@ -13,12 +13,12 @@ NB: This assumes you have sensible versions of NodeJS and NPM present. If you ar
 nix-shell shell.nix
 ```
 
-Will launch a default instance of Norsk Studio on port 8000 (http://localhost:8000) with the built-in components and vision director. It is assumed Norsk is running on localhost on the standard ports. 
+Will launch a default instance of Norsk Studio on port 8000 (http://127.0.0.1:8000) with the built-in components and vision director. It is assumed Norsk is running on 127.0.0.1 on the standard ports.
 
 That can be changed under workspaces/studio-default/config.yaml
 
 ```
-npm run test 
+npm run test
 ```
 
 Will run the tests against all of the workspaces in the project (Again, assuming that Norsk is running)
@@ -27,9 +27,9 @@ Will run the tests against all of the workspaces in the project (Again, assuming
 Locations of interest
 --
 
-*workspaces/built-ins* 
+*workspaces/built-ins*
 
-Contains a collection of the default components available for use within Studio. 
+Contains a collection of the default components available for use within Studio.
 Its package.json builds a manifest for everything found in 'src' in src/index.ts, as well as building a client-side bundle for all of them.
 
 *workspaces/vision-director*

@@ -75,7 +75,7 @@ describe("WHEP Output", () => {
 
     await new Promise<void>((r) => {
       async function doIt() {
-        await page?.goto('http://localhost:8080/whep/whep/whep.html');
+        await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
         // Video only appears if SDP and stuff negotiate properly so..
         await page?.waitForSelector('video', { timeout: 100.0 })
           .catch(() => {
@@ -102,7 +102,7 @@ describe("WHEP Output", () => {
 
     await new Promise<void>((r) => {
       async function doIt() {
-        await page?.goto('http://localhost:8080/whep/whep/whep.html');
+        await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
         // Video only appears if SDP and stuff negotiate properly so..
         await page?.waitForSelector('video', { timeout: 1000.0 })
           .catch(() => {
@@ -136,7 +136,7 @@ describe("WHEP Output", () => {
 
     await new Promise<void>((r) => {
       async function doIt() {
-        await page?.goto('http://localhost:8080/whep/whep/whep.html');
+        await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
         // Video only appears if SDP and stuff negotiate properly so..
         await page?.waitForSelector('video', { timeout: 100.0 })
           .catch(() => {

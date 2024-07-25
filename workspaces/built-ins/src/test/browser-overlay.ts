@@ -30,7 +30,7 @@ describe("Browser Overlay", () => {
           ('browser',
             BrowserOverlayInfo(RegistrationConsts),
             {
-              url: 'http://localhost:6791',
+              url: 'http://127.0.0.1:6791',
             }
           ).reify())
       .reify();
@@ -81,7 +81,7 @@ describe("Browser Overlay with restart", () => {
           ('browser',
             BrowserOverlayInfo(RegistrationConsts),
             {
-              url: 'http://localhost:6791',
+              url: 'http://127.0.0.1:6791',
             }
           ).reify())
       .reify();
