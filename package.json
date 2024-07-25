@@ -6,7 +6,8 @@
     "server": "npm run --workspace workspaces/studio-default server",
     "test": "npm run --workspaces test",
     "support:start": "docker compose down && docker compose up -d",
-    "support:stop": "docker compose down"
+    "support:stop": "docker compose down",
+    "shiny-clean": "npm run clean && rm -rf node_modules && find workspaces/ -maxdepth 2 -name node_modules -exec rm -rf {} ';'"
   },
   "workspaces": [
     "workspaces/built-ins",
