@@ -1,6 +1,6 @@
 {
   "name": "norsk-studio-demo",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "",
   "scripts": {
     "clean": "echo nothing to do",
@@ -11,7 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "@norskvideo/norsk-sdk": "^1.0.367",
-    "@norskvideo/norsk-studio": "^1.18.2",
+    "@norskvideo/norsk-studio": "^1.18.4",
     "@norskvideo/norsk-studio-built-ins": "^1.0.0",
     "@norskvideo/norsk-studio-vision-director": "^1.0.0"
   }

@@ -1,6 +1,6 @@
 {
   "name": "@norskvideo/norsk-studio-alpha",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",
@@ -20,7 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@norskvideo/norsk-sdk": "^1.0.367",
-    "@norskvideo/norsk-studio": "^1.18.2"
+    "@norskvideo/norsk-studio": "^1.18.4"
   },
   "main": "lib/index.js",
   "devDependencies": {
