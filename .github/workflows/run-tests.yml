@@ -48,14 +48,14 @@ jobs:
 
     - name: Discord Webhook Action
       uses: tsickert/discord-webhook@v5.3.0
-      if: always() && ${{ inputs.notify_discord }} && ${{ hashFiles('discord.json') != '' }} 
+      if: ${{ always() && inputs.notify_discord && hashFiles('discord.json') != '' }} 
       with:
         webhook-url: ${{ secrets.DISCORD_URL }}
         raw-data: discord.json
 
     - name: Discord Webhook Action
       uses: tsickert/discord-webhook@v5.3.0
-      if: failure() && ${{ inputs.notify_discord }} && ${{ hashFiles('discord.json') == '' }} 
+      if: ${{ failure() && inputs.notify_discord && hashFiles('discord.json') == '' }} 
       with:
         webhook-url: ${{ secrets.DISCORD_URL }}
         raw-data: scripts/failure.json
