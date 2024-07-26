@@ -53,7 +53,7 @@ jobs:
 
     - name: Update Deps 
       if: ${{ inputs.update-deps }}
-      run: "npm install --workspaces @norskvideo/norsk-sdk@latest @norskvideo/norsk-studio"
+      run: "npm install --workspaces @norskvideo/norsk-sdk@latest @norskvideo/norsk-studio@latest"
 
     - name: Run Build 
       run: "npm install && npm run build"
