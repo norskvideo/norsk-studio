@@ -21,9 +21,9 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s '{
     }' > discord.json
 cat discord.json
 
-if [[ $BUILT_INS -eq 0 && $VISION_DIRECTOR -eq 0]]; then 
-  exit 0
+if [[ $BUILT_INS -eq 0 && $VISION_DIRECTOR -eq 0 ]]; then 
+  exit 0;
 else
-  exit 1
+  exit 1;
 fi
 
