@@ -16,6 +16,9 @@
     "workspaces/studio-default",
     "workspaces/aws"
   ],
+  "overrides": {
+    "ws": ">=8.17.1"
+  },
   "devDependencies": {
     "mocha-json-output-reporter": "^2.1.0"
   }
