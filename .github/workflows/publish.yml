@@ -33,7 +33,7 @@ jobs:
   publish:
     needs: run-tests
     if: always()
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout the head commit of the branch
       uses: actions/checkout@v2
