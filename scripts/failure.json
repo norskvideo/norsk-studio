@@ -1,0 +1,12 @@
+{
+  "content": "Studio Core",
+  "avatar_url": "https://i.imgur.com/HzrYPqf.png",
+  "username": "Evil Jenkins",
+  "embeds": [
+    {
+      "title": "Failure",
+      "color": 15548997,
+      "description": "Test run failed entirely, no file produced (Rob is just testing stuff)"
+    }
+  ]
+}

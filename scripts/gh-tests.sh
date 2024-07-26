@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
-LOG_LEVEL=error npm test --workspace workspaces/built-ins -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/built-ins.json
-LOG_LEVEL=error npm test --workspace workspaces/vision-director -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/vd.json
+LOG_LEVEL=error npm run test --workspace workspaces/built-ins -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/built-ins.json -- --grep "RTMP"
+BUILT_INS=$?
+
+LOG_LEVEL=error npm run test --workspace workspaces/vision-director -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/vd.json
+VISION_DIRECTOR=$?
+
 cat $PWD/built-ins.json $PWD/vd.json | jq -s '{ 
   "content": "Norsk Studio Defaults - Tests",
   "avatar_url": "https://i.imgur.com/HzrYPqf.png",
@@ -16,4 +20,10 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s '{
            ]
     }' > discord.json
 cat discord.json
+
+if [[ $BUILT_INS -eq 0 && $VISION_DIRECTOR -eq 0]]; then 
+  exit 0
+else
+  exit 1
+fi
 

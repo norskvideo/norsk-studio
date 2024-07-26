@@ -1,16 +1,16 @@
 name: Run Tests
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
-  push:
-
+  workflow_call:
+    inputs:
+      notify_discord:
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    # runs-on: self-hosted
 
     steps:
     - name: Checkout the head commit of the branch
@@ -23,7 +23,6 @@ jobs:
         name: "norsk_license.json"
         json: ${{ secrets.NORSK_LICENSE }}
 
-    # this would just be a service but you can't override the entry point, dull..
     - name: Run Norsk
       uses: gacts/run-and-post-run@v1
       with:
@@ -49,10 +48,17 @@ jobs:
 
     - name: Discord Webhook Action
       uses: tsickert/discord-webhook@v5.3.0
-      if: always()
+      if: always() && ${{ inputs.notify_discord }} && ${{ hashFiles('discord.json') != '' }} 
       with:
         webhook-url: ${{ secrets.DISCORD_URL }}
         raw-data: discord.json
+
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      if: failure() && ${{ inputs.notify_discord }} && ${{ hashFiles('discord.json') == '' }} 
+      with:
+        webhook-url: ${{ secrets.DISCORD_URL }}
+        raw-data: scripts/failure.json
 
     - name: Dump norsk logs
       if: always()

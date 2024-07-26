@@ -1,0 +1,12 @@
+name: Build on Push
+
+on:
+  push
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/run-tests.yml
+    secrets: inherit
+    with:
+      notify_discord: true
+

@@ -1,0 +1,134 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      update-deps:
+        description: 'Update Norsk Deps'
+        required: true
+        default: true
+        type: boolean
+      new-version:
+        description: 'New Version'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+      run-tests:
+        description: 'Run Tests'
+        required: true
+        type: boolean
+
+jobs:
+  run-tests:
+    if: ${{ inputs.run-tests }}
+    uses: ./.github/workflows/run-tests.yml
+    secrets: inherit
+    with:
+      notify_discord: false
+
+  publish:
+    needs: run-tests
+    if: always()
+    runs-on: self-hosted
+    steps:
+    - name: Checkout the head commit of the branch
+      uses: actions/checkout@v2
+
+    - name: Install Nix
+      if: ${{ runner.environment == 'github-hosted' }}
+      uses: DeterminateSystems/nix-installer-action@v4
+
+    - name: Run the Magic Nix Cache
+      if: ${{ runner.environment == 'github-hosted' }}
+      uses: DeterminateSystems/magic-nix-cache-action@v2
+
+    - name: Nix env
+      uses: rrbutani/use-nix-shell-action@v1
+      with:
+        file: shell.nix
+
+    - name: Update Deps 
+      if: ${{ inputs.update-deps }}
+      run: "npm install --workspaces @norskvideo/norsk-sdk@latest @norskvideo/norsk-studio"
+
+    - name: Run Build 
+      run: "npm install && npm run build"
+
+    - name: Version Bump
+      run: npm version --workspaces ${{ inputs.new-version }}  --git-tag-version=false
+
+    - name: Commit New Version
+      uses: stefanzweifel/git-auto-commit-action@v2.3.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        commit_message: Apply version update
+        branch: main
+        file_pattern: "package*.json"
+
+    - name: "Publish"
+      id: "publish-bi"
+      uses: JS-DevTools/npm-publish@v3
+      with:
+        token: ${{ secrets.NPM_TOKEN }}
+        package: workspaces/built-ins
+        dry-run: true
+
+    - name: "Publish"
+      id: "publish-vd"
+      uses: JS-DevTools/npm-publish@v3
+      with:
+        token: ${{ secrets.NPM_TOKEN }}
+        package: workspaces/vision-director
+        dry-run: true
+
+    - name: "Publish"
+      id: "publish-aws"
+      uses: JS-DevTools/npm-publish@v3
+      with:
+        token: ${{ secrets.NPM_TOKEN }}
+        package: workspaces/aws
+        dry-run: true
+
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      if: success()
+      with:
+        webhook-url: ${{ secrets.DISCORD_URL }}
+        username: "Evil Jenkins"
+        avatar_url: "https://i.imgur.com/HzrYPqf.png"
+        content: ""
+        embed-title: "@norskvideo/norsk-studio-built-ins published"
+        embed-color: 5763719 
+        embed-description: Version ${{ steps.publish-bi.outputs.version }}
+
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      if: success()
+      with:
+        webhook-url: ${{ secrets.DISCORD_URL }}
+        username: "Evil Jenkins"
+        avatar_url: "https://i.imgur.com/HzrYPqf.png"
+        content: ""
+        embed-title: "@norskvideo/norsk-studio-built-ins published"
+        embed-color: 5763719 
+        embed-description: Version ${{ steps.publish-vd.outputs.version }}
+
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      if: success()
+      with:
+        webhook-url: ${{ secrets.DISCORD_URL }}
+        username: "Evil Jenkins"
+        avatar_url: "https://i.imgur.com/HzrYPqf.png"
+        content: ""
+        embed-title: "@norskvideo/norsk-studio-aws published"
+        embed-color: 5763719 
+        embed-description: Version ${{ steps.publish-aws.outputs.version }}
+
+
+
