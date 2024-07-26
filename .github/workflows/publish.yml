@@ -68,7 +68,6 @@ jobs:
       with:
         commit_message: Apply version update
         branch: main
-        file_pattern: "package*.json"
 
     - name: "Publish"
       id: "publish-bi"
