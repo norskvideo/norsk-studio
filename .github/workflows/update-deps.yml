@@ -5,7 +5,6 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:
 
-
 jobs:
   auto-update:
     runs-on: ubuntu-latest
@@ -24,9 +23,76 @@ jobs:
       with:
         file: shell.nix
 
-    - name: Run auto dependency update 
-      uses: romoh/dependencies-autoupdate@v1.2
-      continue-on-error: true
+    - name: Write license file
+      id: create-json
+      uses: jsdaniell/create-json@v1.2.3
+      with:
+        name: "norsk_license.json"
+        json: ${{ secrets.NORSK_LICENSE }}
+
+    - name: Run Norsk 
+      uses: gacts/run-and-post-run@v1
+      with:
+        run: "docker run --pull=always --rm --name norsk -d --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly -p 6791:6791 -p 6790:6790 -p 8080:8080 norskvideo/norsk --license-file /mnt/license.json"
+        post: docker stop norsk 
+
+    - name: Do the dependency update
+      run: 
+        "npm install --workspaces @norskvideo/norsk-sdk@latest && npm install --workspaces @norskvideo/norsk-studio && npm install"
+
+    - name: Check for changes
+      id: changes
+      if: ${{ always() }}
+      run: |
+        if git diff --exit-code package-lock.json; then
+          echo "changes_exist=false" >> $GITHUB_OUTPUT
+        else
+          echo "changes_exist=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run build
+      id: build
+      if: ${{ always() && steps.changes.outputs.changes_exist }}
+      run: 
+        "npm run build"
+
+    - name: Run tests
+      id: test
+      if: ${{ success() && steps.changes.outputs.changes_exist }}
+      run: 
+        "npm run test"
+
+    - name: Create Pull Request
+      id: cpr
+      uses: peter-evans/create-pull-request@v6
+      if: ${{ always() && steps.changes.outputs.changes_exist }}
       with: 
+        base: 
+        add-paths: |
+            workspaces/*/package.json
+            package.json
+            package-lock.json
         token: ${{secrets.GITHUB_TOKEN}}
-        update-command: "'npm install --workspaces @norskvideo/norsk-sdk@latest && npm install --workspaces @norskvideo/norsk-studio@latest && npm install && npm run build'"
+        commit-message: "Auto update due to changes upstream"
+        delete-branch: true
+        body: |
+            Auto update to latest Norsk Media + Norsk Studio
+            Builds: ${{ steps.build.outcome }}
+            Tests: ${{ steps.test.outcome }}
+
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      if: ${{ always() && steps.changes.outputs.changes_exist }}
+      with:
+        webhook-url: ${{ secrets.DISCORD_URL }}
+        username: "Evil Jenkins"
+        avatar-url: "https://i.imgur.com/HzrYPqf.png"
+        content: ""
+        embed-title: ""
+        embed-color: 5763719 
+        embed-description: |
+          ### [norsk-studio/${{github.ref}}](https://github.com/id3as/norsk-studio/actions/runs/${{github.run_id}}) 
+          Norsk Studio (Defaults) Dependency Update
+          Builds: ${{ steps.build.outcome }}
+          Tests: ${{ steps.test.outcome }}
+          Pull request: [#${{steps.cpr.outputs.pull-request-number }}](${{ steps.cpr.outputs.pull-request-url }})
