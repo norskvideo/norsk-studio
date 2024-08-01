@@ -5,7 +5,7 @@ on:
 
 jobs:
   get-commits: 
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps: 
       - name: "Gather commits" 
         id: commits
