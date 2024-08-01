@@ -20,10 +20,9 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
                 + "\r\n"
                 + (("**Workspace:** Built-Ins \r\n") 
                 + "**Tests: **" 
-                +(if .[0].stats.failures == 0 then 
-                  ((.[0].stats.passes | tostring) +  " passed") 
-                 else 
-                  ("Failed \r\n===\r\n- " + ([.[0].failures.[].title] | join("\r\n- "))) 
+                + ((.[0].stats.passes | tostring) +  " passed") 
+                +(if .[0].stats.failures > 0 then 
+                  ("Failed \r\n===\r\n- " + ([.[1].failures.[].fullTitle] | join("\r\n- "))) 
                  end))
                 )
               },
@@ -33,10 +32,9 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
                 + "\r\n"
                 + (("**Workspace:** Vision Director \r\n") 
                 + "**Tests: **" 
-                +(if .[1].stats.failures == 0 then 
-                  ((.[1].stats.passes | tostring) +  " passed") 
-                 else 
-                  ("Failed \r\n===\r\n- " + ([.[1].failures.[].title] | join("\r\n- "))) 
+                + ((.[1].stats.passes | tostring) +  " passed") 
+                +(if .[1].stats.failures > 0 then 
+                  ("Failed \r\n===\r\n- " + ([.[1].failures.[].fullTitle] | join("\r\n- "))) 
                  end))
                 )
               },            
