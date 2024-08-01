@@ -1,6 +1,6 @@
 {
   "name": "@norskvideo/norsk-studio-built-ins",
-  "version": "1.11.5",
+  "version": "1.11.6",
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",

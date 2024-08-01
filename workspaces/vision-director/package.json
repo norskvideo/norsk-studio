@@ -1,6 +1,6 @@
 {
   "name": "@norskvideo/norsk-studio-vision-director",
-  "version": "1.8.5",
+  "version": "1.8.6",
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",
