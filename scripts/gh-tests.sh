@@ -16,7 +16,7 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
   "embeds": [ { "title": ""
               , "color": (if .[0].stats.failures == 0 then 5763719 else 15548997 end)
               , "description": 
-                ("###[norsk-studio/" + $GITHUB_REF + "](https://github.com/norskvideo/norsk-studio/actions/runs/" + $GITHUB_RUN_ID + ")"
+                ("[norsk-studio/" + $GITHUB_REF + "](https://github.com/norskvideo/norsk-studio/actions/runs/" + $GITHUB_RUN_ID + ")"
                 + "\r\n"
                 + (("**Workspace:** Built-Ins \r\n") 
                 + "**Tests: **" 
@@ -29,8 +29,7 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
               },
               { "title": ""
               , "color": (if .[1].stats.failures == 0 then 5763719 else 15548997 end)
-              , "description": 
-                ("###[norsk-studio/" + $GITHUB_REF + "](https://github.com/norskvideo/norsk-studio/actions/runs/" + $GITHUB_RUN_ID + ")"
+              , "description": ("[norsk-studio/" + $GITHUB_REF + "](https://github.com/norskvideo/norsk-studio/actions/runs/" + $GITHUB_RUN_ID + ")"
                 + "\r\n"
                 + (("**Workspace:** Vision Director \r\n") 
                 + "**Tests: **" 
