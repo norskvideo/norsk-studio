@@ -22,7 +22,7 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
                 + "**Tests: **" 
                 + ((.[0].stats.passes | tostring) +  " passed") 
                 +(if .[0].stats.failures > 0 then 
-                  ("Failed \r\n===\r\n- " + ([.[1].failures.[].fullTitle] | join("\r\n- "))) 
+                  ("Failed \r\n===\r\n- " + ([.[0].failures.[].fullTitle] | join("\r\n- "))) 
                  end))
                 )
               },
