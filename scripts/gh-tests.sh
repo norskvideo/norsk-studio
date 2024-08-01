@@ -10,7 +10,7 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
                      --arg CONTEXT "${CONTEXT:-empty}" \
                      --arg GITHUB_REF "${GITHUB_REF:-empty}" \
                      --arg GITHUB_RUN_ID "${GITHUB_RUN_ID:-empty}" \ '{ 
-  "content": "o",
+  "content": "",
   "avatar_url": "https://i.imgur.com/HzrYPqf.png",
   "username": "Evil Jenkins",
   "embeds": [ { "title": ""
