@@ -7,6 +7,10 @@ on:
         required: false
         default: false
         type: boolean
+      run_context:
+        required: false
+        default: "No context"
+        type: string
 
 jobs:
   run-tests:
@@ -23,11 +27,11 @@ jobs:
         name: "norsk_license.json"
         json: ${{ secrets.NORSK_LICENSE }}
 
-    - name: Run Norsk
+    - name: Run Norsk 
       uses: gacts/run-and-post-run@v1
       with:
-        run: "docker run --name norsk --rm -d --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly --net=host norskvideo/norsk --license-file /mnt/license.json"
-        post: docker stop norsk
+        run: "docker run --pull=always --rm --name norsk -d --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly -p 6791:6791 -p 6790:6790 -p 8080:8080 norskvideo/norsk --license-file /mnt/license.json"
+        post: docker stop norsk 
 
     - name: Install Nix
       uses: DeterminateSystems/nix-installer-action@v4
@@ -43,6 +47,11 @@ jobs:
       run: "npm install --workspaces @norskvideo/norsk-sdk@latest && npm install @norskvideo/norsk-studio@latest && npm install && npm run build"
 
     - name: Run Tests
+      env: 
+        RUNNER: ${{ runner.name }}
+        CONTEXT: ${{ inputs.run_context }}
+        GITHUB_REF: ${{ github.ref }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
       run: "./scripts/gh-tests.sh"
       timeout-minutes: 20
 
@@ -58,7 +67,14 @@ jobs:
       if: ${{ failure() && inputs.notify_discord && hashFiles('discord.json') == '' }} 
       with:
         webhook-url: ${{ secrets.DISCORD_URL }}
-        raw-data: scripts/failure.json
+        username: "Evil Jenkins"
+        avatar-url: "https://i.imgur.com/HzrYPqf.png"
+        content: ""
+        embed-title: "Norsk Studio Defaults Tests Failed"
+        embed-color: 15548997
+        embed-description: | 
+          No Results File Found 
+          ${{inputs.run_context}}
 
     - name: Dump norsk logs
       if: always()

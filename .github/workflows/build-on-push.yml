@@ -4,9 +4,29 @@ on:
   push
 
 jobs:
+  get-commits: 
+    runs-on: self-hosted
+    steps: 
+      - name: "Gather commits" 
+        id: commits
+        env: 
+          PAYLOAD: ${{ toJson(github.event.commits) }}  
+        run: |
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$PAYLOAD" | jq -r '([.[] | ("- " + .id[0:6] + " " + .message + " - " + .author.username)] | join("\r\n"))' >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+    outputs:
+      commits: ${{ steps.commits.outputs.commits }}
+
   run-tests:
     uses: ./.github/workflows/run-tests.yml
     secrets: inherit
+    needs: get-commits
     with:
       notify_discord: true
+      run_context: | 
+        **Changes :**
+        ${{ needs.get-commits.outputs.commits }}
+
+
 
