@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-LOG_LEVEL=error npm run test --workspace workspaces/built-ins -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/built-ins.json
+# LOG_LEVEL=error npm run test --workspace workspaces/built-ins -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/built-ins.json
 BUILT_INS=$?
 
-LOG_LEVEL=error npm run test --workspace workspaces/vision-director -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/vd.json
+# LOG_LEVEL=error npm run test --workspace workspaces/vision-director -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/vd.json
 VISION_DIRECTOR=$?
 
 cat $PWD/built-ins.json $PWD/vd.json | jq -s \
@@ -21,10 +21,12 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
                 + (("**Workspace:** Built-Ins \r\n") 
                 + "**Tests: **" 
                 + ((.[0].stats.passes | tostring) +  " passed") 
-                +(if .[0].stats.failures > 0 then 
+                + (if .[0].stats.failures > 0 then 
                   ("Failed \r\n===\r\n- " + ([.[0].failures.[].fullTitle] | join("\r\n- "))) 
-                 end))
-                )
+                  else 
+                    ""
+                 end)
+                ))
               },
               { "title": ""
               , "color": (if .[1].stats.failures == 0 then 5763719 else 15548997 end)
@@ -35,8 +37,10 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
                 + ((.[1].stats.passes | tostring) +  " passed") 
                 +(if .[1].stats.failures > 0 then 
                   ("Failed \r\n===\r\n- " + ([.[1].failures.[].fullTitle] | join("\r\n- "))) 
-                 end))
-                )
+                  else 
+                    ""
+                 end)
+                ))
               },            
               { "title": ""
               , "color": 5763719 
