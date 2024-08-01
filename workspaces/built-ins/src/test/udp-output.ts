@@ -8,7 +8,7 @@ import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { expect } from "chai";
 import { UdpTsOutputSettings } from "../output.udpTs/runtime";
 import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
-import { getStreams } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
+import { waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import UdpInfo from "../output.udpTs/info";
 import { Av, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { SimpleSinkWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
@@ -48,15 +48,18 @@ describe("TS UDP Output", () => {
   })
 
   it("Should output some frames", async () => {
-    // I think we could be even smarter about this
-    // and spin it up and wait for the standard 'debug' text t be output
-
-    const ffprobe = getStreams('udp://@:5101');
     const compiled = await testDocument();
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
     const udp = result.components["udp"] as SimpleSinkWrapper;
     const source = await videoAndAudio(norsk, 'source');
+
+    const sink = await norsk.input.udpTs({
+      id: 'sink',
+      ip: '127.0.0.1',
+      port: 5101,
+      sourceName: 'sink'
+    });
 
     udp.subscribe([new StudioNodeSubscriptionSource(
       source,
@@ -65,10 +68,10 @@ describe("TS UDP Output", () => {
         type: "take-all-streams", select: Av
       })])
 
-    const streams = await ffprobe;
-
-    // All we really need to assert here tbf
-    expect(streams ?? []).lengthOf(2);
+    sink.outputStreams.length
+    await waitForAssert(() => sink.outputStreams.length == 2, () => {
+      expect(sink.outputStreams.length).equal(2);
+    }, 5000, 10)
   })
 });
 

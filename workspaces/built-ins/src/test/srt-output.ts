@@ -8,11 +8,11 @@ import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { expect } from "chai";
 import { SrtOutputSettings } from "../output.srt/runtime";
 import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
-import { getStreams } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import SrtInfo from "../output.srt/info";
 import { Av, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { SimpleSinkWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
+import { waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();
@@ -47,18 +47,22 @@ describe("SRT Output", () => {
 
   after(async () => {
     await norsk?.close();
+    await new Promise(f => setTimeout(f, 1000));
   })
 
   it("Should output some frames", async () => {
-    // I think we could be even smarter about this
-    // and spin it up and wait for the standard 'debug' text t be output
-    const ffprobe = getStreams('srt://127.0.0.1:65403?connect_timeout=10000');
-
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const compiled = await testDocument();
     const result = await go(norsk, compiled);
     const srt = result.components["srt"] as SimpleSinkWrapper;
     const source = await videoAndAudio(norsk, 'source');
+    const sink = await norsk.input.srt({
+      id: 'sink',
+      ip: '127.0.0.1',
+      port: 65403,
+      mode: 'caller',
+      sourceName: 'sink'
+    });
 
     srt.subscribe([new StudioNodeSubscriptionSource(
       source,
@@ -68,10 +72,9 @@ describe("SRT Output", () => {
         select: Av
       })])
 
-    const streams = await ffprobe;
-
-    // All we really need to assert here tbf
-    expect(streams).lengthOf(2);
+    await waitForAssert(() => sink.outputStreams.length == 2, () => {
+      expect(sink.outputStreams.length).equal(2);
+    }, 5000, 10)
   })
 });
 
