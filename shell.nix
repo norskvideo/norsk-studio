@@ -38,7 +38,7 @@ with nixpkgs;
 
 mkShell {
   buildInputs = with pkgs; [
-    nodejs-18_x
+    nodejs_20
     nodePackages.typescript-language-server
     nodePackages."@tailwindcss/language-server"
     nodePackages.vscode-langservers-extracted
