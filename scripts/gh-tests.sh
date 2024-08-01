@@ -41,7 +41,7 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
                  end))
                 )
               },            
-              { "title": "Commits"
+              { "title": ""
               , "color": 5763719 
               , "description": $CONTEXT
               }            
