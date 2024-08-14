@@ -138,8 +138,8 @@ describe("Dynamic Bug", () => {
 
   it("Dynamic bug with initial configured image", async () => {
     const compiled = await testDocument({
-      defaultBug: "test.png",
-      defaultPosition: "bottomleft"
+      initialBug: "test.png",
+      initialPosition: "bottomleft"
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
@@ -199,8 +199,8 @@ describe("Dynamic Bug", () => {
 
   it("Dynamic bug with configured image, re-configured during run", async () => {
     const compiled = await testDocument({
-      defaultBug: "test.png",
-      defaultPosition: "bottomleft"
+      initialBug: "test.png",
+      initialPosition: "bottomleft"
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
@@ -232,8 +232,8 @@ describe("Dynamic Bug", () => {
 
   it("Dynamic bug with configured image, re-configured during run, source reset", async () => {
     const compiled = await testDocument({
-      defaultBug: "test.png",
-      defaultPosition: "bottomleft"
+      initialBug: "test.png",
+      initialPosition: "bottomleft"
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);

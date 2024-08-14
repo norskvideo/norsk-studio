@@ -24,8 +24,8 @@ export type DynamicBugConfig = {
   },
   id: string,
   displayName: string,
-  defaultBug?: string
-  defaultPosition?: DynamicBugPosition;
+  initialBug?: string
+  initialPosition?: DynamicBugPosition;
 }
 
 export type DynamicBugState = {
@@ -360,7 +360,7 @@ export class DynamicBug implements CreatedMediaNode {
   }
 
   async initialise() {
-    await this.setupBug(this.cfg.defaultBug, this.cfg.defaultPosition);
+    await this.setupBug(this.cfg.initialBug, this.cfg.initialPosition);
   }
 
   subscribe(sources: StudioNodeSubscriptionSource[]) {

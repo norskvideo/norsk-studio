@@ -31,7 +31,7 @@ export default function({
     },
     display: (desc) => {
       return {
-        default: desc.config.defaultBug ?? 'none',
+        default: desc.config.initialBug ?? 'none',
       }
     },
     runtime: {
@@ -54,14 +54,14 @@ export default function({
         hardware: HardwareSelection()
       },
       form: {
-        defaultBug: {
+        initialBug: {
           help: "The default bug to render on the video (if any)",
           hint: {
             type: "custom",
             component: BugSelection,
           }
         },
-        defaultPosition: {
+        initialPosition: {
           help: "The default location to render the bug in",
           hint: {
             type: 'select',

@@ -1,39 +1,100 @@
-== Dynamic Bug Overlay Component 
-This component allows you to overlay a static image onto a video stream within the Norsk Studio environment. It provides a customizable interface for configuring the bug's appearance and position and includes runtime controls for dynamic adjustments.
+== Dynamic Bug Overlay Component
+This component allows you to overlay a static image (or bug) onto a video stream. It provides a customizable interface for configuring the bug's position and includes runtime controls for dynamic adjustments.
 
 It offers the ability to update or remove the overlay image during runtime, making it highly adaptable for various broadcasting and video processing needs.
 
-=== Configurations
-This component is configurable from the Norsk Studio page or via REST API calls. Some of the config options are required while others are optional:
+=== Configuration
 
-- id: A unique identifier for the component instance.
-- displayName: The display name of this component.
-- defaultBug (optional): The default bug to render on the video, if any.
-- defaultPosition (optional): The default position for the bug overlay on the video. Options include:
-  - topleft
-  - topright
-  - bottomleft
-  - bottomright
-__global.hardware (optional): Specifies the type of hardware acceleration to be used.
-__global.dataDir (optional): Specifies the directory where bug images are stored.
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| initialBug | The initial bug to render on the video, if any | 𐄂
+| initialPosition a| The initial position for the bug overlay on the video.  One of:
+
+- topleft
+- topright
+- bottomleft
+- bottomright | 𐄂
+|===
 
 === Runtime Control (UI)
 
 The component provides a UI for runtime control, allowing users to interact with the overlay in real time. This allows you to:
 
-* View a summary of the current configuration.
+* View the current configuration.
 * Adjust the bug's position and image through a form.
-* Configure hardware acceleration settings.
+* Upload new bugs / images
 
-We've configured the overlay bug on the studio page UI by calling into this processor via yaml configs:
+=== Runtime Control API
+
+The DynamicBug component also exposes an HTTP JSON API for runtime control, enabling programmatic interaction.
+
+As with all Studio Runtime Control APIs, the base URL of the API is `http://127.0.0.1:8000/live/api/{componentId}`
+where `{componentId}` is the id of the component you are controlling.  So for example if you have a DynamicBug with id `dynamicBug` the base URL would be `http://127.0.0.1:8000/live/api/bynamicBug/`.
+
+[cols="1,1,2,3",options="header"]
+|===
+| URL | Method | Description | Response
+
+| active-bug | GET | Retrieves the current bug (if any) and its position |
+| bugs | GET | Retrieves a list of available bug images |
+|===
+
+[cols="1,1,2,3",options="header"]
+|===
+| URL | Method | Description | Payload
+| active-bug | DELETE | Removes the current bug overlay |
+| active-bug | POST | Updates the bug overlay with a new image or position
+a|
+[source, json]
+----
+{
+  "bug": The name of the bug to overlay,
+  "position": The position to display the bug (one of `topLeft`, `topRight`...)
+}
+----
+| active-bug | POST | A post with an empty JSON payload `{}` deletes removes the current bug. | `{}`
+|===
+
+
+
+For example, you can send a POST request to update the position of the bug controlled by a DynmaicBup component with `id` of `dynamicBug` as follows:
+
+[source, bash]
+----
+curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -d '{"bug": "trinorsk.png", "position": "topright"}' http://127.0.0.1:8000/live/api/dynamicBug/active-bug
+----
+
+The above request now moves the bug from the default topleft corner to topright - you can experiment with it by moving the bug to different positions.
+
+
+
+== Example
+
+OverlayBug screenshot - form and running with topleft and bottom right
+SHow a new image upload
+
+
+=== Environment Overrides
+
+[cols="1,2,1",options="header"]
+|===
+| NAME | Description | Default Value
+| DYNAMICBUG_DIRECTORY | The subdirectory from which all DynamicBug components read image files and to which new images are uploaded | bugs
+|===
+
+=== YAML Override Example
+TBD
 
 [source, yaml]
 ----
 - type: processor.dynamicBug
     config:
       displayName: dynamicBug
-      defaultBug: trinorsk.png
-      defaultPosition: topleft
+      initialBug: trinorsk.png
+      initialPosition: topleft
       id: dynamicbug
     subscriptions:
       - source: srt-listener
@@ -44,22 +105,4 @@ We've configured the overlay bug on the studio page UI by calling into this proc
           filter: camera1
 ----
 
-=== Runtime Control API
-
-The component also exposes several REST API endpoints for runtime control, enabling programmatic interaction:
-
-* `GET /active-bug`: Retrieves the current bug and its position.
-* `DELETE /active-bug`: Removes the current bug overlay.
-* `POST /active-bug`: Updates the bug overlay with a new image or position.
-* `POST /bugs`: Uploads a new image to the bug directory.
-* `GET /bugs`: Retrieves a list of available bug images.
-
-For example, you can send a POST request to update the position of the bug like so:
-
-[source, bash]
-----
-curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -d '{"bug": "trinorsk.png", "position": "topright"}' http://127.0.0.1:8000/live/api/dynamicBug/active-bug
-----
-
-The above request now moves the bug from the default topleft corner to topright - you can experiment with it by moving the bug to different positions.
 
