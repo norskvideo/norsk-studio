@@ -1,0 +1,65 @@
+== Dynamic Bug Overlay Component 
+This component allows you to overlay a static image onto a video stream within the Norsk Studio environment. It provides a customizable interface for configuring the bug's appearance and position and includes runtime controls for dynamic adjustments.
+
+It offers the ability to update or remove the overlay image during runtime, making it highly adaptable for various broadcasting and video processing needs.
+
+=== Configurations
+This component is configurable from the Norsk Studio page or via REST API calls. Some of the config options are required while others are optional:
+
+- id: A unique identifier for the component instance.
+- displayName: The display name of this component.
+- defaultBug (optional): The default bug to render on the video, if any.
+- defaultPosition (optional): The default position for the bug overlay on the video. Options include:
+  - topleft
+  - topright
+  - bottomleft
+  - bottomright
+__global.hardware (optional): Specifies the type of hardware acceleration to be used.
+__global.dataDir (optional): Specifies the directory where bug images are stored.
+
+=== Runtime Control (UI)
+
+The component provides a UI for runtime control, allowing users to interact with the overlay in real time. This allows you to:
+
+* View a summary of the current configuration.
+* Adjust the bug's position and image through a form.
+* Configure hardware acceleration settings.
+
+We've configured the overlay bug on the studio page UI by calling into this processor via yaml configs:
+
+[source, yaml]
+----
+- type: processor.dynamicBug
+    config:
+      displayName: dynamicBug
+      defaultBug: trinorsk.png
+      defaultPosition: topleft
+      id: dynamicbug
+    subscriptions:
+      - source: srt-listener
+        streams:
+          type: take-specific-stream
+          select:
+            - video
+          filter: camera1
+----
+
+=== Runtime Control API
+
+The component also exposes several REST API endpoints for runtime control, enabling programmatic interaction:
+
+* `GET /active-bug`: Retrieves the current bug and its position.
+* `DELETE /active-bug`: Removes the current bug overlay.
+* `POST /active-bug`: Updates the bug overlay with a new image or position.
+* `POST /bugs`: Uploads a new image to the bug directory.
+* `GET /bugs`: Retrieves a list of available bug images.
+
+For example, you can send a POST request to update the position of the bug like so:
+
+[source, bash]
+----
+curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -d '{"bug": "trinorsk.png", "position": "topright"}' http://127.0.0.1:8000/live/api/dynamicBug/active-bug
+----
+
+The above request now moves the bug from the default topleft corner to topright - you can experiment with it by moving the bug to different positions.
+
