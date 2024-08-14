@@ -5,12 +5,12 @@ Its package.json builds a manifest for everything found in 'src' in src/index.ts
 
 === Structure
 
-Inside the 'src' folder, we have several subdirectories with components that do one of the following things:
+Inside the 'src' folder, we have several subdirectories each containing components in a particular class:
 
 - Inputs: Modules that define how media streams are ingested.
-- Processors: Modules that handle the transformation or analysis of media streams.
 - Outputs: Modules that define how media streams are delivered to their destinations.
+- Processors: Modules that handle the transformation or analysis of media streams.
 
-Using Norsk Studio, we can combine these components to build some rather complicated media workflows seamlessly.
+Using Norsk Studio, we can combine these components to easily build even complex live media workflows.
 
 The documentation for each of the components can be found within the component's folder Readme.
