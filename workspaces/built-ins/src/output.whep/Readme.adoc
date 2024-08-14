@@ -1,0 +1,31 @@
+= output.whep Component
+
+This component allows us to use WebRTC egress for outputs. 
+
+== Features
+* Accepts only a single stream. Can either be an audio stream, a video stream, or a stream with both audio and video 
+* Integration with ICE (Interactive Connectivity Establishment) servers for NAT traversal
+* Configurable jitter buffer for managing network inconsistencies
+
+== Configuration
+
+This component has a few config options:
+
+* id (string): Unique identifier for the component
+* displayName (string): The display name for the component (duuh)
+* bufferDelayMs (number): How many milliseconds in the jitter buffer (default: 500ms)
+* iceServers (array): An array of ICE server objects used in WebRTC connection establishment
+
+== Example config
+You can configure via the studio page by clicking on the component node or via yaml config like so:
+
+[source, yaml]
+----
+  - type: output.whep
+    config:
+      displayName: whep
+      bufferDelayMs: 500
+      id: whep
+----
+
+Also important to mention that these configs can be updated as needed during runtime either via the UI or via REST API calls.
