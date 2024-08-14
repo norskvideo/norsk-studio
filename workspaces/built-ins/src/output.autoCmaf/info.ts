@@ -6,7 +6,7 @@ import React from "react";
 // It's of note that we probably don't want to accidentally subscribe to
 // the same video stream twice (stream switch + encode output for example)
 // so maybe we need to mark things as producers/passthrough and follow that path back
-// We can a starter not allow video from the same original source in twice?
+// We can as a starter not allow video from the same original source in twice?
 // and we can validate that at the top level
 
 export default function({
