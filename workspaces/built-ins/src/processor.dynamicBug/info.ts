@@ -15,6 +15,7 @@ export default function({
     identifier: 'processor.dynamicBug',
     category: 'processor',
     name: "Dynamic Bug",
+    description: "",
     subscription: {
       // Only accept a single video stream
       accepts: {
@@ -55,14 +56,14 @@ export default function({
       },
       form: {
         initialBug: {
-          help: "The default bug to render on the video (if any)",
+          help: "The initial bug to render on the video (if any)",
           hint: {
             type: "custom",
             component: BugSelection,
           }
         },
         initialPosition: {
-          help: "The default location to render the bug in",
+          help: "The initial location at which to render the bug",
           hint: {
             type: 'select',
             optional: true,

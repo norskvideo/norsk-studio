@@ -19,7 +19,7 @@ It offers the ability to update or remove the overlay image during runtime, maki
 - bottomright | 𐄂
 |===
 
-=== Runtime Control (UI)
+=== Runtime Control (Studio UI)
 
 The component provides a UI for runtime control, allowing users to interact with the overlay in real time. This allows you to:
 
@@ -27,12 +27,12 @@ The component provides a UI for runtime control, allowing users to interact with
 * Adjust the bug's position and image through a form.
 * Upload new bugs / images
 
-=== Runtime Control API
+=== Runtime Control (HTTP API)
 
 The DynamicBug component also exposes an HTTP JSON API for runtime control, enabling programmatic interaction.
 
 As with all Studio Runtime Control APIs, the base URL of the API is `http://127.0.0.1:8000/live/api/{componentId}`
-where `{componentId}` is the id of the component you are controlling.  So for example if you have a DynamicBug with id `dynamicBug` the base URL would be `http://127.0.0.1:8000/live/api/bynamicBug/`.
+where `{componentId}` is the id of the component you are controlling.  So for example if you have a DynamicBug with id `dynamicBug` the base URL would be `http://127.0.0.1:8000/live/api/dynamicBug/`.
 
 [cols="1,1,2,3",options="header"]
 |===
@@ -59,6 +59,7 @@ a|
 |===
 
 
+=== Runtime Control Example (HTTP API)
 
 For example, you can send a POST request to update the position of the bug controlled by a DynmaicBup component with `id` of `dynamicBug` as follows:
 
@@ -70,39 +71,19 @@ curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -
 The above request now moves the bug from the default topleft corner to topright - you can experiment with it by moving the bug to different positions.
 
 
-
-== Example
-
-OverlayBug screenshot - form and running with topleft and bottom right
-SHow a new image upload
-
-
 === Environment Overrides
 
 [cols="1,2,1",options="header"]
 |===
 | NAME | Description | Default Value
-| DYNAMICBUG_DIRECTORY | The subdirectory from which all DynamicBug components read image files and to which new images are uploaded | bugs
+| DYNAMICBUG_DIRECTORY | The subdirectory from which all DynamicBug components read image files and to which new images are uploaded.  This is relative to the top level document direction described [here]XXXX
+| bugs
 |===
 
-=== YAML Override Example
+=== Component Level Overrides
+
 TBD
 
-[source, yaml]
-----
-- type: processor.dynamicBug
-    config:
-      displayName: dynamicBug
-      initialBug: trinorsk.png
-      initialPosition: topleft
-      id: dynamicbug
-    subscriptions:
-      - source: srt-listener
-        streams:
-          type: take-specific-stream
-          select:
-            - video
-          filter: camera1
-----
+
 
 
