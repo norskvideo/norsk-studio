@@ -4,6 +4,7 @@
     "clean": "npm run --workspaces clean",
     "build": "npm run --workspaces build",
     "server": "npm run --workspace workspaces/studio-default server",
+    "gen-docs": "npm run --workspace workspaces/studio-default gen-docs",
     "test": "npm run --workspaces test",
     "support:start": "docker compose down && docker compose up -d",
     "support:stop": "docker compose down",
