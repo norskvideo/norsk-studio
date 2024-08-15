@@ -6,7 +6,8 @@
     "clean": "echo nothing to do",
     "build": "echo nothing to do",
     "test": "echo nothing to do",
-    "server": "npx studio-editor"
+    "server": "npx studio-editor",
+    "gen-docs": "npx studio-docs"
   },
   "license": "MIT",
   "dependencies": {
