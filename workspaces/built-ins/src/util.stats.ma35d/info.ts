@@ -9,7 +9,7 @@ export default function(R: Registration) {
   const InlineView = React.lazy(async () => import('./inline-view'));
 
   return defineComponent<Ma35DStatsOutputSettings, Ma35DStatsOutputState, Ma35DStatsOutputCommand, Ma35DStatsOutputEvent>({
-    identifier: 'util.ma35d-stats',
+    identifier: 'util.stats.ma35d',
     category: 'output',
     name: "MA35D Stats",
     subscription: {

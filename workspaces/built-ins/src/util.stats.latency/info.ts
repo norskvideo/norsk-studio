@@ -10,7 +10,7 @@ export default function(R: Registration) {
   const SourceNodeSelection = React.lazy(async () => import('./source-node-selection'));
 
   return defineComponent<LatencyStatsOutputSettings, LatencyStatsOutputState, LatencyStatsOutputCommand, LatencyStatsOutputEvent>({
-    identifier: 'util.latency-stats',
+    identifier: 'util.stats.latency',
     category: 'output',
     name: "Latency Probe",
     subscription: {
