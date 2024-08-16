@@ -59,6 +59,7 @@ export default function({
           help: "The initial bug to render on the video (if any)",
           hint: {
             type: "custom",
+            optional: true,
             component: BugSelection,
           }
         },

@@ -6,6 +6,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "jsx": "react-jsx",
+    "sourceMap": true,
     "target": "ES2022",
     "outDir": "./lib",
     "module": "commonjs"
