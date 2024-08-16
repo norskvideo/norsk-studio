@@ -12,7 +12,7 @@ export default function({
   const InlineView = React.lazy(async () => import('./inline-view'));
 
   return defineComponent<CascadingSwitchConfig, CascadingSwitchState, CascadingSwitchCommand, CascadingSwitchEvent>({
-    identifier: 'processor.control.cascadingSwitch',
+    identifier: 'processor.cascadingSwitch',
     category: 'processor',
     name: "Cascading Switch",
     subscription: {
