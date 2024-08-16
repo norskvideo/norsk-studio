@@ -9,7 +9,7 @@ export default function({
   validation: { Z },
 }: Registration) {
   return defineComponent<BrowserOverlayConfig>({
-    identifier: 'processor.transform.browserOverlay',
+    identifier: 'processor.browserOverlay',
     category: 'processor',
     name: "Browser Overlay",
     subscription: {

@@ -15,7 +15,7 @@ export default function({
   const CodecEditor = React.lazy(async () => import('./codec-editor'))
   const CodecView = React.lazy(async () => import('./codec-view'))
   return defineComponent<FixedLadderConfig>({
-    identifier: 'processor.transform.fixedLadder',
+    identifier: 'processor.fixedLadder',
     category: 'processor',
     name: "Encode Ladder",
     subscription: {
