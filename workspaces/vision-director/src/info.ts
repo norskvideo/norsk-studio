@@ -14,7 +14,7 @@ export default function(R: Registration) {
   const FullscreenView = React.lazy(async () => import('./fullscreen-view'));
 
   return defineComponent<MultiCameraSelectConfig, MultiCameraSelectState, MultiCameraSelectCommand, MultiCameraSelectEvent>({
-    identifier: 'processor.control.multiCameraSelect',
+    identifier: 'processor.multiCameraSelect',
     category: 'processor',
     name: "MultiCamera",
     subscription: {
