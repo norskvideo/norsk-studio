@@ -24,7 +24,7 @@
     "@aws-sdk/client-mediapackage": "^3.499.0",
     "@aws-sdk/client-s3": "^3.614.0",
     "@aws-sdk/client-translate": "^3.535.0",
-    "@norskvideo/norsk-sdk": "^1.0.368",
+    "@norskvideo/norsk-sdk": "^1.0.370",
     "@norskvideo/norsk-studio": "^1.18.5"
   },
   "main": "lib/index.js",
