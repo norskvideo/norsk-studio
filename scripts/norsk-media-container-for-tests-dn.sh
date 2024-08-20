@@ -10,5 +10,10 @@ docker run \
   --detach \
   --mount type=bind,source=$PWD,target=$PWD \
   --mount type=bind,source=$PWD/secrets/license.json,target=/mnt/license.json,readonly \
-  --net=host \
+  -p 1935:1935/TCP \
+  -p 5001:5001/UDP \
+  -p 5002:5002/UDP \
+  -p 6790:6790/TCP \
+  -p 6791:6791/TCP \
+  -p 8080:8080/TCP \
   norskvideo/norsk --license-file /mnt/license.json
