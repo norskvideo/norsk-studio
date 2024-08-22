@@ -5,7 +5,7 @@
     "build": "npm run --workspaces build",
     "server": "npm run --workspace workspaces/studio-default server",
     "gen-docs": "npm run --workspace workspaces/studio-default gen-docs",
-    "start-swagger": "npx ts-node workspaces/built-ins/src/processor.dynamicBug/server.ts",
+    "start-swagger": "node workspaces/built-ins/lib/processor.dynamicBug/server.js",
     "test": "npm run --workspaces test",
     "support:start": "docker compose down && docker compose up -d",
     "support:stop": "docker compose down",
