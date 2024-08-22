@@ -1,6 +1,6 @@
 import express from 'express';
 import swaggerUi from 'swagger-ui-express'
-import { routes, generateOpenApiSpec } from './info';
+import { routes, generateOpenApiSpec } from './runtime';
 
 const app = express();
 

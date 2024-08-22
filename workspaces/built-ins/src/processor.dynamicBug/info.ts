@@ -1,159 +1,9 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import type { DynamicBugCommand, DynamicBugConfig, DynamicBugEvent, DynamicBugState } from "./runtime";
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
-import { RouteInfo } from "@norskvideo/norsk-studio/lib/extension/client-types";
-import { Request, Response } from 'express';
-import { OpenAPIV3 } from 'openapi-types';
 import React from "react";
 
-export function generateOpenApiSpec(routes: RouteInfo[]): OpenAPIV3.Document {
-  const paths: OpenAPIV3.PathsObject = {};
-
-  routes.forEach(route => {
-    if (!paths[route.url]) {
-      paths[route.url] = {};
-    }
-
-    const pathItem = paths[route.url] as OpenAPIV3.PathItemObject
-    const operation: OpenAPIV3.OperationObject = {
-      summary: `${route.method} ${route.url}`,
-      responses: {
-        '200': {
-          description: 'Successful response',
-          content: {
-            'application/json': {
-              schema: route.responseSchema
-            }
-          }
-        }
-      }
-    };
-
-    if (route.payloadSchema) {
-      operation.requestBody = {
-        content: {
-          'application/json': {
-            schema: route.payloadSchema
-          }
-        }
-      };
-    }
-    
-    switch (route.method) {
-      case 'GET':
-        pathItem.get = operation
-        break;
-      case 'POST':
-        pathItem.post = operation
-        break;
-      case 'DELETE':
-        pathItem.delete = operation
-        break;
-    }
-  });
-
-  return {
-    openapi: '3.0.0',
-    info: {
-      title: 'DynamicBug API',
-      version: '1.0.0',
-      description: 'API for managing the overlay of static images in Norsk Studio'
-    },
-    paths
-  };
-}
-
-// RouteInfo objects based on DynamicBugDefinition
-export const routes: RouteInfo[] = [
-  {
-    url: '/active-bug',
-    method: 'GET',
-    handler: (_req: Request, res: Response) => {
-      res.send(JSON.stringify({
-        bug: 'string',
-        position: 'string'
-      }));
-    },
-    payloadSchema: {},
-    responseSchema: {
-      type: 'object',
-      properties: {
-        bug: { type: 'string', description: 'name the image file' },
-        position: { type: 'string' },
-      },
-    },
-  },
-  {
-    url: '/active-bug',
-    method: 'DELETE',
-    handler: (_req: Request, res: Response) => {
-      res.send("ok");
-    },
-    payloadSchema: {},
-    responseSchema: {
-      type: 'string',
-    },
-  },
-  {
-    url: '/active-bug',
-    method: 'POST',
-    handler: (req: Request, res: Response) => {
-      res.send("ok");
-    },
-    payloadSchema: {
-      type: 'object',
-      properties: {
-        bug: { type: 'string', description: 'filepath of the bug to overlay' },
-        position: { 
-          type: 'string',
-          enum: ['topleft', 'topright', 'bottomleft', 'bottomright']
-        },
-      },
-    },
-    responseSchema: {
-      type: 'string',
-    },
-  },
-  {
-    url: '/bugs',
-    method: 'POST',
-    handler: (_req: Request, res: Response) => {
-      res.send('File uploaded successfully');
-    },
-    payloadSchema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-    },
-    responseSchema: {
-      type: 'string',
-    },
-  },
-  {
-    url: '/bugs',
-    method: 'GET',
-    handler: (_req: Request, res: Response) => {
-      res.send(JSON.stringify(['string']));
-    },
-    payloadSchema: {},
-    responseSchema: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
-  },
-];
-
-const openApiSpec = generateOpenApiSpec(routes);
-console.log(JSON.stringify(openApiSpec, null, 2))
-
-
-export default function({
+export default function ({
   defineComponent,
   Video
 }: Registration) {
@@ -176,7 +26,7 @@ export default function({
         media: Video
       }
     },
-    extraValidation: function(ctx) {
+    extraValidation: function (ctx) {
       ctx.requireVideo(1);
     },
     display: (desc) => {
