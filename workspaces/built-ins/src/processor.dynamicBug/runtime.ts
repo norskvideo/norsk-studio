@@ -1,5 +1,4 @@
 import { ComposePart, FileImageInputNode, Norsk, SourceMediaNode, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
-
 import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
@@ -145,34 +144,83 @@ export const routes: RouteInfo<DynamicBug, DynamicBugConfig>[] = [
       properties: bugAndPositionProperties
     },
   },
-  // {
-  //   url: '/active-bug',
-  //   method: 'DELETE',
-  //   handler: (_req: Request, res: Response) => {
-  //     res.send("ok");
-  //   },
-  //   payloadSchema: {},
-  //   responseSchema: {
-  //     type: 'string',
-  //   },
-  // },
-  // {
-  //   url: '/active-bug',
-  //   method: 'POST',
-  //   handler: (req: Request, res: Response) => {
-  //     res.send("ok");
-  //   },
-  //   payloadSchema: {
-  //     type: 'object',
-  //     properties: {
-  //       bug: { type: 'string', description: 'filepath of the bug to overlay' },
+  {
+    url: '/active-bug',
+    method: 'POST',
+    handler: (node, _cfg) => (async (req, res) => {
+      if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
+        if (!dynamicBugPositions.includes(req.body.position)) {
+          res.status(400).send("bad position");
+          return;
+        }
+        const images = await getBugs();
+        if (!images.includes(req.body.bug)) {
+          res.status(400).send("bad bug");
+          return;
+        }
+      }
+      await node.setupBug(req.body.bug, req.body.position);
+      res.send("ok");
+    }),
+    payloadSchema: {
+      type: 'object',
+      properties: {
+        bug: { type: 'string', description: 'filepath of the bug to overlay' },
+        position: {
+          type: "string",
+          enum: ['topleft, topright, bottomleft', 'bottomright']
+        }
+      },
+    },
+    responseSchema: {
+      type: 'string',
+    },
+  },
+  {
+    url: '/bugs',
+    method: 'POST',
+    handler: (_node, _cfg) => ((_req: Request, res: Response) => {
+      res.send('File uploaded successfully');
+    }),
+    payloadSchema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary'
+        }
+      }
+    },
+    responseSchema: {
+      type: 'string'
+    }
+  },
+  {
+    url: '/bugs',
+    method: 'GET',
+    handler: (_node, _cfg) => (async (_req: Request, res: Response) => {
+      const images = await getBugs();
+      res.json(images);
+    }),
+    responseSchema: {
+      type: 'array',
+      items: {
+        type: 'string'
+      }
+    }
+  },
+  {
+    url: '/active-bug',
+    method: 'DELETE',
+    handler: (node, _cfg) => (async (_req, res) => {
+      await node.setupBug(undefined, undefined);
+      res.send("ok");
+    }),
+    responseSchema: {
+      type: 'string',
+    }
+  },
 
-  //     },
-  //   },
-  //   responseSchema: {
-  //     type: 'string',
-  //   },
-  // },
   // {
   //   url: '/bugs',
   //   method: 'POST',
@@ -232,33 +280,6 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     const node = await DynamicBug.create(norsk, cfg, runtime.updates);
     cb(node);
 
-     routes.forEach(route => {
-       switch (route.method) {
-         case 'GET':
-           runtime.router.get(route.url, route.handler(node, cfg));
-           break
-       }
-      });
-
-    runtime.router.delete("/active-bug", async (_req, res) => {
-      await node.setupBug(undefined, undefined);
-      res.send("ok");
-    })
-    runtime.router.post("/active-bug", async (req, res) => {
-      if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
-        if (!dynamicBugPositions.includes(req.body.position)) {
-          res.status(400).send("bad position");
-          return;
-        }
-        const images = await getBugs();
-        if (!images.includes(req.body.bug)) {
-          res.status(400).send("bad bug");
-          return;
-        }
-      }
-      await node.setupBug(req.body.bug, req.body.position);
-      res.send("ok");
-    })
     const storage = multer.diskStorage({
       destination: bugDir(),
       filename: function (_req, file, cb) {
@@ -266,9 +287,48 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
       }
     });
     const upload = multer({ storage })
-    runtime.router.post('/bugs', upload.single('file'), (_req, res) => {
-      res.send('File uploaded successfully')
-    })
+
+    routes.forEach(route => {
+      switch (route.method) {
+        case 'GET':
+          runtime.router.get(route.url, route.handler(node, cfg));
+          break;
+        case 'POST':
+          if(route.url === '/bugs') {
+            runtime.router.post(route.url, upload.single('file'), route.handler(node, cfg))
+          } else {
+            runtime.router.post(route.url, route.handler(node, cfg));
+          }
+          break;
+        case 'DELETE':
+          runtime.router.delete(route.url, route.handler(node, cfg));
+          break;
+      }
+    });
+
+    // runtime.router.delete("/active-bug", async (_req, res) => {
+    //   await node.setupBug(undefined, undefined);
+    //   res.send("ok");
+    // })
+    // runtime.router.post("/active-bug", async (req, res) => {
+    //   if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
+    //     if (!dynamicBugPositions.includes(req.body.position)) {
+    //       res.status(400).send("bad position");
+    //       return;
+    //     }
+    //     const images = await getBugs();
+    //     if (!images.includes(req.body.bug)) {
+    //       res.status(400).send("bad bug");
+    //       return;
+    //     }
+    //   }
+    //   await node.setupBug(req.body.bug, req.body.position);
+    //   res.send("ok");
+    // })
+
+    // runtime.router.post('/bugs', upload.single('file'), (_req, res) => {
+    //   res.send('File uploaded successfully')
+    // })
     runtime.router.get("/bugs", cors({
       origin: '*',
       optionsSuccessStatus: 200
