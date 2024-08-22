@@ -5,6 +5,7 @@
     "build": "npm run --workspaces build",
     "server": "npm run --workspace workspaces/studio-default server",
     "gen-docs": "npm run --workspace workspaces/studio-default gen-docs",
+    "start-swagger": "npx ts-node workspaces/built-ins/src/processor.dynamicBug/server.ts",
     "test": "npm run --workspaces test",
     "support:start": "docker compose down && docker compose up -d",
     "support:stop": "docker compose down",
@@ -21,6 +22,9 @@
     "ws": ">=8.17.1"
   },
   "devDependencies": {
-    "mocha-json-output-reporter": "^2.1.0"
+    "@types/swagger-ui-express": "^4.1.6",
+    "mocha-json-output-reporter": "^2.1.0",
+    "openapi-types": "^12.1.3",
+    "swagger-ui-express": "^5.0.1"
   }
 }
