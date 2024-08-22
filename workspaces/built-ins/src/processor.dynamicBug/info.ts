@@ -1,17 +1,10 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import type { DynamicBugCommand, DynamicBugConfig, DynamicBugEvent, DynamicBugState } from "./runtime";
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
-import { NextFunction, Request, Response } from 'express';
+import { RouteInfo } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { Request, Response } from 'express';
 import { OpenAPIV3 } from 'openapi-types';
 import React from "react";
-
-type RouteInfo = {
-  url: string,
-  method: 'GET' | 'POST' | 'DELETE',
-  handler: (req: Request, res: Response, next: NextFunction) => void,
-  payloadSchema: OpenAPIV3.SchemaObject,
-  responseSchema: OpenAPIV3.SchemaObject,
-}
 
 export function generateOpenApiSpec(routes: RouteInfo[]): OpenAPIV3.Document {
   const paths: OpenAPIV3.PathsObject = {};
