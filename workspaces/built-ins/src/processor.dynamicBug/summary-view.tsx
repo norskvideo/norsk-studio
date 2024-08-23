@@ -68,6 +68,7 @@ function SummaryView({ state, sendCommand, httpApi }: ViewProps<DynamicBugConfig
 
             // Upload a file first
             if (fileToUpload && bug === 'new') {
+              console.log("File to Upload is ", fileToUpload);
               const form = new FormData()
               const url = httpApi.toString() + "/bugs"
               form.append('file', fileToUpload)
@@ -75,17 +76,11 @@ function SummaryView({ state, sendCommand, httpApi }: ViewProps<DynamicBugConfig
                 method: 'POST',
                 body: form
               })
-
-              // probably don't need this but..
+              setFileToUpload(undefined);
               setTimeout(async () => {
                 await updateBugs();
-                sendCommand({ type: "change-bug", file: fileToUpload.name, position });
-                setBug(fileToUpload.name);
-                setFileToUpload(undefined);
                 return;
               }, 500)
-
-
             } else {
               sendCommand({ type: "change-bug", file: bug, position });
             }

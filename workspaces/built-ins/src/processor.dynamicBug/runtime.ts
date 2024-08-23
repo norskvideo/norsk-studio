@@ -10,10 +10,10 @@ import { OpenAPIV3 } from 'openapi-types';
 import { Router, Request, Response } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
-import cors from 'cors';
 import bodyParser from 'body-parser';
 import express from 'express'
-import multer from 'multer';
+import multer, { Multer } from 'multer';
+import { addDynamicRoute, addStaticRoute } from '@norskvideo/norsk-studio/lib/extension/runtime-system';
 
 
 const dynamicBugPositions = ["topleft", "topright", "bottomleft", "bottomright"] as const;
@@ -49,10 +49,20 @@ export type DynamicBugEvent = {
   position?: DynamicBugPosition
 }
 
-export function generateOpenApiSpec(routes: RouteInfo<DynamicBug, DynamicBugConfig>[]): OpenAPIV3.Document {
+type DynamicRouteContext = {
+  node: DynamicBug,
+  upload: Multer
+}
+
+type StaticRouteContext = {
+  upload: Multer
+}
+
+export function generateOpenApiSpec(routes: RouteInfo<DynamicRouteContext>[]): OpenAPIV3.Document {
   const paths: OpenAPIV3.PathsObject = {};
 
-  routes.forEach(route => {
+  const allRoutes = routes.concat( staticRoutes);
+  allRoutes.forEach(route => {
     if (!paths[route.url]) {
       paths[route.url] = {};
     }
@@ -60,26 +70,11 @@ export function generateOpenApiSpec(routes: RouteInfo<DynamicBug, DynamicBugConf
     const pathItem = paths[route.url] as OpenAPIV3.PathItemObject
     const operation: OpenAPIV3.OperationObject = {
       summary: `${route.method} ${route.url}`,
-      responses: {
-        '200': {
-          description: 'Successful response',
-          content: {
-            'application/json': {
-              schema: route.responseSchema
-            }
-          }
-        }
-      }
+      responses: route.responses,
     };
 
-    if (route.payloadSchema) {
-      operation.requestBody = {
-        content: {
-          'application/json': {
-            schema: route.payloadSchema
-          }
-        }
-      };
+    if (route.requestBody) {
+      operation.requestBody = route.requestBody
     }
 
     switch (route.method) {
@@ -107,9 +102,9 @@ export function generateOpenApiSpec(routes: RouteInfo<DynamicBug, DynamicBugConf
       {
         url: "http://127.0.0.1:8000/live/api/{componentId}",
         variables: {
-          "componentId": {
-            "default": "componentId",
-            "description": "The ID of the component whose HTTP API you are using"
+          componentId: {
+            default: "dynamicBug", // TODO should probably be empty - or a list of componentIds
+            description: "The ID of the component whose HTTP API you are using"
           },
         }
       }
@@ -118,142 +113,148 @@ export function generateOpenApiSpec(routes: RouteInfo<DynamicBug, DynamicBugConf
   };
 }
 
-
-const bugProperty = { type: 'string', description: 'name the image file' } as const;
-const positionProperty = {
+const bugProperty: OpenAPIV3.SchemaObject = {
   type: 'string',
+  description: 'The name of the image file',
+  example: 'Norsk.png',
+};
+const positionProperty: OpenAPIV3.SchemaObject = {
+  type: 'string',
+  description: 'Where to display the bug',
+  example: 'topright',
   enum: dynamicBugPositions.slice() // The OpenApi type is mutable, so copy the array
-} as const;
-const bugAndPositionProperties = {
-  bug: bugProperty,
-  position: positionProperty,
-} as const;
+};
+
+const bugAndPositionSchema: OpenAPIV3.SchemaObject = {
+  type: 'object',
+  properties: {
+    bug: bugProperty,
+    position: positionProperty,
+  },
+};
+
 // RouteInfo objects based on DynamicBugDefinition
-export const routes: RouteInfo<DynamicBug, DynamicBugConfig>[] = [
+export const routes: RouteInfo<DynamicRouteContext>[] = [
   {
     url: '/active-bug',
     method: 'GET',
-    handler: (node, _cfg) => ((_req: Request, res: Response) => {
+    handler: ({ node }) => ((_req: Request, res: Response) => {
       res.json({
         bug: node.bug,
         position: node.position
       });
     }),
-    responseSchema: {
-      type: 'object',
-      properties: bugAndPositionProperties
-    },
+    responses: {
+      '200': {
+        description: "Information about the currently overlaid bug (if any)",
+        content: {
+          "application/json": {
+            schema: bugAndPositionSchema
+          },
+        }
+      }
+    }
   },
   {
     url: '/active-bug',
     method: 'POST',
-    handler: (node, _cfg) => (async (req, res) => {
+    handler: ({ node }) => (async (req, res) => {
       if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
         if (!dynamicBugPositions.includes(req.body.position)) {
-          res.status(400).send("bad position");
+          res.status(400).json({
+            error: "bad position",
+            details: req.body.position
+          });
           return;
         }
         const images = await getBugs();
         if (!images.includes(req.body.bug)) {
-          res.status(400).send("bad bug");
+          res.status(400).json({
+            error: "Unknown bug file",
+            details: req.body.bug,
+          });
           return;
         }
       }
       await node.setupBug(req.body.bug, req.body.position);
-      res.send("ok");
+      res.status(204).send();
     }),
-    payloadSchema: {
-      type: 'object',
-      properties: {
-        bug: { type: 'string', description: 'filepath of the bug to overlay' },
-        position: {
-          type: "string",
-          enum: ['topleft, topright, bottomleft', 'bottomright']
+    requestBody: {
+      description: "The bug filename and location (sending an empty JSON object will delete the bug)",
+      content: {
+        'application/json': {
+          schema: bugAndPositionSchema,
+          example: {
+            bug: "Norsk.png",
+            position: "topleft",
+          }
         }
       },
     },
-    responseSchema: {
-      type: 'string',
-    },
-  },
-  {
-    url: '/bugs',
-    method: 'POST',
-    handler: (_node, _cfg) => ((_req: Request, res: Response) => {
-      res.send('File uploaded successfully');
-    }),
-    payloadSchema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary'
+    responses: {
+      '204': { description: "The active bug was successfully updated" },
+      '400': {
+        description: "Unknown bug",
+        content: {
+          "application/json": {
+            schema: {
+              type: 'object',
+              properties: {
+                error: { type: 'string', description: "A description of the error" },
+                details: { type: 'string', description: "The unacceptable data" }
+              }
+            },
+          }
         }
-      }
-    },
-    responseSchema: {
-      type: 'string'
-    }
-  },
-  {
-    url: '/bugs',
-    method: 'GET',
-    handler: (_node, _cfg) => (async (_req: Request, res: Response) => {
-      const images = await getBugs();
-      res.json(images);
-    }),
-    responseSchema: {
-      type: 'array',
-      items: {
-        type: 'string'
       }
     }
   },
   {
     url: '/active-bug',
     method: 'DELETE',
-    handler: (node, _cfg) => (async (_req, res) => {
+    handler: ({ node }) => (async (_req, res) => {
       await node.setupBug(undefined, undefined);
-      res.send("ok");
+      res.status(204).send();
     }),
-    responseSchema: {
-      type: 'string',
-    }
+    responses: { '204': { description: "The active bug was successfully deleted" } }
   },
 
-  // {
-  //   url: '/bugs',
-  //   method: 'POST',
-  //   handler: (_req: Request, res: Response) => {
-  //     res.send('File uploaded successfully');
-  //   },
-  //   payloadSchema: {
-  //     type: 'object',
-  //     properties: {
-  //       file: {
-  //         type: 'string',
-  //         format: 'binary',
-  //       },
-  //     },
-  //   },
-  //   responseSchema: {
-  //     type: 'string',
-  //   },
-  // },
-  // {
-  //   url: '/bugs',
-  //   method: 'GET',
-  //   handler: (_req: Request, res: Response) => {
-  //     res.json(['string']);
-  //   },
-  //   payloadSchema: {},
-  //   responseSchema: {
-  //     type: 'array',
-  //     items: {
-  //       type: 'string',
-  //     },
-  //   },
-  // },
+];
+
+const staticRoutes: RouteInfo<StaticRouteContext>[] = [
+  {
+    url: '/bugs',
+    method: 'POST',
+    handler: ({ upload }) => [upload.single('file'), (async (req, res) => res.status(204).send())],
+    requestBody: {
+      description: "A multipart form containing the file to upload)",
+      content: {
+        'multipart/form-data': {
+          schema: {
+            type: "object",
+            properties: {
+              // The property name 'file' will be used for all files.
+              'file': {
+                type: "string",
+                format: "binary",
+              }
+            },
+            required: ['file'],
+          }
+        }
+      }
+    },
+    responses: { '204': { description: "The file bug was uploaded successfully" } }
+  },
+  {
+    url: '/bugs',
+    method: 'GET',
+    handler: (_) => (async (_req: Request, res: Response) => {
+      const images = await getBugs();
+      res.json(images);
+    }),
+    responses: {},
+  },
 ];
 
 const openApiSpec = generateOpenApiSpec(routes);
@@ -286,66 +287,25 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
         cb(null, path.basename(file.originalname));
       }
     });
-    const upload = multer({ storage })
+    const upload = multer({ storage });
+    const context = { node, upload };
 
-    routes.forEach(route => {
-      switch (route.method) {
-        case 'GET':
-          runtime.router.get(route.url, route.handler(node, cfg));
-          break;
-        case 'POST':
-          if(route.url === '/bugs') {
-            runtime.router.post(route.url, upload.single('file'), route.handler(node, cfg))
-          } else {
-            runtime.router.post(route.url, route.handler(node, cfg));
-          }
-          break;
-        case 'DELETE':
-          runtime.router.delete(route.url, route.handler(node, cfg));
-          break;
-      }
-    });
-
-    // runtime.router.delete("/active-bug", async (_req, res) => {
-    //   await node.setupBug(undefined, undefined);
-    //   res.send("ok");
-    // })
-    // runtime.router.post("/active-bug", async (req, res) => {
-    //   if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
-    //     if (!dynamicBugPositions.includes(req.body.position)) {
-    //       res.status(400).send("bad position");
-    //       return;
-    //     }
-    //     const images = await getBugs();
-    //     if (!images.includes(req.body.bug)) {
-    //       res.status(400).send("bad bug");
-    //       return;
-    //     }
-    //   }
-    //   await node.setupBug(req.body.bug, req.body.position);
-    //   res.send("ok");
-    // })
-
-    // runtime.router.post('/bugs', upload.single('file'), (_req, res) => {
-    //   res.send('File uploaded successfully')
-    // })
-    runtime.router.get("/bugs", cors({
-      origin: '*',
-      optionsSuccessStatus: 200
-    }), async (_req, res) => {
-      const images = await getBugs();
-      res.json(images);
-    })
+    routes.forEach(route => addDynamicRoute(runtime, context, route));
+    // Make the static routes also available under the URL of the runtime component
+    staticRoutes.forEach(route => addDynamicRoute(runtime, context, route));
   }
 
   routes(): Router {
     const router = express.Router()
     router.use(bodyParser.json());
-
-    router.get("/bugs", async (_req, res) => {
-      const images = await getBugs();
-      res.json(images);
-    })
+    const storage = multer.diskStorage({
+      destination: bugDir(),
+      filename: function (_req, file, cb) {
+        cb(null, path.basename(file.originalname));
+      }
+    });
+    const upload = multer({ storage });
+    staticRoutes.forEach((route) => addStaticRoute(router, {upload}, route));
     return router;
   }
 
@@ -361,7 +321,6 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     }
   }
 }
-
 
 export class DynamicBug implements CreatedMediaNode {
   id: string;
@@ -525,6 +484,7 @@ export class DynamicBug implements CreatedMediaNode {
       await this.imageSource?.close();
       this.imageSource = undefined;
       this.bug = undefined;
+      this.position = undefined;
       this.updates.raiseEvent({ type: 'bug-changed' })
       await this.contexts.schedule();
       return;
