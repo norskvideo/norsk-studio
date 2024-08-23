@@ -340,13 +340,12 @@ describe("Dynamic Bug", () => {
           position: 'bottomleft'
         })
       });
-      const body = await httpResult.text();
 
       function latestState() {
         return result.runtimeState.latest["bug"] as DynamicBugState;
       }
 
-      expect(body).equal("ok");
+      expect(httpResult.status).equal(204);
 
       await Promise.all([
         assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
@@ -367,9 +366,8 @@ describe("Dynamic Bug", () => {
         body: JSON.stringify({
         })
       });
-      const body = await httpResult.text();
 
-      expect(body).equal("ok");
+      expect(httpResult.status).equal(204);
 
       await Promise.all([
         assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
@@ -388,9 +386,8 @@ describe("Dynamic Bug", () => {
       const httpResult = await fetch(apiUrl(bug.id, port), {
         method: 'delete'
       });
-      const body = await httpResult.text();
 
-      expect(body).equal("ok");
+      expect(httpResult.status).equal(204);
 
       await Promise.all([
         assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),

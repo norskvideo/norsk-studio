@@ -45,7 +45,6 @@ export default function ({
             return { ...state, activeBug: { file: ev.file, position: ev.position } };
           default:
             assertUnreachable(evType)
-
         }
       }
     },
