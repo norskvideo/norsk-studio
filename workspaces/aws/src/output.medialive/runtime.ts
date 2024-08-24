@@ -116,7 +116,7 @@ export class MediaLiveOutput extends CustomSinkNode {
       input = await client.send(new DescribeInputCommand({ InputId: this.cfg.inputId }));
       client.destroy();
     } catch (e) {
-      console.error("Failed to retrieve input information from AWS, cannot start media node");
+      console.error("Failed to retrieve input information from AWS, cannot start media node", e);
       return;
     }
 
