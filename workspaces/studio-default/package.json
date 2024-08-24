@@ -6,12 +6,13 @@
     "clean": "echo nothing to do",
     "build": "echo nothing to do",
     "test": "echo nothing to do",
-    "server": "npx studio-editor"
+    "server": "npx studio-editor",
+    "gen-docs": "npx studio-docs"
   },
   "license": "MIT",
   "dependencies": {
     "@norskvideo/norsk-sdk": "^1.0.372",
-    "@norskvideo/norsk-studio": "^1.19.0",
+    "@norskvideo/norsk-studio": "^1.19.3",
     "@norskvideo/norsk-studio-built-ins": "^1.0.0",
     "@norskvideo/norsk-studio-vision-director": "^1.0.0"
   }

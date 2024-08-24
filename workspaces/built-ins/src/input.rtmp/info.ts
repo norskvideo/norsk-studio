@@ -15,6 +15,7 @@ export default function({
       identifier: 'input.rtmp',
       category: 'input',
       name: "RTMP Ingest",
+      description: "A component that listens for RTMP input on the address specified.",
       subscription: {
         accepts: undefined,
         produces: {

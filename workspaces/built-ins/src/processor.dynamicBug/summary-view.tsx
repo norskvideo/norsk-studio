@@ -2,7 +2,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import type { DynamicBugState, DynamicBugConfig, DynamicBugCommand, DynamicBugPosition } from "./runtime";
 import { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
-function SummaryView({ state, sendCommand, httpApi }: ViewProps<DynamicBugConfig, DynamicBugState, DynamicBugCommand>) {
+function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, DynamicBugState, DynamicBugCommand>) {
 
   const [bug, setBug] = useState(state.activeBug?.file);
   const [position, setPosition] = useState(state.activeBug?.position);
@@ -68,24 +68,19 @@ function SummaryView({ state, sendCommand, httpApi }: ViewProps<DynamicBugConfig
 
             // Upload a file first
             if (fileToUpload && bug === 'new') {
+              console.log("File to Upload is ", fileToUpload);
               const form = new FormData()
-              const url = httpApi.toString() + "/bugs"
+              const url = urls.componentUrl.toString() + "/bugs"
               form.append('file', fileToUpload)
               await fetch(url, {
                 method: 'POST',
                 body: form
               })
-
-              // probably don't need this but..
+              setFileToUpload(undefined);
               setTimeout(async () => {
                 await updateBugs();
-                sendCommand({ type: "change-bug", file: fileToUpload.name, position });
-                setBug(fileToUpload.name);
-                setFileToUpload(undefined);
                 return;
               }, 500)
-
-
             } else {
               sendCommand({ type: "change-bug", file: bug, position });
             }

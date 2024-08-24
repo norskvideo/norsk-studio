@@ -1,0 +1,53 @@
+== input.srt-listener
+
+This component is designed to ingest media via the SRT(Secure Reliable Transport) protocol. It acts as a listener, receiving media streams from remote SRT sources and is highly configurable, allowing for custom IP addresses, ports, and stream handling behaviours.
+
+=== Configurations
+
+We can configure this component from the Norsk Studio page or via config files. The config options are:
+
+* displayName (string): The name displayed for this SRT listener in the UI.
+
+* port (number): The port number that this SRT input will listen on. The default is 5001.
+
+* ip (string): The IP address that this SRT input will listen on. The default is 0.0.0.0, which means it will listen on all available network interfaces.
+
+* passphrase (string, optional): An optional passphrase for authenticating the SRT input. This adds a layer of security by requiring the sender to know the passphrase.
+
+* socketOptions (object): Advanced configuration options for the SRT socket. These options provide fine-tuning of the SRT connection, offering greater control over parameters such as latency and bandwidth. 
+
+* sourceNames (string): Determines how streams are assigned:
+  - permissive: Automatically assigns streams in the order they arrive.
+  - strict: Restricts connections to streams with known IDs only.
+* streamIds (array of strings): A list of stream IDs that the listener will accept. Each stream ID corresponds to a specific source.
+
+* id (string): A unique identifier for this SRT listener component.
+
+=== Example configuration
+As with almost anything in Norsk Studio, this component can be configured from the UI page by clicking on it and adding the configs you want like the displayName, port etc. We can also configure it via a yaml config file like so:|
+
+[source, bash]
+----
+components:
+  - type: input.srt-listener
+    config:
+      displayName: srt-listener
+      port: 5001
+      ip: 0.0.0.0
+      passphrase: ""
+      socketOptions: {
+        receiveLatency: 120,
+        peerLatency: 120,
+        inputBandwidth: 5000000,
+        overheadBandwidth: 1000000,
+        maxBandwidth: 7000000
+      }
+      sourceNames: permissive
+      streamIds:
+        - camera1
+      id: srt-listener
+    subscriptions: []
+----
+
+
+

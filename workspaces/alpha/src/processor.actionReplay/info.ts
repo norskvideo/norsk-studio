@@ -12,7 +12,7 @@ export default function({
   const SummaryView = React.lazy(async () => import('./summary'));
 
   return defineComponent<ActionReplayConfig, ActionReplayState, ActionReplayCommand, ActionReplayEvent>({
-    identifier: 'processor.transform.actionReplay',
+    identifier: 'processor.actionReplay',
     category: 'processor',
     name: "Action Replay",
     subscription: {

@@ -3,8 +3,7 @@ import type { DynamicBugCommand, DynamicBugConfig, DynamicBugEvent, DynamicBugSt
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 import React from "react";
 
-
-export default function({
+export default function ({
   defineComponent,
   Video
 }: Registration) {
@@ -15,6 +14,7 @@ export default function({
     identifier: 'processor.dynamicBug',
     category: 'processor',
     name: "Dynamic Bug",
+    description: "",
     subscription: {
       // Only accept a single video stream
       accepts: {
@@ -26,12 +26,12 @@ export default function({
         media: Video
       }
     },
-    extraValidation: function(ctx) {
+    extraValidation: function (ctx) {
       ctx.requireVideo(1);
     },
     display: (desc) => {
       return {
-        default: desc.config.defaultBug ?? 'none',
+        default: desc.config.initialBug ?? 'none',
       }
     },
     runtime: {
@@ -45,7 +45,6 @@ export default function({
             return { ...state, activeBug: { file: ev.file, position: ev.position } };
           default:
             assertUnreachable(evType)
-
         }
       }
     },
@@ -54,15 +53,16 @@ export default function({
         hardware: HardwareSelection()
       },
       form: {
-        defaultBug: {
-          help: "The default bug to render on the video (if any)",
+        initialBug: {
+          help: "The initial bug to render on the video (if any)",
           hint: {
             type: "custom",
+            optional: true,
             component: BugSelection,
           }
         },
-        defaultPosition: {
-          help: "The default location to render the bug in",
+        initialPosition: {
+          help: "The initial location at which to render the bug",
           hint: {
             type: 'select',
             optional: true,
