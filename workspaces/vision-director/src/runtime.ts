@@ -3,7 +3,8 @@ import {
   , Norsk, SampleRate, StreamMetadata
   , StreamSwitchSmoothNode, VideoTestcardGeneratorNode, audioToPin, videoToPin, ReceiveFromAddress, SourceMediaNode, WhepOutputNode, requireAV, ReceiveFromAddressAuto, selectAudio, selectVideo,
   VideoComposeNode,
-  StreamKeyOverrideNode
+  StreamKeyOverrideNode,
+  VideoComposeDefaults
 } from '@norskvideo/norsk-sdk';
 
 // should probably just re-implement this or...
@@ -448,23 +449,20 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
       id,
       compose: await this.norsk.processor.transform.videoCompose<string>({
         id,
-        referenceResolution: { width: 100, height: 100 },
         outputResolution: this.cfg.resolution,
         referenceStream: 'background',
         missingStreamBehaviour: 'drop_part',
         parts: [
           {
             pin: "background",
-            sourceRect: { x: 0, y: 0, width: 100.0, height: 100.0 },
-            destRect: { x: 0, y: 0, width: 100.0, height: 100.0 },
+            compose: VideoComposeDefaults.fullscreen(),
             opacity: 1.0,
             zIndex: 0
           },
           ...overlays.map((o, i) => {
             return {
               pin: `overlay-${i}`,
-              sourceRect: { x: 0, y: 0, width: 100, height: 100 },
-              destRect: { x: o.x, y: o.y, width: o.width, height: o.height },
+              compose: VideoComposeDefaults.fullscreen(),
               opacity: 1.0,
               zIndex: i + 1
             }

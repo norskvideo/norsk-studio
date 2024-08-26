@@ -1,4 +1,4 @@
-import { ComposePart, FileImageInputNode, Norsk, SourceMediaNode, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
+import { ComposePart, FileImageInputNode, Norsk, SourceMediaNode, VideoComposeDefaults, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
 import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
@@ -61,7 +61,7 @@ type StaticRouteContext = {
 export function generateOpenApiSpec(routes: RouteInfo<DynamicRouteContext>[]): OpenAPIV3.Document {
   const paths: OpenAPIV3.PathsObject = {};
 
-  const allRoutes = routes.concat( staticRoutes);
+  const allRoutes = routes.concat(staticRoutes);
   allRoutes.forEach(route => {
     if (!paths[route.url]) {
       paths[route.url] = {};
@@ -225,7 +225,7 @@ const staticRoutes: RouteInfo<StaticRouteContext>[] = [
   {
     url: '/bugs',
     method: 'POST',
-    handler: ({ upload }) => [upload.single('file'), (async (req, res) => res.status(204).send())],
+    handler: ({ upload }) => [upload.single('file'), (async (_req, res) => res.status(204).send())],
     requestBody: {
       description: "A multipart form containing the file to upload)",
       content: {
@@ -257,10 +257,8 @@ const staticRoutes: RouteInfo<StaticRouteContext>[] = [
   },
 ];
 
-const openApiSpec = generateOpenApiSpec(routes);
-console.log(JSON.stringify(openApiSpec, null, 2))
-
-
+// const openApiSpec = generateOpenApiSpec(routes);
+// console.log(JSON.stringify(openApiSpec, null, 2))
 
 // Use the top level working dir and shove a bugs folder inside it
 function bugDir() {
@@ -283,7 +281,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
 
     const storage = multer.diskStorage({
       destination: bugDir(),
-      filename: function (_req, file, cb) {
+      filename: function(_req, file, cb) {
         cb(null, path.basename(file.originalname));
       }
     });
@@ -300,12 +298,12 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     router.use(bodyParser.json());
     const storage = multer.diskStorage({
       destination: bugDir(),
-      filename: function (_req, file, cb) {
+      filename: function(_req, file, cb) {
         cb(null, path.basename(file.originalname));
       }
     });
     const upload = multer({ storage });
-    staticRoutes.forEach((route) => addStaticRoute(router, {upload}, route));
+    staticRoutes.forEach((route) => addStaticRoute(router, { upload }, route));
     return router;
   }
 
@@ -364,6 +362,7 @@ export class DynamicBug implements CreatedMediaNode {
       await this.composeNode?.close();
       this.composeNode = undefined;
       this.currentVideo = undefined;
+      this.doSubs();
       return;
     } else {
       const nextVideo = video.message.value;
@@ -380,6 +379,7 @@ export class DynamicBug implements CreatedMediaNode {
       // If we haven't got a compose node, then spin one up
       // with the resolution/etc of the incoming stream
       if (!this.composeNode) {
+        debuglog("Creating compose node for dynamic bug", { id: this.id, width: nextVideo.width, height: nextVideo.height });
         const thisCompose = this.composeNode = await this.norsk.processor.transform.videoCompose<'video' | 'bug'>({
           onCreate: (n) => {
             this.relatedMediaNodes.addOutput(n);
@@ -387,19 +387,17 @@ export class DynamicBug implements CreatedMediaNode {
           },
           onClose: () => {
             this.relatedMediaNodes.removeOutput(thisCompose);
-            this.relatedMediaNodes.removeOutput(thisCompose);
           },
           id: `${this.id}-compose`,
           referenceStream: 'video',
-          // Could accept quadra, but there is pending work on quadra compose
-          // which means that non-fullscreen overlays have a few outstanding issues
-          hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ["nvidia"]),
+          hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ["nvidia", "quadra"]),
+          missingStreamBehaviour: 'drop_part',
           outputResolution: {
             width: nextVideo.width,
             height: nextVideo.height
           },
           parts: [
-            this.videoPart(nextVideo.width, nextVideo.height),
+            this.videoPart(),
           ]
         });
         this.doSubs();
@@ -425,7 +423,7 @@ export class DynamicBug implements CreatedMediaNode {
           // Reset the compose node to have no overlay
           this.composeNode?.updateConfig({
             parts: [
-              this.videoPart(nextVideo.width, nextVideo.height),
+              this.videoPart(),
             ]
           })
           debuglog("Closing old image source for bug", { id: this.id, oldNode: this.oldImageSource?.id, newNode: this.imageSource?.id })
@@ -444,19 +442,15 @@ export class DynamicBug implements CreatedMediaNode {
         if (imageStream && imageStream.message.case == 'video') {
           this.composeNode?.updateConfig({
             parts: [
-              this.videoPart(nextVideo.width, nextVideo.height),
-              this.imagePart(this.position ?? 'topleft',
-                nextVideo.width,
-                nextVideo.height,
-                imageStream.message.value.width,
-                imageStream.message.value.height)
+              this.videoPart(),
+              this.imagePart(this.position ?? 'topleft')
             ]
           })
         } else {
           this.doSubs();
           this.composeNode?.updateConfig({
             parts: [
-              this.videoPart(nextVideo.width, nextVideo.height),
+              this.videoPart(),
             ]
           })
         }
@@ -507,41 +501,42 @@ export class DynamicBug implements CreatedMediaNode {
     this.updates.raiseEvent({ type: 'bug-changed', file: bug, position })
   }
 
-  imagePart(position: DynamicBugPosition,
-    videoWidth: number,
-    videoHeight: number,
-    imageWidth: number,
-    imageHeight: number): ComposePart<"bug"> {
+  imagePart(position: DynamicBugPosition): ComposePart<"bug"> {
+    // // We shouldn't need this, pending work on Compose
+    // imageWidth = Math.min(videoWidth - 100, imageWidth);
+    // imageHeight = Math.min(videoHeight - 100, imageHeight);
 
-    // We shouldn't need this, pending work on Compose
-    imageWidth = Math.min(videoWidth - 100, imageWidth);
-    imageHeight = Math.min(videoHeight - 100, imageHeight);
-
-    const foo = {
+    const foo: ComposePart<"bug"> = {
       id: "bug",
       zIndex: 1,
-      sourceRect: { x: 0, y: 0, width: videoWidth, height: videoHeight },
-      referenceResolution: undefined,
+      compose: (metadata, cfg) => {
+        const videoWidth = cfg.outputResolution.width;
+        const videoHeight = cfg.outputResolution.height;
+        const imageWidth = Math.min(videoWidth - 100, metadata.width);
+        const imageHeight = Math.min(videoHeight - 100, metadata.height);
 
-      // What to do about resolution?
-      // we could subscribe to the output of the image source and do some maths
-      // to preserve aspect ratio before building this config?
-      destRect: (position == 'topleft' ? { x: 5, y: 5, width: imageWidth, height: imageHeight } :
-        position == 'topright' ? { x: videoWidth - imageWidth - 5, y: 5, width: imageWidth, height: imageHeight } :
-          position == 'bottomleft' ? { x: 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight } :
-            { x: videoWidth - imageWidth - 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight }),
+        return {
+          // Take the whole image
+          sourceRect: { x: 0, y: 0, width: metadata.width, height: metadata.height },
+
+          // And do a per pixel blit of the image 'as is', with an offset of 5 pixels 
+          destRect: (position == 'topleft' ? { x: 5, y: 5, width: imageWidth, height: imageHeight } :
+            position == 'topright' ? { x: videoWidth - imageWidth - 5, y: 5, width: imageWidth, height: imageHeight } :
+              position == 'bottomleft' ? { x: 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight } :
+                { x: videoWidth - imageWidth - 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight })
+        }
+      },
       opacity: 1.0,
       pin: "bug"
     } as const;
     return foo;
   }
 
-  videoPart(videoWidth: number, videoHeight: number): ComposePart<"video"> {
+  videoPart(): ComposePart<"video"> {
     return {
       id: "video",
       zIndex: 0,
-      sourceRect: { x: 0, y: 0, width: videoWidth, height: videoHeight },
-      destRect: { x: 0, y: 0, width: videoWidth, height: videoHeight },
+      compose: VideoComposeDefaults.fullscreen(),
       opacity: 1.0,
       pin: "video"
     }

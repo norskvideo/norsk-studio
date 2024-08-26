@@ -130,6 +130,8 @@ describe("Browser Overlay with restart", () => {
     ])
     await waitForCondition(() => sink.streamCount() == 1, 10000.0);
     await sourceOne.close();
+    // this is what studio does for you
+    browser.subscribe([]);
 
     await waitForCondition(() => sink.streamCount() == 0, 10000.0);
 
