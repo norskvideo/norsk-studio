@@ -2,8 +2,6 @@ import type Registration from "@norskvideo/norsk-studio/lib/extension/registrati
 import type { MultiCameraSelectCommand, MultiCameraSelectConfig, MultiCameraSelectEvent, MultiCameraSelectState } from "./runtime";
 import React from "react";
 import { GlobalIceServers, HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
-import { OpenAPIV3 } from "openapi-types";
-import { Request, Response} from "express";
 
 export default function(R: Registration) {
   const {
