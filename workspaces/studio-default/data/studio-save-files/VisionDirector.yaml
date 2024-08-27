@@ -137,7 +137,7 @@ components:
           select:
             - video
           filter: h264_1920x1080
-  - type: processor.control.multiCameraSelect
+  - type: processor.sourceSwitcher
     config:
       resolution:
         width: 1280
@@ -149,7 +149,7 @@ components:
       channelLayout: stereo
       iceServers:
         - stun:stun.l.google.com:19302
-      displayName: Vision Dir
+      displayName: Source Switch 
       id: vision_dir-1
     subscriptions:
       - source: srt_cameras-0

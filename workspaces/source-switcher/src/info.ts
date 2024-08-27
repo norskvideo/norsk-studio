@@ -1,5 +1,5 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
-import type { MultiCameraSelectCommand, MultiCameraSelectConfig, MultiCameraSelectEvent, MultiCameraSelectState } from "./runtime";
+import type { SourceSwitchCommand, SourceSwitchConfig, SourceSwitchEvent, SourceSwitchState } from "./runtime";
 import React from "react";
 import { GlobalIceServers, HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 
@@ -13,10 +13,10 @@ export default function(R: Registration) {
   const SummaryView = React.lazy(async () => import('./summary-view'));
   const FullscreenView = React.lazy(async () => import('./fullscreen-view'));
 
-  return defineComponent<MultiCameraSelectConfig, MultiCameraSelectState, MultiCameraSelectCommand, MultiCameraSelectEvent>({
-    identifier: 'processor.multiCameraSelect',
+  return defineComponent<SourceSwitchConfig, SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>({
+    identifier: 'processor.sourceSwitcher',
     category: 'processor',
-    name: "MultiCamera",
+    name: "Source Switcher",
     subscription: {
       accepts: {
         type: 'multi-stream',
@@ -35,7 +35,7 @@ export default function(R: Registration) {
         if (s.streams.select.includes("audio") && s.streams.select.includes("video")) {
           return;
         }
-        ctx.addError("Each subscription for MultiCamera must contain both video *and* audio, subscription to " + s.source + " only contains " + s.streams.select.join(","));
+        ctx.addError("Each subscription for Source Switcher must contain both video *and* audio, subscription to " + s.source + " only contains " + s.streams.select.join(","));
       })
     },
     display: (desc) => {

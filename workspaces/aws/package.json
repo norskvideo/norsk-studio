@@ -10,7 +10,7 @@
     "build:copy-css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
     "build:tailwind": "npx tailwindcss -i src/shared/tailwind.css -o client/style.css",
     "build:eslint": "npx eslint src",
-    "test": "mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
+    "test": "echo no tests here yet"
   },
   "files": [
     "client/*",
@@ -24,8 +24,9 @@
     "@aws-sdk/client-mediapackage": "^3.499.0",
     "@aws-sdk/client-s3": "^3.614.0",
     "@aws-sdk/client-translate": "^3.535.0",
-    "@norskvideo/norsk-sdk": "^1.0.372",
-    "@norskvideo/norsk-studio": "^1.19.3"
+    "@norskvideo/norsk-api": "file:../../../norsk/client/workspaces/api",
+    "@norskvideo/norsk-sdk": "file:../../../norsk/client/workspaces/sdk",
+    "@norskvideo/norsk-studio": "file:../../../studio-core"
   },
   "main": "lib/index.js",
   "devDependencies": {

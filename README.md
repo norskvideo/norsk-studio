@@ -32,7 +32,7 @@ Locations of interest
 Contains a collection of the default components available for use within Studio.
 Its package.json builds a manifest for everything found in 'src' in src/index.ts, as well as building a client-side bundle for all of them.
 
-*workspaces/vision-director*
+*workspaces/source-switcher*
 
 Contains a single component that is manually registered in src/index.ts, as well as building a client-side bundle for everything required to run it.
 
@@ -42,7 +42,7 @@ This is what you would start with when working against Norsk Studio, an empty pr
 
 - Norsk Studio
 - Built-ins
-- Vision Director
+- Source Switcher
 
 You can then add your own components to this list by adding them as a dependency and including them in your config.yaml
 

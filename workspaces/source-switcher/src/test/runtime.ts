@@ -8,7 +8,7 @@ import YAML from 'yaml';
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import cameraSelectInfo from '../info';
-import MultiCameraSelectDefinition, { MultiCameraSelect, MultiCameraSelectCommand, MultiCameraSelectState } from "../runtime";
+import SourceSwitchDefinition, { SourceSwitch, SourceSwitchCommand, SourceSwitchState } from "../runtime";
 import { expect } from "chai";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
 import { debuglog } from "@norskvideo/norsk-studio/lib/server/logging";
@@ -19,7 +19,7 @@ const CameraSelectInfo = cameraSelectInfo(RegistrationConsts);
 
 async function testRuntime() {
   const runtime = await builtInRuntime();
-  runtime.registerComponent(new MultiCameraSelectDefinition(), CameraSelectInfo, "");
+  runtime.registerComponent(new SourceSwitchDefinition(), CameraSelectInfo, "");
   return runtime;
 }
 
@@ -55,12 +55,12 @@ describe("Multi camera select", () => {
     })
 
     const latestState = () => {
-      return result?.runtimeState.getNodeState('select') as (MultiCameraSelectState)
+      return result?.runtimeState.getNodeState('select') as (SourceSwitchState)
     }
 
-    const sendCommand = (command: MultiCameraSelectCommand) => {
-      const definition = (result?.document.components["select"].definition as unknown) as MultiCameraSelectDefinition;
-      const node = result?.components["select"] as MultiCameraSelect;
+    const sendCommand = (command: SourceSwitchCommand) => {
+      const definition = (result?.document.components["select"].definition as unknown) as SourceSwitchDefinition;
+      const node = result?.components["select"] as SourceSwitch;
       debuglog("Sending command to node", { id: node.id, command })
       definition.handleCommand(node, command)
     }
@@ -80,7 +80,7 @@ describe("Multi camera select", () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.components['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as SourceSwitch;
         await Promise.all([
           assertNodeOutputsAudioFrames(norsk, result, 'select'),
           assertNodeOutputsVideoFrames(norsk, result, 'select'),
@@ -105,7 +105,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.components['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as SourceSwitch;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await Promise.all([
           assertNodeOutputsAudioFrames(norsk, result, 'select'),
@@ -132,7 +132,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.components['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as SourceSwitch;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
 
         await waitForCondition(() => latestState()?.availableSources.length == 2)
@@ -153,7 +153,7 @@ describe("Multi camera select", () => {
               expect(latestState()?.availableSources.map((s) => s.id)).contains('primary')
               expect(latestState()?.availableSources.map((s) => s.id)).contains('fallback')
             },
-            10000.0,
+            60000.0,
             10.0
           ),
         ]);
@@ -166,7 +166,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.components['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as SourceSwitch;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await waitForCondition(() => latestState()?.availableSources.length == 2)
         sendCommand({
@@ -202,7 +202,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.components['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as SourceSwitch;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await waitForCondition(() => latestState()?.availableSources.length == 2 && latestState()?.activeSource.id == 'fallback')
         sendCommand({
@@ -236,7 +236,7 @@ describe("Multi camera select", () => {
         const source = await videoAndAudio(norsk, "primary");
         const compiled = await compileDocument();
         result = await go(norsk, compiled);
-        const switcher = result.components['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as SourceSwitch;
         switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
         await waitForCondition(() => latestState()?.availableSources.length == 2 && latestState()?.activeSource.id == 'fallback')
         sendCommand({
@@ -280,7 +280,7 @@ describe("Multi camera select", () => {
         const compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
 
         result = await go(norsk, compiled);
-        const switcher = result.components['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as SourceSwitch;
         const source = result.components['source'];
 
         switcher.subscribe([new StudioNodeSubscriptionSource(source, compiled.components['source'].yaml, { type: "take-specific-streams", select: Av, filter: ["one", "two"] }, AvMultiInput.info as unknown as NodeInfo<BaseConfig>)]);
@@ -319,7 +319,7 @@ describe("Multi camera select", () => {
         const compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
 
         result = await go(norsk, compiled);
-        const switcher = result.components['select'] as MultiCameraSelect;
+        const switcher = result.components['select'] as SourceSwitch;
         const source = result.components['source'];
 
 

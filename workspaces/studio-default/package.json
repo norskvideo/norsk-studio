@@ -11,9 +11,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@norskvideo/norsk-sdk": "^1.0.372",
-    "@norskvideo/norsk-studio": "^1.19.3",
+    "@norskvideo/norsk-api": "file:../../../norsk/client/workspaces/api",
+    "@norskvideo/norsk-sdk": "file:../../../norsk/client/workspaces/sdk",
+    "@norskvideo/norsk-studio": "file:../../../studio-core",
     "@norskvideo/norsk-studio-built-ins": "^1.0.0",
-    "@norskvideo/norsk-studio-vision-director": "^1.0.0"
+    "@norskvideo/norsk-studio-source-switcher": "^1.0.0"
   }
 }

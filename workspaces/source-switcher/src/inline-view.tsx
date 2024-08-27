@@ -1,10 +1,10 @@
-import type { MultiCameraSelectState, MultiCameraSelectConfig } from "./runtime";
+import type { SourceSwitchState, SourceSwitchConfig } from "./runtime";
 
 const activeClasses = "active text-green-300 dark:text-green-300";
 const availableClasses = "available text-green-300 dark:text-green-300";
 const inactiveClasses = "inactive text-orange-300 dark:text-orange-300";
 
-function InlineView({ state }: { state: MultiCameraSelectState, config: MultiCameraSelectConfig }) {
+function InlineView({ state }: { state: SourceSwitchState, config: SourceSwitchConfig }) {
   return <>
     <h5>Sources</h5>
     <ul>

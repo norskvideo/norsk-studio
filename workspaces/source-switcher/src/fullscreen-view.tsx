@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { type MultiCameraSelectState, type MultiCameraSelectConfig, type MultiCameraSelectCommand, type MultiCameraSource } from "./runtime";
+import { type SourceSwitchState, type SourceSwitchConfig, type SourceSwitchCommand, type SourceSwitchSource } from "./runtime";
 import interact from 'interactjs';
 
 import { WhepClient, WhepClientConfig } from '@norskvideo/webrtc-client'
 
 type CreatedClient = {
-  source: MultiCameraSource,
+  source: SourceSwitchSource,
   client: MyWhepClient
 }
 
@@ -108,7 +108,7 @@ function createPlayerElement(stream: MediaStream, container: HTMLElement) {
   return element;
 }
 
-async function maybeCreatePlayer(created: CreatedClient[], source: MultiCameraSource, url: string): Promise<CreatedClient[]> {
+async function maybeCreatePlayer(created: CreatedClient[], source: SourceSwitchSource, url: string): Promise<CreatedClient[]> {
   if (!created.find((c) => c.source.id == source.id && c.source.key == source.key)) {
     const container = document.getElementById(mkContainerId(source)) || undefined; // TODO Could pass an HTMLElement or what have you to the function
     const client = new MyWhepClient({ url, container, streamId: source.id, streamKey: source.key })
@@ -139,7 +139,7 @@ type State = {
   livePreviewSource: CreatedClient | undefined;
 }
 
-function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: MultiCameraSelectConfig, sendCommand: (cmd: MultiCameraSelectCommand) => void }) {
+function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceSwitchConfig, sendCommand: (cmd: SourceSwitchCommand) => void }) {
   const [state, setState] = useState<State>({ createdClient: [], livePreviewSource: undefined, overlays: [] });
   const overlayRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const refLivePreviewVideo = useRef<HTMLVideoElement>(null)
@@ -245,7 +245,7 @@ function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: Mu
   const takeButtonClasses = "text-gray-900 bg-white border border-gray-300 focus:outline-none focus:ring-0 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:border-gray-600 dark:focus:ring-gray-700 w-full dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:border-gray-600"
   const sourcesSorted =
     multiCamera.state.availableSources.sort(sortSource)
-      .reduce<{ fallback: MultiCameraSource | undefined, inputs: MultiCameraSource[] }>(({ fallback, inputs }, s) => {
+      .reduce<{ fallback: SourceSwitchSource | undefined, inputs: SourceSwitchSource[] }>(({ fallback, inputs }, s) => {
         if (s.id === "fallback") {
           return { fallback: s, inputs }
         }
@@ -260,13 +260,13 @@ function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: Mu
         <h2>Camera Control</h2>
         <div className="grid 2xl:grid-cols-5 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 xs:grid-cols-2 grid-rows-1 gap-4">
           {sourcesSorted.inputs.map((s, i) => {
-            const isLive = isMultiCameraSourceEqual(s, multiCamera.state.activeSource)
+            const isLive = isSourceSwitchSourceEqual(s, multiCamera.state.activeSource)
             return <div className="relative" key={i}>
               <div className={`${isLive ? 'border-green-400 border-solid border-2' : ''}`} id={mkContainerId(s)}>
               </div>
               <button
                 className={takeButtonClasses}
-                onClick={(_e) => { setState({ ...state, livePreviewSource: state.createdClient.find((c) => isMultiCameraSourceEqual(c.source, s)) }) }}
+                onClick={(_e) => { setState({ ...state, livePreviewSource: state.createdClient.find((c) => isSourceSwitchSourceEqual(c.source, s)) }) }}
               >
                 Preview {s.key ?? s.id}
               </button>
@@ -382,7 +382,7 @@ function FullScreenView(multiCamera: { state: MultiCameraSelectState, config: Mu
   </div>
 }
 
-function sortSource(a: MultiCameraSource, b: MultiCameraSource) {
+function sortSource(a: SourceSwitchSource, b: SourceSwitchSource) {
   const aKey = a.key || ''
   const bKey = b.key || ''
   if (aKey > bKey) return 1
@@ -390,11 +390,11 @@ function sortSource(a: MultiCameraSource, b: MultiCameraSource) {
   return 0
 }
 
-function isMultiCameraSourceEqual(a: MultiCameraSource, b: MultiCameraSource) {
+function isSourceSwitchSourceEqual(a: SourceSwitchSource, b: SourceSwitchSource) {
   return a.id === b.id && a.key === b.key
 }
 
-function mkContainerId(source: MultiCameraSource) {
+function mkContainerId(source: SourceSwitchSource) {
   return `preview-container-${source.id}${source.key ? '-' + source.key : ''}`;
 }
 

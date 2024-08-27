@@ -19,8 +19,9 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@norskvideo/norsk-sdk": "^1.0.372",
-    "@norskvideo/norsk-studio": "^1.19.3",
+    "@norskvideo/norsk-api": "file:../../../norsk/client/workspaces/api",
+    "@norskvideo/norsk-sdk": "file:../../../norsk/client/workspaces/sdk",
+    "@norskvideo/norsk-studio": "file:../../../studio-core",
     "@norskvideo/webrtc-client": "^0.1.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",

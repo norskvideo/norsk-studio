@@ -98,7 +98,6 @@ describe("Dynamic Bug", () => {
     const result = await go(norsk, compiled);
     const bug = result.components["bug"] as DynamicBug;
 
-    console.log("Outer sink");
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
@@ -299,7 +298,6 @@ describe("Dynamic Bug", () => {
     let bug: DynamicBug = undefined!;
 
     beforeEach(async () => {
-      console.log("opening norsk");
       const compiled = await testDocument();
       norsk = await Norsk.connect({ onShutdown: () => { } });
       const app = express();

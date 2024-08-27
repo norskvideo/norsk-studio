@@ -14,7 +14,7 @@
   "workspaces": [
     "workspaces/built-ins",
     "workspaces/alpha",
-    "workspaces/vision-director",
+    "workspaces/source-switcher",
     "workspaces/studio-default",
     "workspaces/aws"
   ],

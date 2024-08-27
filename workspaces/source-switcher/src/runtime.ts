@@ -17,7 +17,7 @@ import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/loggin
 import { HardwareAccelerationType, IceServer, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { webRtcSettings } from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
 
-export type MultiCameraSelectConfig = {
+export type SourceSwitchConfig = {
   id: MediaNodeId,
   displayName: string,
   resolution: { width: number, height: number },
@@ -34,95 +34,95 @@ export type MultiCameraSelectConfig = {
   // I guess we'll nominate a 'data' dir (although how Norsk itself is supposed to access that I don't know)
 }
 
-export type MultiCameraSelectState = {
-  activeSource: MultiCameraSource,
-  availableSources: MultiCameraSourceInfo[],
-  knownSources: MultiCameraSource[],
+export type SourceSwitchState = {
+  activeSource: SourceSwitchSource,
+  availableSources: SourceSwitchSourceInfo[],
+  knownSources: SourceSwitchSource[],
   previewPlayerUrl?: string,
-  players: { source: MultiCameraSource, player: string }[];
+  players: { source: SourceSwitchSource, player: string }[];
 }
 
 
-export type MultiCameraSourceInfo = {
+export type SourceSwitchSourceInfo = {
   resolution: { width: number, height: number },
   frameRate?: { frames: number, seconds: number },
   wentLiveAt: number;
-} & MultiCameraSource;
+} & SourceSwitchSource;
 
-export type MultiCameraSource = {
+export type SourceSwitchSource = {
   id: string,
   key?: string
 }
 
-export type MultiCameraSelectEvent = {
+export type SourceSwitchEvent = {
   type: 'active-source-changed',
-  activeSource: MultiCameraSource
+  activeSource: SourceSwitchSource
 } | {
   type: 'source-online'
-  source: MultiCameraSourceInfo
+  source: SourceSwitchSourceInfo
 } | {
   type: 'source-offline'
-  source: MultiCameraSource
+  source: SourceSwitchSource
 } | {
   type: 'player-online',
-  source: MultiCameraSource,
+  source: SourceSwitchSource,
   url: string
 } | {
   type: 'preview-player-online',
   url: string
 } | {
   type: 'sources-discovered',
-  sources: MultiCameraSource[],
+  sources: SourceSwitchSource[],
 };
 
-type MultiCameraOverlay = {
-  source: MultiCameraSource,
+type SourceSwitchOverlay = {
+  source: SourceSwitchSource,
   x: number,
   y: number,
   width: number,
   height: number
 }
 
-export type MultiCameraSelectCommand = {
+export type SourceSwitchCommand = {
   type: 'select-source',
-  source: MultiCameraSource,
-  overlays: MultiCameraOverlay[]
+  source: SourceSwitchSource,
+  overlays: SourceSwitchOverlay[]
 }
 
-export default class MultiCameraSelectDefinition implements ServerComponentDefinition<MultiCameraSelectConfig,
-  MultiCameraSelect,
-  MultiCameraSelectState,
-  MultiCameraSelectCommand,
-  MultiCameraSelectEvent> {
+export default class SourceSwitchDefinition implements ServerComponentDefinition<SourceSwitchConfig,
+  SourceSwitch,
+  SourceSwitchState,
+  SourceSwitchCommand,
+  SourceSwitchEvent> {
   async create(norsk: Norsk,
-    cfg: MultiCameraSelectConfig,
-    cb: OnCreated<MultiCameraSelect>,
-    runtime: StudioRuntime<MultiCameraSelectState, MultiCameraSelectEvent>) {
+    cfg: SourceSwitchConfig,
+    cb: OnCreated<SourceSwitch>,
+    runtime: StudioRuntime<SourceSwitchState, SourceSwitchEvent>) {
 
     const updates = runtime.updates;
 
-    const onActiveSourceChanged = (activeSource: MultiCameraSource) => {
+    const onActiveSourceChanged = (activeSource: SourceSwitchSource) => {
       updates.raiseEvent({ type: 'active-source-changed', activeSource });
     }
 
-    const onSourceOnline = (source: MultiCameraSourceInfo) => {
+    const onSourceOnline = (source: SourceSwitchSourceInfo) => {
       updates.raiseEvent({ type: 'source-online', source });
     }
 
-    const onPlayerOnline = ({ source, url }: { source: MultiCameraSource, url: string }) => {
+    const onPlayerOnline = ({ source, url }: { source: SourceSwitchSource, url: string }) => {
       updates.raiseEvent({ type: 'player-online', source, url });
     }
 
-    const onSourceOffline = (source: MultiCameraSource) => {
+    const onSourceOffline = (source: SourceSwitchSource) => {
       updates.raiseEvent({ type: 'source-offline', source });
     }
 
-    const onSourcesDiscovered = (sources: MultiCameraSource[]) => {
+    const onSourcesDiscovered = (sources: SourceSwitchSource[]) => {
       updates.raiseEvent({ type: 'sources-discovered', sources });
     }
 
     const cfgWithHooks = { onActiveSourceChanged, onSourcesDiscovered, onSourceOnline, onSourceOffline, onPlayerOnline, ...cfg };
-    const node = new MultiCameraSelect(norsk, cfgWithHooks, runtime);
+    const node = new SourceSwitch(norsk, cfgWithHooks, runtime);
     await node.initialised;
 
     // Again, needs to hook a new whep event
@@ -134,13 +134,13 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
       const patched = {
         available: latest.availableSources.map((f) =>
         ({
-          source: multiCameraSourceToPin(f),
+          source: sourceSwitchSourceToPin(f),
           resolution: f.resolution,
           frameRate: f.frameRate,
           age: (new Date().valueOf() - f.wentLiveAt) / 1000.0
         })
         ),
-        active: multiCameraSourceToPin(latest.activeSource)
+        active: sourceSwitchSourceToPin(latest.activeSource)
       };
       res.send(JSON.stringify(patched))
     })
@@ -153,7 +153,7 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
         return;
       }
       const latest = updates.latest();
-      const converted = pinToMultiCameraSource(source);
+      const converted = pinToSourceSwitchSource(source);
       const exists = latest.availableSources.find((s) => s.id == converted.id && s.key == converted.key)
 
       if (!exists) {
@@ -175,7 +175,7 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
 
     cb(node);
   }
-  handleCommand(node: MultiCameraSelect, command: MultiCameraSelectCommand) {
+  handleCommand(node: SourceSwitch, command: SourceSwitchCommand) {
     const commandType = command.type;
     switch (commandType) {
       case 'select-source':
@@ -192,30 +192,30 @@ export default class MultiCameraSelectDefinition implements ServerComponentDefin
 // Everything below this line is Norsk only
 //
 
-type MultiCameraSelectConfigComplete = {
-  onActiveSourceChanged: (source: MultiCameraSource) => void,
-  onSourceOnline: (source: MultiCameraSourceInfo) => void,
-  onSourceOffline: (source: MultiCameraSource) => void,
-  onSourcesDiscovered: (sources: MultiCameraSource[]) => void,
-  onPlayerOnline: (ev: { source: MultiCameraSource, url: string }) => void,
-} & MultiCameraSelectConfig
+type SourceSwitchConfigComplete = {
+  onActiveSourceChanged: (source: SourceSwitchSource) => void,
+  onSourceOnline: (source: SourceSwitchSourceInfo) => void,
+  onSourceOffline: (source: SourceSwitchSource) => void,
+  onSourcesDiscovered: (sources: SourceSwitchSource[]) => void,
+  onPlayerOnline: (ev: { source: SourceSwitchSource, url: string }) => void,
+} & SourceSwitchConfig
 
-export class MultiCameraSelect extends CustomAutoDuplexNode {
+export class SourceSwitch extends CustomAutoDuplexNode {
   norsk: Norsk;
-  cfg: MultiCameraSelectConfigComplete;
+  cfg: SourceSwitchConfigComplete;
   audio?: SilenceSource;
   video?: VideoTestcardGeneratorNode;
   smooth?: StreamSwitchSmoothNode<string>;
   initialised: Promise<void>;
-  activeSource: MultiCameraSource = { id: '' };
-  desiredSource: MultiCameraSource = { id: '' };
-  availableSources: MultiCameraSource[] = [];
+  activeSource: SourceSwitchSource = { id: '' };
+  desiredSource: SourceSwitchSource = { id: '' };
+  availableSources: SourceSwitchSource[] = [];
   lastSmoothSwitchContext: Map<string, StreamMetadata[]> = new Map();
   whepOutputs: Map<string, { whep: WhepOutputNode, encoder?: SourceMediaNode }> = new Map();
   encodePreview?: SourceMediaNode;
   whepPreview?: WhepOutputNode;
   subscriptions: StudioNodeSubscriptionSource[] = [];
-  updates: RuntimeUpdates<MultiCameraSelectState, MultiCameraSelectEvent>;
+  updates: RuntimeUpdates<SourceSwitchState, SourceSwitchEvent>;
   shared: StudioShared;
 
   composeCount: number = 0;
@@ -314,7 +314,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     this.subscribe([]);
   }
 
-  constructor(norsk: Norsk, cfg: MultiCameraSelectConfigComplete, runtime: StudioRuntime<MultiCameraSelectState, MultiCameraSelectEvent>) {
+  constructor(norsk: Norsk, cfg: SourceSwitchConfigComplete, runtime: StudioRuntime<SourceSwitchState, SourceSwitchEvent>) {
     super(cfg.id);
     this.norsk = norsk;
     this.cfg = cfg;
@@ -343,7 +343,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     await this.maybeSwitchSource();
   }
 
-  setActiveSource(source: MultiCameraSource, overlays: MultiCameraOverlay[]) {
+  setActiveSource(source: SourceSwitchSource, overlays: SourceSwitchOverlay[]) {
     if (!this.sourceIsAvailable(source)) return;
 
     // Quit this if we started
@@ -365,21 +365,21 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     const oldSources = this.availableSources;
     const allStreams = this.lastSmoothSwitchContext;
 
-    this.availableSources = [...allStreams.keys()].map(pinToMultiCameraSource);
+    this.availableSources = [...allStreams.keys()].map(pinToSourceSwitchSource);
 
     // Switch to desired source if available and not already done so
     if (this.activeSource.id !== this.desiredSource.id || this.activeSource.key != this.desiredSource.key) {
-      const currentAvailable = this.sourceIsAvailable(this.desiredSource) && allStreams.get(multiCameraSourceToPin(this.desiredSource))?.length == 2;
+      const currentAvailable = this.sourceIsAvailable(this.desiredSource) && allStreams.get(sourceSwitchSourceToPin(this.desiredSource))?.length == 2;
       if (currentAvailable) {
         this.activeSource = this.desiredSource;
-        this.smooth?.switchSource(multiCameraSourceToPin(this.desiredSource));
+        this.smooth?.switchSource(sourceSwitchSourceToPin(this.desiredSource));
       }
     }
 
     // Switch to fallback if our desired source isn't available
     if (this.activeSource.id !== 'fallback') {
-      const currentUnavailable = !this.sourceIsAvailable(this.desiredSource) || allStreams.get(multiCameraSourceToPin(this.desiredSource))?.length !== 2;
-      const fallbackAvailable = this.sourceIsAvailable({ id: 'fallback' }) && allStreams.get(multiCameraSourceToPin({ id: 'fallback' }))?.length == 2;
+      const currentUnavailable = !this.sourceIsAvailable(this.desiredSource) || allStreams.get(sourceSwitchSourceToPin(this.desiredSource))?.length !== 2;
+      const fallbackAvailable = this.sourceIsAvailable({ id: 'fallback' }) && allStreams.get(sourceSwitchSourceToPin({ id: 'fallback' }))?.length == 2;
       if (currentUnavailable && fallbackAvailable) {
         debuglog("Switching to fallback source", { id: this.id });
         if (this.desiredSource.id == this.activeSource.id && this.desiredSource.key == this.activeSource.key) {
@@ -394,7 +394,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
       if (existing.id == this.pendingCompose?.id) continue;
       if (existing.id == this.activeCompose?.id) continue;
 
-      const pin = multiCameraSourceToPin(existing);
+      const pin = sourceSwitchSourceToPin(existing);
       if (!this.sourceIsAvailable(existing) || allStreams.get(pin)?.length == 0) {
         const player = this.whepOutputs.get(pin);
         if (player) {
@@ -412,7 +412,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
       if (current.id == this.pendingCompose?.id) continue;
       if (current.id == this.activeCompose?.id) continue;
 
-      const pin = multiCameraSourceToPin(current);
+      const pin = sourceSwitchSourceToPin(current);
       if (!this.whepOutputs.get(pin) && allStreams.get(pin)?.length == 2) {
         debuglog("Source online", { id: this.id, source: current });
 
@@ -443,7 +443,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     void this.setupPreviewPlayers();
   }
 
-  async setupComposeSource(source: MultiCameraSource, overlays: MultiCameraOverlay[]) {
+  async setupComposeSource(source: SourceSwitchSource, overlays: SourceSwitchOverlay[]) {
     const id = `${this.id}-compose-${this.composeCount++}`;
     this.pendingCompose = {
       id,
@@ -526,7 +526,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
     this.doSubscriptions();
   }
 
-  sourceIsAvailable(source: MultiCameraSource) {
+  sourceIsAvailable(source: SourceSwitchSource) {
     return !!this.availableSources.find((s) => s.id == source.id && s.key == source.key);
   }
 
@@ -537,7 +537,7 @@ export class MultiCameraSelect extends CustomAutoDuplexNode {
   }
 
   doSubscriptions(opts?: SubscriptionOpts) {
-    const knownSources: MultiCameraSource[] = [];
+    const knownSources: SourceSwitchSource[] = [];
     const subs = this.subscriptions;
 
     const subscriptions = subs.flatMap((s) => {
@@ -672,11 +672,11 @@ function pinToSourceAndKey(pin: string): [string, string | undefined] {
   return [pin, undefined];
 }
 
-function pinToMultiCameraSource(pin: string): MultiCameraSource {
+function pinToSourceSwitchSource(pin: string): SourceSwitchSource {
   const [id, key] = pinToSourceAndKey(pin);
   return { id, key };
 }
 
-function multiCameraSourceToPin(source: MultiCameraSource) {
+function sourceSwitchSourceToPin(source: SourceSwitchSource) {
   return pinName(source.id, source.key);
 }

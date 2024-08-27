@@ -30,7 +30,7 @@ components:
         - camera3
       id: srt_cameras
     subscriptions: []
-  - type: processor.control.multiCameraSelect
+  - type: processor.sourceSwitcher
     config:
       displayName: Source Switcher
       resolution:

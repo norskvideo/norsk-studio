@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { MultiCameraSelectState, MultiCameraSelectConfig, MultiCameraSelectCommand, MultiCameraSource } from "./runtime";
+import type { SourceSwitchState, SourceSwitchConfig, SourceSwitchCommand, SourceSwitchSource } from "./runtime";
 
 import { WhepClient } from '@norskvideo/webrtc-client'
 
@@ -9,10 +9,10 @@ const inactiveClasses = "inactive text-orange-300 dark:text-orange-300";
 
 var currentClient: WhepClient | undefined = undefined; // eslint-disable-line
 
-function SummaryView({ state, config, sendCommand }: { state: MultiCameraSelectState, config: MultiCameraSelectConfig, sendCommand: (cmd: MultiCameraSelectCommand) => void }) {
+function SummaryView({ state, config, sendCommand }: { state: SourceSwitchState, config: SourceSwitchConfig, sendCommand: (cmd: SourceSwitchCommand) => void }) {
 
-  const [previewSource, setPreviewSource] = useState<MultiCameraSource | undefined>(undefined);
-  const [activePlayerSource, setActivePlayerSource] = useState<MultiCameraSource | undefined>(undefined)
+  const [previewSource, setPreviewSource] = useState<SourceSwitchSource | undefined>(undefined);
+  const [activePlayerSource, setActivePlayerSource] = useState<SourceSwitchSource | undefined>(undefined)
   const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {

@@ -1,0 +1,61 @@
+__layout:
+  - id: videotestcard
+    x: 624
+    y: 560
+  - id: browseroverlay
+    x: 1168
+    y: 608
+  - id: whep
+    x: 1664
+    y: 352
+  - id: silence
+    x: 832
+    y: 176
+components:
+  - type: input.videoTestCard
+    config:
+      displayName: videoTestCard
+      resolution:
+        width: 1280
+        height: 720
+      frameRate:
+        frames: 25
+        seconds: 1
+      sourceName: video
+      pattern: black
+      id: videotestcard
+    subscriptions: []
+  - type: processor.browserOverlay
+    config:
+      displayName: browserOverlay
+      url: https://app.singular.live/output/6CTPhPRe7yc5lkxgUixA5q/Default?aspect=9:5
+      id: browseroverlay
+    subscriptions:
+      - source: videotestcard
+        streams:
+          type: take-first-stream
+          select:
+            - video
+  - type: output.whep
+    config:
+      displayName: whep
+      bufferDelayMs: 500
+      id: whep
+    subscriptions:
+      - source: browseroverlay
+        streams:
+          type: take-first-stream
+          select:
+            - video
+      - source: silence
+        streams:
+          type: take-first-stream
+          select:
+            - audio
+  - type: input.silence
+    config:
+      displayName: silence
+      sampleRate: 48000
+      channelLayout: stereo
+      id: silence
+    subscriptions: []
