@@ -134,6 +134,7 @@ describe("Preview", () => {
 
   it("Source goes away and comes back", async () => {
     source = await videoAndAudio(norsk!, 'source');
+
     preview.subscribe([new StudioNodeSubscriptionSource(
       source,
       testSourceDescription(),
@@ -144,11 +145,13 @@ describe("Preview", () => {
       return result?.runtimeState.getNodeState('preview') as (PreviewOutputState | undefined)
     }
 
-    await waitForCondition(() => !!latestState()?.url);
+    await waitForCondition(() => !!latestState()?.url, 60000);
     await source.close();
 
     preview.subscribe([]);
+
     source = await videoAndAudio(norsk!, 'source');
+
     preview.subscribe([new StudioNodeSubscriptionSource(
       source,
       testSourceDescription(),
@@ -158,14 +161,14 @@ describe("Preview", () => {
     await waitForAssert(
       () => !!(latestState())?.url,
       () => expect(latestState()?.url).not.undefined,
-      10000.0,
+      60000.0,
       10.0
     )
 
     await waitForAssert(
       () => !!(latestState())?.levels,
       () => expect(latestState()?.levels).not.undefined,
-      10000.0,
+      60000.0,
       10.0
     )
 

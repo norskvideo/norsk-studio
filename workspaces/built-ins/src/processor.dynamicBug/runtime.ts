@@ -49,16 +49,12 @@ export type DynamicBugEvent = {
   position?: DynamicBugPosition
 }
 
-type DynamicRouteContext = {
-  node: DynamicBug,
+type RouteContext = {
   upload: Multer
 }
 
-type StaticRouteContext = {
-  upload: Multer
-}
 
-export function generateOpenApiSpec(routes: RouteInfo<DynamicRouteContext>[]): OpenAPIV3.Document {
+export function generateOpenApiSpec(routes: RouteInfo<DynamicBugState, DynamicBugCommand, DynamicBugEvent, RouteContext>[]): OpenAPIV3.Document {
   const paths: OpenAPIV3.PathsObject = {};
 
   const allRoutes = routes.concat(staticRoutes);
@@ -134,14 +130,15 @@ const bugAndPositionSchema: OpenAPIV3.SchemaObject = {
 };
 
 // RouteInfo objects based on DynamicBugDefinition
-export const routes: RouteInfo<DynamicRouteContext>[] = [
+export const routes: RouteInfo<DynamicBugState, DynamicBugCommand, DynamicBugEvent, RouteContext>[] = [
   {
     url: '/active-bug',
     method: 'GET',
-    handler: ({ node }) => ((_req: Request, res: Response) => {
+    handler: ({ runtime }) => ((_req: Request, res: Response) => {
+      const latest = runtime.updates.latest();
       res.json({
-        bug: node.bug,
-        position: node.position
+        bug: latest.activeBug?.file,
+        position: latest.activeBug?.position
       });
     }),
     responses: {
@@ -158,7 +155,7 @@ export const routes: RouteInfo<DynamicRouteContext>[] = [
   {
     url: '/active-bug',
     method: 'POST',
-    handler: ({ node }) => (async (req, res) => {
+    handler: ({ runtime }) => (async (req, res) => {
       if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
         if (!dynamicBugPositions.includes(req.body.position)) {
           res.status(400).json({
@@ -176,7 +173,11 @@ export const routes: RouteInfo<DynamicRouteContext>[] = [
           return;
         }
       }
-      await node.setupBug(req.body.bug, req.body.position);
+      runtime.updates.sendCommand({
+        type: 'change-bug',
+        file: req.body.bug,
+        position: req.body.position
+      })
       res.status(204).send();
     }),
     requestBody: {
@@ -212,8 +213,10 @@ export const routes: RouteInfo<DynamicRouteContext>[] = [
   {
     url: '/active-bug',
     method: 'DELETE',
-    handler: ({ node }) => (async (_req, res) => {
-      await node.setupBug(undefined, undefined);
+    handler: ({ runtime }) => (async (_req, res) => {
+      runtime.updates.sendCommand({
+        type: 'change-bug'
+      })
       res.status(204).send();
     }),
     responses: { '204': { description: "The active bug was successfully deleted" } }
@@ -221,11 +224,16 @@ export const routes: RouteInfo<DynamicRouteContext>[] = [
 
 ];
 
-const staticRoutes: RouteInfo<StaticRouteContext>[] = [
+const staticRoutes: RouteInfo<DynamicBugState, DynamicBugCommand, DynamicBugEvent, RouteContext>[] = [
   {
     url: '/bugs',
     method: 'POST',
-    handler: ({ upload }) => [upload.single('file'), (async (_req, res) => res.status(204).send())],
+    handler: ({ context: { upload } }) => async (req, res) => {
+      const uploader = upload.single('file');
+      uploader(req, res, () => {
+        res.status(204).send();
+      });
+    },
     requestBody: {
       description: "A multipart form containing the file to upload)",
       content: {
@@ -275,7 +283,7 @@ async function getBugs() {
 
 
 export default class DynamicBugDefinition implements ServerComponentDefinition<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent> {
-  async create(norsk: Norsk, cfg: DynamicBugConfig, cb: OnCreated<DynamicBug>, runtime: StudioRuntime<DynamicBugState, DynamicBugEvent>) {
+  async create(norsk: Norsk, cfg: DynamicBugConfig, cb: OnCreated<DynamicBug>, runtime: StudioRuntime<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
     const node = await DynamicBug.create(norsk, cfg, runtime.updates);
     cb(node);
 
@@ -287,14 +295,9 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     });
     const upload = multer({ storage });
 
-    // Note from Rob: I don't think we should be using 'node' here
-    // if we are building a HTTP API, we should try and do it off the State that is built using the Events
-    // so that really we don't need to pass in 'node' here at all, we should just always get the latest runtime
-    // and command handler
-    // or we'll just end up updating state that doesn't raise events and wonder why things are arguing with each other
-    const context = { node, upload };
-
+    const context = { upload };
     routes.forEach(route => addDynamicRoute(runtime, context, route));
+
     // Make the static routes also available under the URL of the runtime component
     staticRoutes.forEach(route => addDynamicRoute(runtime, context, route));
   }
@@ -309,7 +312,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
       }
     });
     const upload = multer({ storage });
-    staticRoutes.forEach((route) => addStaticRoute(router, { upload }, route));
+    staticRoutes.forEach(route => addStaticRoute(router, { upload }, route));
     return router;
   }
 
@@ -342,16 +345,16 @@ export class DynamicBug implements CreatedMediaNode {
   oldImageSource?: FileImageInputNode;
   activeImage: "a" | "b" = "a";
   initialised: Promise<void>;
-  updates: RuntimeUpdates<DynamicBugState, DynamicBugEvent>;
+  updates: RuntimeUpdates<DynamicBugState, DynamicBugCommand, DynamicBugEvent>;
   currentVideo?: VideoStreamMetadata;
 
-  static async create(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugEvent>) {
+  static async create(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
     const node = new DynamicBug(norsk, cfg, updates);
     await node.initialised;
     return node;
   }
 
-  constructor(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugEvent>) {
+  constructor(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
     this.cfg = cfg;
     this.id = cfg.id;
     this.norsk = norsk;

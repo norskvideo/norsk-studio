@@ -40,7 +40,7 @@ export type ActionReplayCommand = {
 
 
 export default class ActionReplayDefinition implements ServerComponentDefinition<ActionReplayConfig, ActionReplay, ActionReplayState, ActionReplayCommand, ActionReplayEvent> {
-  async create(norsk: Norsk, cfg: ActionReplayConfig, cb: OnCreated<ActionReplay>, runtime: StudioRuntime<ActionReplayState, ActionReplayEvent>) {
+  async create(norsk: Norsk, cfg: ActionReplayConfig, cb: OnCreated<ActionReplay>, runtime: StudioRuntime<ActionReplayState, ActionReplayCommand, ActionReplayEvent>) {
     const node = new ActionReplay(norsk, cfg, runtime);
     await node.initialised;
     cb(node);
@@ -62,7 +62,7 @@ export class ActionReplay {
   norsk: Norsk;
   cfg: ActionReplayConfig;
   initialised: Promise<void>;
-  updates: RuntimeUpdates<ActionReplayState, ActionReplayEvent>
+  updates: RuntimeUpdates<ActionReplayState, ActionReplayCommand, ActionReplayEvent>
   shared: StudioShared;
 
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
@@ -96,7 +96,7 @@ export class ActionReplay {
   audioStreamKey?: StreamKey;
   videoStreamKey?: StreamKey;
 
-  constructor(norsk: Norsk, cfg: ActionReplayConfig, runtime: StudioRuntime<ActionReplayState, ActionReplayEvent>) {
+  constructor(norsk: Norsk, cfg: ActionReplayConfig, runtime: StudioRuntime<ActionReplayState, ActionReplayCommand, ActionReplayEvent>) {
     this.id = cfg.id;
     this.norsk = norsk;
     this.cfg = cfg;

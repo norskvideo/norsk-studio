@@ -22,7 +22,7 @@ import { HardwareAccelerationType, IceServer, contractHardwareAcceleration } fro
 import { webRtcSettings } from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
 import { OpenAPIV3 } from 'openapi-types';
 import { RouteInfo } from '@norskvideo/norsk-studio/lib/extension/client-types';
-import { addRoute } from '@norskvideo/norsk-studio/lib/extension/runtime-system';
+import { addDynamicRoute } from '@norskvideo/norsk-studio/lib/extension/runtime-system';
 
 export type SourceSwitchConfig = {
   id: MediaNodeId,
@@ -210,9 +210,7 @@ export type SourceSwitchHttpUpdate = {
   overlays: SourceSwitchHttpOverlay[]
 }
 
-type SourceSwitchHttpContext = StudioRuntime<SourceSwitchState, SourceSwitchEvent>;
-
-export const routes: RouteInfo<SourceSwitchState, SourceSwitchEvent, SourceSwitchHttpContext>[] = [
+export const routes: RouteInfo<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>[] = [
   {
     url: '/status',
     method: 'GET',
@@ -275,9 +273,12 @@ export const routes: RouteInfo<SourceSwitchState, SourceSwitchEvent, SourceSwitc
       } else {
         fadeMs = undefined;
       }
-      node.setActiveSource(converted, []);
+      updates.sendCommand({
+        type: 'select-source',
+        source: converted,
+        overlays: []
+      })
       res.send("ok");
-
     }),
     requestBody: {
       description: "The new primary source and any overlays required on it",
@@ -298,7 +299,7 @@ export const routes: RouteInfo<SourceSwitchState, SourceSwitchEvent, SourceSwitc
   // })
 ];
 
-export function generateOpenApiSpec(routes: RouteInfo<SourceSwitchHttpContext>[]): OpenAPIV3.Document {
+export function generateOpenApiSpec(routes: RouteInfo<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>[]): OpenAPIV3.Document {
   const paths: OpenAPIV3.PathsObject = {};
 
   routes.forEach(route => {
@@ -360,7 +361,7 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
   async create(norsk: Norsk,
     cfg: SourceSwitchConfig,
     cb: OnCreated<SourceSwitch>,
-    runtime: StudioRuntime<SourceSwitchState, SourceSwitchEvent>) {
+    runtime: StudioRuntime<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>) {
 
     const updates = runtime.updates;
 
@@ -437,7 +438,7 @@ export class SourceSwitch extends CustomAutoDuplexNode {
   encodePreview?: SourceMediaNode;
   whepPreview?: WhepOutputNode;
   subscriptions: StudioNodeSubscriptionSource[] = [];
-  updates: RuntimeUpdates<SourceSwitchState, SourceSwitchEvent>;
+  updates: RuntimeUpdates<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>;
   shared: StudioShared;
 
   composeCount: number = 0;
@@ -536,7 +537,7 @@ export class SourceSwitch extends CustomAutoDuplexNode {
     this.subscribe([]);
   }
 
-  constructor(norsk: Norsk, cfg: SourceSwitchConfigComplete, runtime: StudioRuntime<SourceSwitchState, SourceSwitchEvent>) {
+  constructor(norsk: Norsk, cfg: SourceSwitchConfigComplete, runtime: StudioRuntime<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>) {
     super(cfg.id);
     this.norsk = norsk;
     this.cfg = cfg;

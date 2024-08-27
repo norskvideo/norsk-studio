@@ -44,7 +44,7 @@ export type CmafOutputEvent = {
 export type CmafOutputCommand = object;
 
 export default class AutoCmafDefinition implements ServerComponentDefinition<AutoCmafConfig, AutoCmaf, CmafOutputState, CmafOutputCommand, CmafOutputEvent> {
-  async create(norsk: Norsk, cfg: AutoCmafConfig, cb: OnCreated<AutoCmaf>, { updates, report }: StudioRuntime<CmafOutputState, CmafOutputEvent>) {
+  async create(norsk: Norsk, cfg: AutoCmafConfig, cb: OnCreated<AutoCmaf>, { updates, report }: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
     const node = await AutoCmaf.create(norsk, cfg, report);
     cb(node);
     const mv = node.mv;

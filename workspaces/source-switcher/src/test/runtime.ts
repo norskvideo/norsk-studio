@@ -87,7 +87,7 @@ describe("Multi camera select", () => {
           waitForAssert(
             () => latestState()?.availableSources.length == 1,
             () => {
-              expect(switcher.activeSource.id).equals('fallback', "Active source on component");
+              expect(switcher.activeSource.primary.id).equals('fallback', "Active source on component");
               expect(latestState()?.activeSource.id).equals('fallback', "active source on runtime state");
               expect(latestState()?.availableSources).length(1, "available sources")
               expect(latestState()?.availableSources.map((s) => s.id)).contains('fallback')
@@ -113,7 +113,7 @@ describe("Multi camera select", () => {
           waitForAssert(
             () => latestState()?.availableSources.length == 2,
             () => {
-              expect(switcher.activeSource.id).equals('fallback', "Active source on component");
+              expect(switcher.activeSource.primary.id).equals('fallback', "Active source on component");
               expect(latestState()?.activeSource.id).equals('fallback', "active source in runtime state")
               expect(latestState()?.availableSources).length(2, "available sources")
               expect(latestState()?.availableSources.map((s) => s.id)).contains('primary')
@@ -147,7 +147,7 @@ describe("Multi camera select", () => {
           waitForAssert(
             () => latestState()?.activeSource.id == 'primary',
             () => {
-              expect(switcher.activeSource.id).equals('primary', "Active source on component");
+              expect(switcher.activeSource.primary.id).equals('primary', "Active source on component");
               expect(latestState()?.activeSource.id).equals('primary', "active source in runtime state")
               expect(latestState()?.availableSources).length(2, "available sources")
               expect(latestState()?.availableSources.map((s) => s.id)).contains('primary')
@@ -183,7 +183,7 @@ describe("Multi camera select", () => {
           waitForAssert(
             () => latestState()?.activeSource.id == 'primary',
             () => {
-              expect(switcher.activeSource.id).equals('primary', "Active source on component");
+              expect(switcher.activeSource.primary.id).equals('primary', "Active source on component");
               expect(latestState()?.activeSource.id).equals('primary', "active source in runtime state")
               expect(latestState()?.availableSources).length(2, "available sources")
               expect(latestState()?.availableSources.map((s) => s.id)).contains('primary')
@@ -218,7 +218,7 @@ describe("Multi camera select", () => {
           waitForAssert(
             () => latestState().availableSources.length == 1 && latestState()?.activeSource.id == 'fallback',
             () => {
-              expect(switcher.activeSource.id).equals('fallback', "Active source on component");
+              expect(switcher.activeSource.primary.id).equals('fallback', "Active source on component");
               expect(latestState()?.activeSource.id).equals('fallback', "active source on runtime state");
               expect(latestState()?.availableSources).length(1, "available sources")
               expect(latestState()?.availableSources.map((s) => s.id)).contains('fallback')
@@ -254,7 +254,7 @@ describe("Multi camera select", () => {
           waitForAssert(
             () => latestState()?.availableSources.length == 2,
             () => {
-              expect(switcher.activeSource.id).equals('fallback', "Active source on component");
+              expect(switcher.activeSource.primary.id).equals('fallback', "Active source on component");
               expect(latestState()?.activeSource.id).equals('fallback', "active source on runtime state");
               expect(latestState()?.availableSources).length(2, "available sources")
               expect(latestState()?.availableSources.map((s) => s.id)).contains('primary')
@@ -291,7 +291,7 @@ describe("Multi camera select", () => {
           waitForAssert(
             () => latestState()?.availableSources.length == 3,
             () => {
-              expect(switcher.activeSource.id).equals('fallback', "Active source on component");
+              expect(switcher.activeSource.primary.id).equals('fallback', "Active source on component");
               expect(latestState()?.activeSource.id).equals('fallback', "active source on runtime state");
               expect(latestState()?.availableSources).length(3, "available sources")
               expect(latestState()?.availableSources.map((s) => s.key)).contains('one')
@@ -334,7 +334,7 @@ describe("Multi camera select", () => {
           waitForAssert(
             () => latestState()?.availableSources.length == 3,
             () => {
-              expect(switcher.activeSource.id).equals('fallback', "Active source on component");
+              expect(switcher.activeSource.primary.id).equals('fallback', "Active source on component");
               expect(latestState()?.activeSource.id).equals('fallback', "active source on runtime state");
               expect(latestState()?.availableSources).length(3, "available sources")
               expect(latestState()?.availableSources.map((s) => s.key)).contains('one')

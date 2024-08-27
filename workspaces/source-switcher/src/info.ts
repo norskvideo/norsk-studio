@@ -51,6 +51,7 @@ export default function(R: Registration) {
     runtime: {
       initialState: () => ({
         activeSource: { id: '' },
+        activeOverlays: [],
         availableSources: [],
         knownSources: [],
         players: []

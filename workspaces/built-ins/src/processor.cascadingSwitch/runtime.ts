@@ -48,7 +48,7 @@ export default class CascadingSwitchDefinition implements ServerComponentDefinit
   async create(norsk: Norsk,
     cfg: CascadingSwitchConfig,
     cb: OnCreated<CascadingSwitch>,
-    { updates }: StudioRuntime<CascadingSwitchState, CascadingSwitchEvent>) {
+    { updates }: StudioRuntime<CascadingSwitchState, CascadingSwitchCommand, CascadingSwitchEvent>) {
 
     const onActiveSourceChanged = (activeSource: string) => {
       updates.raiseEvent({ type: 'active-source-changed', activeSource });
