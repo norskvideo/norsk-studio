@@ -3,7 +3,7 @@ name: Build on Push
 on:
   push:
     branches-ignore:
-      'dev'
+      - 'dev'
 
 jobs:
   get-commits: 
