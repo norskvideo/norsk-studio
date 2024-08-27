@@ -286,6 +286,12 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
       }
     });
     const upload = multer({ storage });
+
+    // Note from Rob: I don't think we should be using 'node' here
+    // if we are building a HTTP API, we should try and do it off the State that is built using the Events
+    // so that really we don't need to pass in 'node' here at all, we should just always get the latest runtime
+    // and command handler
+    // or we'll just end up updating state that doesn't raise events and wonder why things are arguing with each other
     const context = { node, upload };
 
     routes.forEach(route => addDynamicRoute(runtime, context, route));

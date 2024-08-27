@@ -4,7 +4,10 @@ import {
   , StreamSwitchSmoothNode, VideoTestcardGeneratorNode, audioToPin, videoToPin, ReceiveFromAddress, SourceMediaNode, WhepOutputNode, requireAV, ReceiveFromAddressAuto, selectAudio, selectVideo,
   VideoComposeNode,
   StreamKeyOverrideNode,
-  VideoComposeDefaults
+  VideoComposeDefaults,
+  ComposePart,
+  Resolution,
+  FrameRate
 } from '@norskvideo/norsk-sdk';
 
 // should probably just re-implement this or...
@@ -13,9 +16,13 @@ import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscri
 import { CustomAutoDuplexNode, SubscriptionOpts } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 import { Context } from '@norskvideo/norsk-sdk';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
+import { Request, Response } from 'express';
 import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, IceServer, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { webRtcSettings } from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
+import { OpenAPIV3 } from 'openapi-types';
+import { RouteInfo } from '@norskvideo/norsk-studio/lib/extension/client-types';
+import { addRoute } from '@norskvideo/norsk-studio/lib/extension/runtime-system';
 
 export type SourceSwitchConfig = {
   id: MediaNodeId,
@@ -30,12 +37,12 @@ export type SourceSwitchConfig = {
   }
 
   // Need an image uploaded
-  // that'll need to live somewhere..
-  // I guess we'll nominate a 'data' dir (although how Norsk itself is supposed to access that I don't know)
+  // that'll need to live in the global data dir
 }
 
 export type SourceSwitchState = {
   activeSource: SourceSwitchSource,
+  activeOverlays: SourceSwitchOverlay[],
   availableSources: SourceSwitchSourceInfo[],
   knownSources: SourceSwitchSource[],
   previewPlayerUrl?: string,
@@ -56,7 +63,8 @@ export type SourceSwitchSource = {
 
 export type SourceSwitchEvent = {
   type: 'active-source-changed',
-  activeSource: SourceSwitchSource
+  activeSource: SourceSwitchSource,
+  overlays: SourceSwitchOverlay[]
 } | {
   type: 'source-online'
   source: SourceSwitchSourceInfo
@@ -75,18 +83,273 @@ export type SourceSwitchEvent = {
   sources: SourceSwitchSource[],
 };
 
-type SourceSwitchOverlay = {
-  source: SourceSwitchSource,
+
+export type SourceSwitchRect = {
   x: number,
   y: number,
   width: number,
   height: number
 }
 
+export type SourceSwitchOverlay = {
+  source: SourceSwitchSource,
+  sourceRect?: SourceSwitchRect,
+  destRect?: SourceSwitchRect,
+}
+
 export type SourceSwitchCommand = {
   type: 'select-source',
   source: SourceSwitchSource,
   overlays: SourceSwitchOverlay[]
+}
+
+
+// HTTP API
+export type SourceSwitchHttpSourceId = string;
+
+const sourceSwitchHttpSourceIdSchema: OpenAPIV3.SchemaObject = {
+  type: 'string',
+  example: 'source1-stream'
+}
+
+export type SourceSwitchHttpSource = {
+  source: SourceSwitchHttpSourceId,
+  resolution: Resolution,
+  frameRate?: FrameRate,
+  age: number
+}
+
+const sourceSwitchHttpSourceSchema: OpenAPIV3.SchemaObject = {
+  type: 'object',
+  description: "Information about a source within the source switcher",
+  properties: {
+    source: sourceSwitchHttpSourceIdSchema,
+    resolution: {
+      type: 'object',
+      properties: {
+        width: { type: 'number' },
+        height: { type: 'number' }
+      }
+    },
+    frameRate: {
+      type: 'object',
+      nullable: true,
+      properties: {
+        frames: { type: 'number' },
+        seconds: { type: 'number' }
+      }
+    },
+    age: {
+      type: 'number',
+      description: "The number of milliseconds this source has been active"
+    }
+  }
+}
+
+export type SourceSwitchHttpOverlay = {
+  source: SourceSwitchHttpSourceId,
+  sourceRect?: SourceSwitchRect,
+  destRect?: SourceSwitchRect
+}
+
+const sourceSwitchRectSchema: OpenAPIV3.SchemaObject = {
+  type: 'object',
+  properties: {
+    x: { type: 'number' },
+    y: { type: 'number' },
+    width: { type: 'number' },
+    height: { type: 'number' },
+  }
+}
+
+const sourceSwitchHttpOverlaySchema: OpenAPIV3.SchemaObject = {
+  type: 'object',
+  properties: {
+    source: sourceSwitchHttpSourceIdSchema,
+    sourceRect: { ...sourceSwitchRectSchema, nullable: true },
+    destRect: { ...sourceSwitchRectSchema, nullable: true },
+  }
+}
+
+export type SourceSwitchHttpStatus = {
+  available: SourceSwitchHttpSource[]
+  active: {
+    primary: SourceSwitchHttpSourceId
+    overlays: SourceSwitchHttpOverlay[]
+  }
+}
+
+const sourceSwitchHttpStatusSchema: OpenAPIV3.SchemaObject = {
+  type: 'object',
+  properties: {
+    available: sourceSwitchHttpSourceSchema,
+    active: {
+      type: 'object',
+      properties: {
+        primary: sourceSwitchHttpSourceIdSchema,
+        overlays: {
+          type: 'array',
+          items: sourceSwitchHttpOverlaySchema
+        }
+      }
+    }
+  }
+}
+
+export type SourceSwitchHttpTransition = {
+  type: 'fade',
+  durationMs: number
+} | {
+  type: 'animate',
+  durationMs: number
+}
+
+export type SourceSwitchHttpUpdate = {
+  transition?: SourceSwitchHttpTransition,
+  primary: SourceSwitchHttpSourceId,
+  overlays: SourceSwitchHttpOverlay[]
+}
+
+type SourceSwitchHttpContext = StudioRuntime<SourceSwitchState, SourceSwitchEvent>;
+
+export const routes: RouteInfo<SourceSwitchState, SourceSwitchEvent, SourceSwitchHttpContext>[] = [
+  {
+    url: '/status',
+    method: 'GET',
+    handler: ({ runtime: { updates } }) => ((_req: Request, res: Response) => {
+      const { availableSources, activeOverlays, activeSource } = updates.latest();
+      const value: SourceSwitchHttpStatus = {
+        available: availableSources.map((f) =>
+        ({
+          source: sourceSwitchSourceToPin(f),
+          resolution: f.resolution,
+          frameRate: f.frameRate,
+          age: (new Date().valueOf() - f.wentLiveAt) / 1000.0
+        })),
+        active: {
+          primary: sourceSwitchSourceToPin(activeSource),
+          overlays: activeOverlays.map((o) => ({
+            sourceRect: o.sourceRect,
+            destRect: o.destRect,
+            source: sourceSwitchSourceToPin(o.source)
+          }))
+        }
+      };
+      res.json(value);
+    }),
+    responses: {
+      '200': {
+        description: "Information about the presently active source and any configured overlays",
+        content: {
+          "application/json": {
+            schema: sourceSwitchHttpStatusSchema
+          },
+        }
+      }
+    }
+  },
+  {
+    url: '/active',
+    method: 'POST',
+    handler: ({ runtime: { updates } }) => ((req, res) => {
+      const source = req.body.source;
+      let fadeMs = req.body.fadeMs ?? 500;
+      if (!source) {
+        res.status(400).send("no source");
+        return;
+      }
+      const latest = updates.latest();
+      const converted = pinToSourceSwitchSource(source);
+      const exists = latest.availableSources.find((s) => s.id == converted.id && s.key == converted.key)
+
+      if (!exists) {
+        res.status(400).send("source isn't active or doesn't exist");
+        return;
+      }
+
+      if (typeof fadeMs === 'number') {
+        if (fadeMs > 1000.0) {
+          res.status(400).send("fadeMs too large");
+          return;
+        }
+      } else {
+        fadeMs = undefined;
+      }
+      node.setActiveSource(converted, []);
+      res.send("ok");
+
+    }),
+    requestBody: {
+      description: "The new primary source and any overlays required on it",
+      content: {
+
+      }
+    },
+    responses: {
+      '200': {
+        description: "The update was requested succesfully, and will be applied in due course"
+      },
+      '400': {
+        description: "There was a problem with the request"
+      }
+    }
+  }
+  // runtime.router.post("/active", (req, res) => {
+  // })
+];
+
+export function generateOpenApiSpec(routes: RouteInfo<SourceSwitchHttpContext>[]): OpenAPIV3.Document {
+  const paths: OpenAPIV3.PathsObject = {};
+
+  routes.forEach(route => {
+    if (!paths[route.url]) {
+      paths[route.url] = {};
+    }
+
+    const pathItem = paths[route.url] as OpenAPIV3.PathItemObject
+    const operation: OpenAPIV3.OperationObject = {
+      summary: `${route.method} ${route.url}`,
+      responses: route.responses,
+    };
+
+    if (route.requestBody) {
+      operation.requestBody = route.requestBody
+    }
+
+    switch (route.method) {
+      case 'GET':
+        pathItem.get = operation
+        break;
+      case 'POST':
+        pathItem.post = operation
+        break;
+      case 'DELETE':
+        pathItem.delete = operation
+        break;
+    }
+  });
+
+  return {
+    openapi: '3.0.0',
+    info: {
+      title: 'DynamicBug API',
+      version: '1.0.0',
+      description: 'API for managing the overlay of static images in Norsk Studio'
+    },
+
+    servers: [
+      {
+        url: "http://127.0.0.1:8000/live/api/{componentId}",
+        variables: {
+          componentId: {
+            default: "dynamicBug", // TODO should probably be empty - or a list of componentIds
+            description: "The ID of the component whose HTTP API you are using"
+          },
+        }
+      }
+    ],
+    paths
+  };
 }
 
 export default class SourceSwitchDefinition implements ServerComponentDefinition<SourceSwitchConfig,
@@ -101,8 +364,8 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
 
     const updates = runtime.updates;
 
-    const onActiveSourceChanged = (activeSource: SourceSwitchSource) => {
-      updates.raiseEvent({ type: 'active-source-changed', activeSource });
+    const onActiveSourceChanged = (source: SourceSwitchSource, overlays: SourceSwitchOverlay[]) => {
+      updates.raiseEvent({ type: 'active-source-changed', activeSource: source, overlays });
     }
 
     const onSourceOnline = (source: SourceSwitchSourceInfo) => {
@@ -129,50 +392,8 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
     if (node.whepPreview?.endpointUrl)
       updates.raiseEvent({ type: 'preview-player-online', url: node.whepPreview?.endpointUrl })
 
-    runtime.router.get("/status", (_req, res) => {
-      const latest = updates.latest();
-      const patched = {
-        available: latest.availableSources.map((f) =>
-        ({
-          source: sourceSwitchSourceToPin(f),
-          resolution: f.resolution,
-          frameRate: f.frameRate,
-          age: (new Date().valueOf() - f.wentLiveAt) / 1000.0
-        })
-        ),
-        active: sourceSwitchSourceToPin(latest.activeSource)
-      };
-      res.send(JSON.stringify(patched))
-    })
-
-    runtime.router.post("/active", (req, res) => {
-      const source = req.body.source;
-      let fadeMs = req.body.fadeMs ?? 500;
-      if (!source) {
-        res.status(400).send("no source");
-        return;
-      }
-      const latest = updates.latest();
-      const converted = pinToSourceSwitchSource(source);
-      const exists = latest.availableSources.find((s) => s.id == converted.id && s.key == converted.key)
-
-      if (!exists) {
-        res.status(400).send("source isn't active or doesn't exist");
-        return;
-      }
-
-      if (typeof fadeMs === 'number') {
-        if (fadeMs > 1000.0) {
-          res.status(400).send("fadeMs too large");
-          return;
-        }
-      } else {
-        fadeMs = undefined;
-      }
-      node.setActiveSource(converted, []);
-      res.send("ok");
-    })
-
+    const context = runtime;
+    routes.forEach(route => addDynamicRoute(runtime, context, route));
     cb(node);
   }
   handleCommand(node: SourceSwitch, command: SourceSwitchCommand) {
@@ -188,12 +409,13 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
   }
 }
 
+
 //
 // Everything below this line is Norsk only
 //
 
 type SourceSwitchConfigComplete = {
-  onActiveSourceChanged: (source: SourceSwitchSource) => void,
+  onActiveSourceChanged: (source: SourceSwitchSource, overlays: SourceSwitchOverlay[]) => void,
   onSourceOnline: (source: SourceSwitchSourceInfo) => void,
   onSourceOffline: (source: SourceSwitchSource) => void,
   onSourcesDiscovered: (sources: SourceSwitchSource[]) => void,
@@ -207,8 +429,8 @@ export class SourceSwitch extends CustomAutoDuplexNode {
   video?: VideoTestcardGeneratorNode;
   smooth?: StreamSwitchSmoothNode<string>;
   initialised: Promise<void>;
-  activeSource: SourceSwitchSource = { id: '' };
-  desiredSource: SourceSwitchSource = { id: '' };
+  activeSource: { pin: string, primary: SourceSwitchSource, overlays: SourceSwitchOverlay[] } = { pin: '', primary: { id: '' }, overlays: [] };
+  desiredSource: { pin: string, primary: SourceSwitchSource, overlays: SourceSwitchOverlay[] } = { pin: '', primary: { id: '' }, overlays: [] };
   availableSources: SourceSwitchSource[] = [];
   lastSmoothSwitchContext: Map<string, StreamMetadata[]> = new Map();
   whepOutputs: Map<string, { whep: WhepOutputNode, encoder?: SourceMediaNode }> = new Map();
@@ -325,7 +547,7 @@ export class SourceSwitch extends CustomAutoDuplexNode {
 
   onTransitionComplete(pin: string) {
     debuglog("Transition complete", { id: this.id, source: this.activeSource })
-    this.cfg.onActiveSourceChanged?.(this.activeSource);
+    this.cfg.onActiveSourceChanged?.(this.activeSource.primary, this.activeSource.overlays);
 
     if (pin == this.pendingCompose?.id) {
       this.activeCompose = this.pendingCompose;
@@ -356,7 +578,7 @@ export class SourceSwitch extends CustomAutoDuplexNode {
     if (overlays.length > 0) {
       void this.setupComposeSource(source, overlays);
     } else {
-      this.desiredSource = source;
+      this.desiredSource = { pin: sourceSwitchSourceToPin(source), primary: source, overlays: [] };
       void this.maybeSwitchSource();
     }
   }
@@ -368,24 +590,24 @@ export class SourceSwitch extends CustomAutoDuplexNode {
     this.availableSources = [...allStreams.keys()].map(pinToSourceSwitchSource);
 
     // Switch to desired source if available and not already done so
-    if (this.activeSource.id !== this.desiredSource.id || this.activeSource.key != this.desiredSource.key) {
-      const currentAvailable = this.sourceIsAvailable(this.desiredSource) && allStreams.get(sourceSwitchSourceToPin(this.desiredSource))?.length == 2;
+    if (this.activeSource.pin !== this.desiredSource.pin) {
+      const currentAvailable = this.sourceIsAvailable(this.desiredSource.primary) && allStreams.get(this.desiredSource.pin)?.length == 2;
       if (currentAvailable) {
         this.activeSource = this.desiredSource;
-        this.smooth?.switchSource(sourceSwitchSourceToPin(this.desiredSource));
+        this.smooth?.switchSource(this.desiredSource.pin);
       }
     }
 
     // Switch to fallback if our desired source isn't available
-    if (this.activeSource.id !== 'fallback') {
-      const currentUnavailable = !this.sourceIsAvailable(this.desiredSource) || allStreams.get(sourceSwitchSourceToPin(this.desiredSource))?.length !== 2;
+    if (this.activeSource.pin !== 'fallback') {
+      const currentUnavailable = !this.sourceIsAvailable(this.desiredSource.primary) || allStreams.get(this.desiredSource.pin)?.length !== 2;
       const fallbackAvailable = this.sourceIsAvailable({ id: 'fallback' }) && allStreams.get(sourceSwitchSourceToPin({ id: 'fallback' }))?.length == 2;
       if (currentUnavailable && fallbackAvailable) {
         debuglog("Switching to fallback source", { id: this.id });
-        if (this.desiredSource.id == this.activeSource.id && this.desiredSource.key == this.activeSource.key) {
-          this.desiredSource = { id: 'fallback' };
+        if (this.desiredSource.pin == this.activeSource.pin) {
+          this.desiredSource = { pin: 'fallback', primary: { id: 'fallback' }, overlays: [] };
         }
-        this.activeSource = { id: 'fallback' };
+        this.activeSource = { pin: 'fallback', primary: { id: 'fallback' }, overlays: [] };
         this.smooth?.switchSource("fallback")
       }
     }
@@ -459,14 +681,15 @@ export class SourceSwitch extends CustomAutoDuplexNode {
             opacity: 1.0,
             zIndex: 0
           },
-          ...overlays.map((o, i) => {
-            return {
-              pin: `overlay-${i}`,
-              compose: VideoComposeDefaults.fullscreen(),
-              opacity: 1.0,
-              zIndex: i + 1
-            }
-          })
+          ...overlays.map((o, i): ComposePart<string> => ({
+            pin: `overlay-${i}`,
+            opacity: 1.0,
+            zIndex: i + 1,
+            compose: (metadata, settings) => ({
+              sourceRect: o.sourceRect ?? { x: 0, y: 0, width: metadata.width, height: metadata.height },
+              destRect: o.destRect ?? { x: 0, y: 0, width: settings.outputResolution.width, height: settings.outputResolution.height }
+            })
+          }))
         ]
       }),
       output: await this.norsk.processor.transform.streamKeyOverride({
@@ -522,7 +745,9 @@ export class SourceSwitch extends CustomAutoDuplexNode {
         background.selectAudioForKey(source.key)[0] :
         background.selectAudio()[0]
     ])
-    this.desiredSource = { id: `${this.pendingCompose.id}` };
+    this.desiredSource = {
+      pin: `${this.pendingCompose.id}`, overlays, primary: source
+    };
     this.doSubscriptions();
   }
 

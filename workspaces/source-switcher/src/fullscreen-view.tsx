@@ -125,6 +125,8 @@ async function maybeCreatePlayer(created: CreatedClient[], source: SourceSwitchS
 }
 
 
+// NB: These are screen coordinates relative to the top left of the video element
+// and will need transforming into video space before sending up
 type Overlay = {
   x: number;
   y: number;
@@ -351,14 +353,15 @@ function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceS
                 const parentRect = refLivePreviewVideo.current.getBoundingClientRect();
                 multiCamera.sendCommand({
                   type: "select-source", source: state.livePreviewSource.source, overlays: state.overlays.map((o) => {
-                    // We'll go with percentages for now
-                    // Is that more or less arbitrary than exact pixels? I'm not sure
+                    // const video = multiCamera.state.availableSources.find((s) => s.id == o.source.source.id && s.key == o.source.source.key);
                     return {
                       source: o.source.source,
-                      x: (o.x / parentRect.width) * 100.0,
-                      y: (o.y / parentRect.height) * 100.0,
-                      width: (o.width / parentRect.width) * 100.0,
-                      height: (o.height / parentRect.height) * 100.0,
+                      destRect: {
+                        x: (o.x / parentRect.width) * multiCamera.config.resolution.width,
+                        y: (o.y / parentRect.height) * multiCamera.config.resolution.height,
+                        width: (o.width / parentRect.width) * multiCamera.config.resolution.width,
+                        height: (o.height / parentRect.height) * multiCamera.config.resolution.height,
+                      }
                     }
                   })
                 })
