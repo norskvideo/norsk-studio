@@ -221,7 +221,6 @@ export const routes: RouteInfo<DynamicBugState, DynamicBugCommand, DynamicBugEve
     }),
     responses: { '204': { description: "The active bug was successfully deleted" } }
   },
-
 ];
 
 const staticRoutes: RouteInfo<DynamicBugState, DynamicBugCommand, DynamicBugEvent, RouteContext>[] = [
@@ -280,7 +279,6 @@ async function getBugs() {
   })
   return images;
 }
-
 
 export default class DynamicBugDefinition implements ServerComponentDefinition<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent> {
   async create(norsk: Norsk, cfg: DynamicBugConfig, cb: OnCreated<DynamicBug>, runtime: StudioRuntime<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
