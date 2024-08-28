@@ -15,6 +15,7 @@
     "@norskvideo/norsk-sdk": "file:../../../norsk/client/workspaces/sdk",
     "@norskvideo/norsk-studio": "file:../../../studio-core",
     "@norskvideo/norsk-studio-built-ins": "^1.0.0",
-    "@norskvideo/norsk-studio-source-switcher": "^1.0.0"
+    "@norskvideo/norsk-studio-source-switcher": "^1.0.0",
+    "openapi-types": "^12.1.3"
   }
 }
