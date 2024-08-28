@@ -103,7 +103,6 @@ export type SourceSwitchCommand = {
   overlays: SourceSwitchOverlay[]
 }
 
-
 // HTTP API
 export type SourceSwitchHttpSourceId = string;
 
@@ -204,10 +203,45 @@ export type SourceSwitchHttpTransition = {
   durationMs: number
 }
 
+// I assume this is actually wrong..
+const sourceSwitchTransitionSchema: OpenAPIV3.SchemaObject = {
+  discriminator: {
+    propertyName: 'type'
+  },
+  oneOf: [
+    {
+      type: 'object',
+      properties: {
+        type: { type: 'string', enum: ['fade'] },
+        durationMs: { type: 'number', description: 'How long this transition should take' }
+      }
+    },
+    {
+      type: 'object',
+      properties: {
+        type: { type: 'string', enum: ['animate'] },
+        durationMs: { type: 'number', description: 'How long this transition should take' }
+      }
+    }
+  ]
+}
+
 export type SourceSwitchHttpUpdate = {
   transition?: SourceSwitchHttpTransition,
   primary: SourceSwitchHttpSourceId,
   overlays: SourceSwitchHttpOverlay[]
+}
+
+const sourceSwitchHttpUpdateSchema: OpenAPIV3.SchemaObject = {
+  type: 'object',
+  properties: {
+    primary: sourceSwitchHttpSourceIdSchema,
+    transition: { ...sourceSwitchTransitionSchema, nullable: true },
+    overlays: {
+      type: 'array',
+      items: sourceSwitchHttpOverlaySchema
+    }
+  }
 }
 
 export const routes: RouteInfo<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>[] = [
@@ -250,40 +284,65 @@ export const routes: RouteInfo<SourceSwitchState, SourceSwitchCommand, SourceSwi
     url: '/active',
     method: 'POST',
     handler: ({ runtime: { updates } }) => ((req, res) => {
-      const source = req.body.source;
-      let fadeMs = req.body.fadeMs ?? 500;
-      if (!source) {
-        res.status(400).send("no source");
+      const update: Partial<SourceSwitchHttpUpdate> = req.body;
+      const primary = update.primary;
+
+      if (!primary) {
+        res.status(400).send(`Source ${primary} does not exist`);
         return;
       }
+
       const latest = updates.latest();
-      const converted = pinToSourceSwitchSource(source);
+      const converted = pinToSourceSwitchSource(primary);
       const exists = latest.availableSources.find((s) => s.id == converted.id && s.key == converted.key)
+
+      const overlays = update.overlays?.map((o): SourceSwitchOverlay => {
+        const convertedSource = pinToSourceSwitchSource(o.source);
+        return {
+          source: convertedSource,
+          sourceRect: o.sourceRect,
+          destRect: o.destRect,
+        };
+      });
 
       if (!exists) {
         res.status(400).send("source isn't active or doesn't exist");
         return;
       }
+      if (overlays?.reduce((a, o) => {
+        if (a) return a;
+        const exists = latest.availableSources.find((s) => s.id == o.source.id && s.key == o.source.key)
+        if (!exists) {
+          res.status(400).send(`overlay ${sourceSwitchSourceToPin(o.source)} isn't active or doesn't exist`);
+        }
+        return !exists;
+      }, false)) return;
 
-      if (typeof fadeMs === 'number') {
-        if (fadeMs > 1000.0) {
+
+      if (typeof update.transition?.durationMs === 'number') {
+        if (update.transition.durationMs > 10000.0) {
           res.status(400).send("fadeMs too large");
           return;
         }
       } else {
-        fadeMs = undefined;
+        if (update.transition)
+          update.transition.durationMs = 0;
       }
+
+      // TODO: Add the actual transition support
       updates.sendCommand({
         type: 'select-source',
         source: converted,
-        overlays: []
+        overlays: overlays ?? []
       })
       res.send("ok");
     }),
     requestBody: {
       description: "The new primary source and any overlays required on it",
       content: {
-
+        "application/json": {
+          schema: sourceSwitchHttpUpdateSchema
+        },
       }
     },
     responses: {
@@ -295,8 +354,6 @@ export const routes: RouteInfo<SourceSwitchState, SourceSwitchCommand, SourceSwi
       }
     }
   }
-  // runtime.router.post("/active", (req, res) => {
-  // })
 ];
 
 export function generateOpenApiSpec(routes: RouteInfo<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>[]): OpenAPIV3.Document {
@@ -333,9 +390,9 @@ export function generateOpenApiSpec(routes: RouteInfo<SourceSwitchState, SourceS
   return {
     openapi: '3.0.0',
     info: {
-      title: 'DynamicBug API',
+      title: 'SourceSwitch API',
       version: '1.0.0',
-      description: 'API for managing the overlay of static images in Norsk Studio'
+      description: 'API for managing selection/overlay of sources in Norsk Studio'
     },
 
     servers: [
@@ -343,7 +400,7 @@ export function generateOpenApiSpec(routes: RouteInfo<SourceSwitchState, SourceS
         url: "http://127.0.0.1:8000/live/api/{componentId}",
         variables: {
           componentId: {
-            default: "dynamicBug", // TODO should probably be empty - or a list of componentIds
+            default: "sourceSwitch", // TODO should probably be empty - or a list of componentIds
             description: "The ID of the component whose HTTP API you are using"
           },
         }
