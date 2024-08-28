@@ -53,7 +53,7 @@ components:
             - camera1
             - camera2
             - camera3
-  - type: processor.transform.browserOverlay
+  - type: processor.browserOverlay
     config:
       displayName: Lower Third
       url: https://app.singular.live/output/6CTPhPRe7yc5lkxgUixA5q/Default?aspect=9:5
@@ -64,7 +64,7 @@ components:
           type: take-first-stream
           select:
             - video
-  - type: processor.transform.fixedLadder
+  - type: processor.fixedLadder
     config:
       displayName: Encode Ladder
       rungs:
