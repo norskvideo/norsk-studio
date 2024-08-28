@@ -1,19 +1,15 @@
 import { ComposePart, FileImageInputNode, Norsk, SourceMediaNode, VideoComposeDefaults, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
-import { CreatedMediaNode, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StaticRouteInfo, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import Config from "@norskvideo/norsk-studio/lib/server/config";
-import { RouteInfo } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 import { OpenAPIV3 } from 'openapi-types';
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
-import bodyParser from 'body-parser';
-import express from 'express'
-import multer, { Multer } from 'multer';
-import { addDynamicRoute, addStaticRoute } from '@norskvideo/norsk-studio/lib/extension/runtime-system';
+import multer from 'multer';
 
 
 const dynamicBugPositions = ["topleft", "topright", "bottomleft", "bottomright"] as const;
@@ -49,66 +45,6 @@ export type DynamicBugEvent = {
   position?: DynamicBugPosition
 }
 
-type RouteContext = {
-  upload: Multer
-}
-
-
-export function generateOpenApiSpec(routes: RouteInfo<DynamicBugState, DynamicBugCommand, DynamicBugEvent, RouteContext>[]): OpenAPIV3.Document {
-  const paths: OpenAPIV3.PathsObject = {};
-
-  const allRoutes = routes.concat(staticRoutes);
-  allRoutes.forEach(route => {
-    if (!paths[route.url]) {
-      paths[route.url] = {};
-    }
-
-    const pathItem = paths[route.url] as OpenAPIV3.PathItemObject
-    const operation: OpenAPIV3.OperationObject = {
-      summary: `${route.method} ${route.url}`,
-      responses: route.responses,
-    };
-
-    if (route.requestBody) {
-      operation.requestBody = route.requestBody
-    }
-
-    switch (route.method) {
-      case 'GET':
-        pathItem.get = operation
-        break;
-      case 'POST':
-        pathItem.post = operation
-        break;
-      case 'DELETE':
-        pathItem.delete = operation
-        break;
-    }
-  });
-
-  return {
-    openapi: '3.0.0',
-    info: {
-      title: 'DynamicBug API',
-      version: '1.0.0',
-      description: 'API for managing the overlay of static images in Norsk Studio'
-    },
-
-    servers: [
-      {
-        url: "http://127.0.0.1:8000/live/api/{componentId}",
-        variables: {
-          componentId: {
-            default: "dynamicBug", // TODO should probably be empty - or a list of componentIds
-            description: "The ID of the component whose HTTP API you are using"
-          },
-        }
-      }
-    ],
-    paths
-  };
-}
-
 const bugProperty: OpenAPIV3.SchemaObject = {
   type: 'string',
   description: 'The name of the image file',
@@ -128,145 +64,6 @@ const bugAndPositionSchema: OpenAPIV3.SchemaObject = {
     position: positionProperty,
   },
 };
-
-// RouteInfo objects based on DynamicBugDefinition
-export const routes: RouteInfo<DynamicBugState, DynamicBugCommand, DynamicBugEvent, RouteContext>[] = [
-  {
-    url: '/active-bug',
-    method: 'GET',
-    handler: ({ runtime }) => ((_req: Request, res: Response) => {
-      const latest = runtime.updates.latest();
-      res.json({
-        bug: latest.activeBug?.file,
-        position: latest.activeBug?.position
-      });
-    }),
-    responses: {
-      '200': {
-        description: "Information about the currently overlaid bug (if any)",
-        content: {
-          "application/json": {
-            schema: bugAndPositionSchema
-          },
-        }
-      }
-    }
-  },
-  {
-    url: '/active-bug',
-    method: 'POST',
-    handler: ({ runtime }) => (async (req, res) => {
-      if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
-        if (!dynamicBugPositions.includes(req.body.position)) {
-          res.status(400).json({
-            error: "bad position",
-            details: req.body.position
-          });
-          return;
-        }
-        const images = await getBugs();
-        if (!images.includes(req.body.bug)) {
-          res.status(400).json({
-            error: "Unknown bug file",
-            details: req.body.bug,
-          });
-          return;
-        }
-      }
-      runtime.updates.sendCommand({
-        type: 'change-bug',
-        file: req.body.bug,
-        position: req.body.position
-      })
-      res.status(204).send();
-    }),
-    requestBody: {
-      description: "The bug filename and location (sending an empty JSON object will delete the bug)",
-      content: {
-        'application/json': {
-          schema: bugAndPositionSchema,
-          example: {
-            bug: "Norsk.png",
-            position: "topleft",
-          }
-        }
-      },
-    },
-    responses: {
-      '204': { description: "The active bug was successfully updated" },
-      '400': {
-        description: "Unknown bug",
-        content: {
-          "application/json": {
-            schema: {
-              type: 'object',
-              properties: {
-                error: { type: 'string', description: "A description of the error" },
-                details: { type: 'string', description: "The unacceptable data" }
-              }
-            },
-          }
-        }
-      }
-    }
-  },
-  {
-    url: '/active-bug',
-    method: 'DELETE',
-    handler: ({ runtime }) => (async (_req, res) => {
-      runtime.updates.sendCommand({
-        type: 'change-bug'
-      })
-      res.status(204).send();
-    }),
-    responses: { '204': { description: "The active bug was successfully deleted" } }
-  },
-];
-
-const staticRoutes: RouteInfo<DynamicBugState, DynamicBugCommand, DynamicBugEvent, RouteContext>[] = [
-  {
-    url: '/bugs',
-    method: 'POST',
-    handler: ({ context: { upload } }) => async (req, res) => {
-      const uploader = upload.single('file');
-      uploader(req, res, () => {
-        res.status(204).send();
-      });
-    },
-    requestBody: {
-      description: "A multipart form containing the file to upload)",
-      content: {
-        'multipart/form-data': {
-          schema: {
-            type: "object",
-            properties: {
-              // The property name 'file' will be used for all files.
-              'file': {
-                type: "string",
-                format: "binary",
-              }
-            },
-            required: ['file'],
-          }
-        }
-      }
-    },
-    responses: { '204': { description: "The file bug was uploaded successfully" } }
-  },
-  {
-    url: '/bugs',
-    method: 'GET',
-    handler: (_) => (async (_req: Request, res: Response) => {
-      const images = await getBugs();
-      res.json(images);
-    }),
-    responses: {},
-  },
-];
-
-// const openApiSpec = generateOpenApiSpec(routes);
-// console.log(JSON.stringify(openApiSpec, null, 2))
-
 // Use the top level working dir and shove a bugs folder inside it
 function bugDir() {
   return path.join(Config.server.workingDir(), process.env.DYNAMICBUG_DIRECTORY ?? "bugs");
@@ -284,34 +81,6 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
   async create(norsk: Norsk, cfg: DynamicBugConfig, cb: OnCreated<DynamicBug>, runtime: StudioRuntime<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
     const node = await DynamicBug.create(norsk, cfg, runtime.updates);
     cb(node);
-
-    const storage = multer.diskStorage({
-      destination: bugDir(),
-      filename: function(_req, file, cb) {
-        cb(null, path.basename(file.originalname));
-      }
-    });
-    const upload = multer({ storage });
-
-    const context = { upload };
-    routes.forEach(route => addDynamicRoute(runtime, context, route));
-
-    // Make the static routes also available under the URL of the runtime component
-    staticRoutes.forEach(route => addDynamicRoute(runtime, context, route));
-  }
-
-  routes(): Router {
-    const router = express.Router()
-    router.use(bodyParser.json());
-    const storage = multer.diskStorage({
-      destination: bugDir(),
-      filename: function(_req, file, cb) {
-        cb(null, path.basename(file.originalname));
-      }
-    });
-    const upload = multer({ storage });
-    staticRoutes.forEach(route => addStaticRoute(router, { upload }, route));
-    return router;
   }
 
   async handleCommand(node: DynamicBug, command: DynamicBugCommand) {
@@ -324,6 +93,152 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
         assertUnreachable(commandType);
 
     }
+  }
+
+  staticRoutes(): StaticRouteInfo[] {
+    const storage = multer.diskStorage({
+      destination: bugDir(),
+      filename: function(_req, file, cb) {
+        cb(null, path.basename(file.originalname));
+      }
+    });
+    const upload = multer({ storage });
+    return [
+      {
+        url: '/bugs',
+        method: 'POST',
+        handler: () => async (req, res) => {
+          const uploader = upload.single('file');
+          uploader(req, res, () => {
+            res.status(204).send();
+          });
+        },
+        requestBody: {
+          description: "A multipart form containing the file to upload)",
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: "object",
+                properties: {
+                  // The property name 'file' will be used for all files.
+                  'file': {
+                    type: "string",
+                    format: "binary",
+                  }
+                },
+                required: ['file'],
+              }
+            }
+          }
+        },
+        responses: { '204': { description: "The file bug was uploaded successfully" } }
+      },
+      {
+        url: '/bugs',
+        method: 'GET',
+        handler: (_) => (async (_req: Request, res: Response) => {
+          const images = await getBugs();
+          res.json(images);
+        }),
+        responses: {},
+      },
+    ]
+  }
+
+
+  instanceRoutes(): InstanceRouteInfo<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent>[] {
+    return [
+      {
+        url: '/active-bug',
+        method: 'GET',
+        handler: ({ runtime }) => ((_req: Request, res: Response) => {
+          const latest = runtime.updates.latest();
+          res.json({
+            bug: latest.activeBug?.file,
+            position: latest.activeBug?.position
+          });
+        }),
+        responses: {
+          '200': {
+            description: "Information about the currently overlaid bug (if any)",
+            content: {
+              "application/json": {
+                schema: bugAndPositionSchema
+              },
+            }
+          }
+        }
+      },
+      {
+        url: '/active-bug',
+        method: 'POST',
+        handler: ({ runtime }) => (async (req, res) => {
+          if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
+            if (!dynamicBugPositions.includes(req.body.position)) {
+              res.status(400).json({
+                error: "bad position",
+                details: req.body.position
+              });
+              return;
+            }
+            const images = await getBugs();
+            if (!images.includes(req.body.bug)) {
+              res.status(400).json({
+                error: "Unknown bug file",
+                details: req.body.bug,
+              });
+              return;
+            }
+          }
+          runtime.updates.sendCommand({
+            type: 'change-bug',
+            file: req.body.bug,
+            position: req.body.position
+          })
+          res.status(204).send();
+        }),
+        requestBody: {
+          description: "The bug filename and location (sending an empty JSON object will delete the bug)",
+          content: {
+            'application/json': {
+              schema: bugAndPositionSchema,
+              example: {
+                bug: "Norsk.png",
+                position: "topleft",
+              }
+            }
+          },
+        },
+        responses: {
+          '204': { description: "The active bug was successfully updated" },
+          '400': {
+            description: "Unknown bug",
+            content: {
+              "application/json": {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    error: { type: 'string', description: "A description of the error" },
+                    details: { type: 'string', description: "The unacceptable data" }
+                  }
+                },
+              }
+            }
+          }
+        }
+      },
+      {
+        url: '/active-bug',
+        method: 'DELETE',
+        handler: ({ runtime }) => (async (_req, res) => {
+          runtime.updates.sendCommand({
+            type: 'change-bug'
+          })
+          res.status(204).send();
+        }),
+        responses: { '204': { description: "The active bug was successfully deleted" } }
+      },
+    ]
   }
 }
 

@@ -12,7 +12,7 @@ import {
 
 // should probably just re-implement this or...
 import { SilenceSource } from '@norskvideo/norsk-studio-built-ins/lib/input.silence/runtime';
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { InstanceRouteInfo, OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomAutoDuplexNode, SubscriptionOpts } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 import { Context } from '@norskvideo/norsk-sdk';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
@@ -21,8 +21,6 @@ import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/loggin
 import { HardwareAccelerationType, IceServer, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { webRtcSettings } from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
 import { OpenAPIV3 } from 'openapi-types';
-import { RouteInfo } from '@norskvideo/norsk-studio/lib/extension/client-types';
-import { addDynamicRoute } from '@norskvideo/norsk-studio/lib/extension/runtime-system';
 
 export type SourceSwitchConfig = {
   id: MediaNodeId,
@@ -244,172 +242,6 @@ const sourceSwitchHttpUpdateSchema: OpenAPIV3.SchemaObject = {
   }
 }
 
-export const routes: RouteInfo<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>[] = [
-  {
-    url: '/status',
-    method: 'GET',
-    handler: ({ runtime: { updates } }) => ((_req: Request, res: Response) => {
-      const { availableSources, activeOverlays, activeSource } = updates.latest();
-      const value: SourceSwitchHttpStatus = {
-        available: availableSources.map((f) =>
-        ({
-          source: sourceSwitchSourceToPin(f),
-          resolution: f.resolution,
-          frameRate: f.frameRate,
-          age: (new Date().valueOf() - f.wentLiveAt) / 1000.0
-        })),
-        active: {
-          primary: sourceSwitchSourceToPin(activeSource),
-          overlays: activeOverlays.map((o) => ({
-            sourceRect: o.sourceRect,
-            destRect: o.destRect,
-            source: sourceSwitchSourceToPin(o.source)
-          }))
-        }
-      };
-      res.json(value);
-    }),
-    responses: {
-      '200': {
-        description: "Information about the presently active source and any configured overlays",
-        content: {
-          "application/json": {
-            schema: sourceSwitchHttpStatusSchema
-          },
-        }
-      }
-    }
-  },
-  {
-    url: '/active',
-    method: 'POST',
-    handler: ({ runtime: { updates } }) => ((req, res) => {
-      const update: Partial<SourceSwitchHttpUpdate> = req.body;
-      const primary = update.primary;
-
-      if (!primary) {
-        res.status(400).send(`Source ${primary} does not exist`);
-        return;
-      }
-
-      const latest = updates.latest();
-      const converted = pinToSourceSwitchSource(primary);
-      const exists = latest.availableSources.find((s) => s.id == converted.id && s.key == converted.key)
-
-      const overlays = update.overlays?.map((o): SourceSwitchOverlay => {
-        const convertedSource = pinToSourceSwitchSource(o.source);
-        return {
-          source: convertedSource,
-          sourceRect: o.sourceRect,
-          destRect: o.destRect,
-        };
-      });
-
-      if (!exists) {
-        res.status(400).send("source isn't active or doesn't exist");
-        return;
-      }
-      if (overlays?.reduce((a, o) => {
-        if (a) return a;
-        const exists = latest.availableSources.find((s) => s.id == o.source.id && s.key == o.source.key)
-        if (!exists) {
-          res.status(400).send(`overlay ${sourceSwitchSourceToPin(o.source)} isn't active or doesn't exist`);
-        }
-        return !exists;
-      }, false)) return;
-
-
-      if (typeof update.transition?.durationMs === 'number') {
-        if (update.transition.durationMs > 10000.0) {
-          res.status(400).send("fadeMs too large");
-          return;
-        }
-      } else {
-        if (update.transition)
-          update.transition.durationMs = 0;
-      }
-
-      // TODO: Add the actual transition support
-      updates.sendCommand({
-        type: 'select-source',
-        source: converted,
-        overlays: overlays ?? []
-      })
-      res.send("ok");
-    }),
-    requestBody: {
-      description: "The new primary source and any overlays required on it",
-      content: {
-        "application/json": {
-          schema: sourceSwitchHttpUpdateSchema
-        },
-      }
-    },
-    responses: {
-      '200': {
-        description: "The update was requested succesfully, and will be applied in due course"
-      },
-      '400': {
-        description: "There was a problem with the request"
-      }
-    }
-  }
-];
-
-export function generateOpenApiSpec(routes: RouteInfo<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>[]): OpenAPIV3.Document {
-  const paths: OpenAPIV3.PathsObject = {};
-
-  routes.forEach(route => {
-    if (!paths[route.url]) {
-      paths[route.url] = {};
-    }
-
-    const pathItem = paths[route.url] as OpenAPIV3.PathItemObject
-    const operation: OpenAPIV3.OperationObject = {
-      summary: `${route.method} ${route.url}`,
-      responses: route.responses,
-    };
-
-    if (route.requestBody) {
-      operation.requestBody = route.requestBody
-    }
-
-    switch (route.method) {
-      case 'GET':
-        pathItem.get = operation
-        break;
-      case 'POST':
-        pathItem.post = operation
-        break;
-      case 'DELETE':
-        pathItem.delete = operation
-        break;
-    }
-  });
-
-  return {
-    openapi: '3.0.0',
-    info: {
-      title: 'SourceSwitch API',
-      version: '1.0.0',
-      description: 'API for managing selection/overlay of sources in Norsk Studio'
-    },
-
-    servers: [
-      {
-        url: "http://127.0.0.1:8000/live/api/{componentId}",
-        variables: {
-          componentId: {
-            default: "sourceSwitch", // TODO should probably be empty - or a list of componentIds
-            description: "The ID of the component whose HTTP API you are using"
-          },
-        }
-      }
-    ],
-    paths
-  };
-}
-
 export default class SourceSwitchDefinition implements ServerComponentDefinition<SourceSwitchConfig,
   SourceSwitch,
   SourceSwitchState,
@@ -450,8 +282,6 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
     if (node.whepPreview?.endpointUrl)
       updates.raiseEvent({ type: 'preview-player-online', url: node.whepPreview?.endpointUrl })
 
-    const context = runtime;
-    routes.forEach(route => addDynamicRoute(runtime, context, route));
     cb(node);
   }
   handleCommand(node: SourceSwitch, command: SourceSwitchCommand) {
@@ -464,6 +294,120 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
         assertUnreachable(commandType);
 
     }
+  }
+
+  instanceRoutes(): InstanceRouteInfo<SourceSwitchConfig, SourceSwitch, SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>[] {
+    return [
+      {
+        url: '/status',
+        method: 'GET',
+        handler: ({ runtime: { updates } }) => ((_req: Request, res: Response) => {
+          const { availableSources, activeOverlays, activeSource } = updates.latest();
+          const value: SourceSwitchHttpStatus = {
+            available: availableSources.map((f) =>
+            ({
+              source: sourceSwitchSourceToPin(f),
+              resolution: f.resolution,
+              frameRate: f.frameRate,
+              age: (new Date().valueOf() - f.wentLiveAt) / 1000.0
+            })),
+            active: {
+              primary: sourceSwitchSourceToPin(activeSource),
+              overlays: activeOverlays.map((o) => ({
+                sourceRect: o.sourceRect,
+                destRect: o.destRect,
+                source: sourceSwitchSourceToPin(o.source)
+              }))
+            }
+          };
+          res.json(value);
+        }),
+        responses: {
+          '200': {
+            description: "Information about the presently active source and any configured overlays",
+            content: {
+              "application/json": {
+                schema: sourceSwitchHttpStatusSchema
+              },
+            }
+          }
+        }
+      },
+      {
+        url: '/active',
+        method: 'POST',
+        handler: ({ runtime: { updates } }) => ((req, res) => {
+          const update: Partial<SourceSwitchHttpUpdate> = req.body;
+          const primary = update.primary;
+
+          if (!primary) {
+            res.status(400).send(`Source ${primary} does not exist`);
+            return;
+          }
+
+          const latest = updates.latest();
+          const converted = pinToSourceSwitchSource(primary);
+          const exists = latest.availableSources.find((s) => s.id == converted.id && s.key == converted.key)
+
+          const overlays = update.overlays?.map((o): SourceSwitchOverlay => {
+            const convertedSource = pinToSourceSwitchSource(o.source);
+            return {
+              source: convertedSource,
+              sourceRect: o.sourceRect,
+              destRect: o.destRect,
+            };
+          });
+
+          if (!exists) {
+            res.status(400).send("source isn't active or doesn't exist");
+            return;
+          }
+          if (overlays?.reduce((a, o) => {
+            if (a) return a;
+            const exists = latest.availableSources.find((s) => s.id == o.source.id && s.key == o.source.key)
+            if (!exists) {
+              res.status(400).send(`overlay ${sourceSwitchSourceToPin(o.source)} isn't active or doesn't exist`);
+            }
+            return !exists;
+          }, false)) return;
+
+
+          if (typeof update.transition?.durationMs === 'number') {
+            if (update.transition.durationMs > 10000.0) {
+              res.status(400).send("fadeMs too large");
+              return;
+            }
+          } else {
+            if (update.transition)
+              update.transition.durationMs = 0;
+          }
+
+          // TODO: Add the actual transition support
+          updates.sendCommand({
+            type: 'select-source',
+            source: converted,
+            overlays: overlays ?? []
+          })
+          res.send("ok");
+        }),
+        requestBody: {
+          description: "The new primary source and any overlays required on it",
+          content: {
+            "application/json": {
+              schema: sourceSwitchHttpUpdateSchema
+            },
+          }
+        },
+        responses: {
+          '200': {
+            description: "The update was requested succesfully, and will be applied in due course"
+          },
+          '400': {
+            description: "There was a problem with the request"
+          }
+        }
+      }
+    ]
   }
 }
 
