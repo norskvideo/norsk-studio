@@ -91,7 +91,7 @@ components:
           select:
             - video
             - audio
-  - type: processor.transform.browserOverlay
+  - type: processor.browserOverlay
     config:
       url: https://app.singular.live/output/6CTPhPRe7yc5lkxgUixA5q/Default?aspect=9:5
       displayName: Lower Third
@@ -190,7 +190,7 @@ components:
             - h264_1280x720
             - h264_640x360
             - h264_320x180
-  - type: processor.transform.fixedLadder
+  - type: processor.fixedLadder
     config:
       displayName: fixedLadder
       rungs:
