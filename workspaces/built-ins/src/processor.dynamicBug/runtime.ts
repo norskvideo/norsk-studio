@@ -1,6 +1,6 @@
 import { ComposePart, FileImageInputNode, Norsk, SourceMediaNode, VideoComposeDefaults, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
 import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StaticRouteInfo, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import Config from "@norskvideo/norsk-studio/lib/server/config";
@@ -19,7 +19,6 @@ export type DynamicBugPosition = components['schemas']['position'];
 export type DynamicBugFile = components['schemas']['bug'];
 export type DynamicBugApiConfig = components['schemas']['config'];
 const dynamicBugPositions: DynamicBugPosition[] = ['topleft', 'topright', 'bottomleft', 'bottomright'];
-
 
 export type DynamicBugConfig = {
   __global: {
@@ -85,18 +84,38 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
   async staticRoutes(): Promise<StaticRouteInfo[]> {
     const storage = multer.diskStorage({
       destination: bugDir(),
-      filename: function(_req, file, cb) {
+      filename: function (_req, file, cb) {
         cb(null, path.basename(file.originalname));
       }
     });
-    const upload = multer({ storage });
+
+    const fileFilter = async function (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+      try {
+        const existingBugs = await getBugs();
+        if (existingBugs.includes(file.originalname)) {
+          return cb(new Error('A bug with this name already exists'));
+        } else {
+          cb(null, true);
+        }
+      } catch (error) {
+        cb(error as Error);
+      }
+    }
+    const upload = multer({ storage, fileFilter });
     return [
       {
         url: '/bugs',
         method: 'POST',
         handler: () => async (req, res) => {
           const uploader = upload.single('file');
-          uploader(req, res, () => {
+          uploader(req, res, (err) => {
+            if (err) {
+              if (err.message === 'A bug with this name already exists') {
+                return res.status(409).json({ error: err.message });
+              }
+              warninglog("An error occured during upload", err);
+              return res.status(500).json({ error: 'File upload failed' });
+            }
             res.status(204).send();
           });
         },
@@ -118,7 +137,13 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
             }
           }
         },
-        responses: { '204': { description: "The file bug was uploaded successfully" } }
+        responses: {
+          '204': { description: "The file bug was uploaded successfully" },
+          '400': { description: "No file was uploaded" },
+          '404': { description: "Not Found" },
+          '409': { description: "A bug with the same name already exists" },
+          '500': { description: "File upload failed" },
+        }
       },
       {
         url: '/bugs',
@@ -128,7 +153,49 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
           res.json(images);
         }),
         responses: {},
-      },
+      }, 
+      {
+        url: '/bug',
+        method: 'DELETE',
+        handler: () => (async (req, res) => {
+          const filename = req.body.filename; 
+          const filePath = path.join(bugDir(), filename);
+      
+          try {
+            await fs.access(filePath);
+            await fs.unlink(filePath);
+            res.status(204).send();
+          } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+              res.status(404).json({ error: 'Bug not found' });
+            } else {
+              warninglog("Error deleting bug", error);
+              res.status(500).json({ error: 'Failed to delete bug' });
+            }
+          }
+        }),
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  filename: {
+                    type: 'string',
+                    description: 'The name of the bug file to delete'
+                  }
+                },
+                required: ['filename']
+              }
+            }
+          }
+        },
+        responses: {
+          '204': { description: "The bug was successfully deleted" },
+          '404': { description: "The specified bug was not found" },
+          '500': { description: "Failed to delete the bug" }
+        }
+      }
     ]
   }
 
@@ -467,4 +534,3 @@ export class DynamicBug implements CreatedMediaNode {
     this.contexts.setSources(this.videoSource ? [this.videoSource] : [], imageSources)
   }
 }
-
