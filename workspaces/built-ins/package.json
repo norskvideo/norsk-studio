@@ -4,10 +4,12 @@
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",
-    "build": "npx studio-wrap-infos src/ && npx npm-run-all build:* && rm -rf build",
+    "types": "npx openapi-typescript src/processor.dynamicBug/types.yaml -o src/processor.dynamicBug/types.ts",
+    "build": "npm run types && npx studio-wrap-infos src/ && npx npm-run-all build:* && rm -rf build",
     "build:server": "npx tsc",
     "build:client": "npx tsc -p tsconfig-client.json && npx studio-bundle build/info.js client/info.js",
-    "build:copy-css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
+    "build:css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
+    "build:types": "rsync --mkpath -v -r --include '*/' --include 'types.yaml' --exclude '*' src/ lib/",
     "build:tailwind": "npx tailwindcss -i src/shared/tailwind.css -o client/style.css",
     "build:eslint": "npx eslint src",
     "test": "LOG_LEVEL=${LOG_LEVEL:-error} NODE_ENV=test mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
@@ -27,6 +29,7 @@
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "express-ws": "^5.0.2",
+    "json-refs": "^3.0.15",
     "multer": "^1.4.5-lts.1",
     "openapi-types": "^12.1.3"
   },
@@ -44,6 +47,7 @@
     "@types/react-dom": "^18.2.14",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.9.1",
+    "openapi-typescript": "^7.3.0",
     "chai": "^4.3.10",
     "chart.js": "^4.4.2",
     "esbuild": "^0.20.2",

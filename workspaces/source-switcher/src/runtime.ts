@@ -5,21 +5,23 @@ import {
   VideoComposeNode,
   StreamKeyOverrideNode,
   VideoComposeDefaults,
-  ComposePart,
-  Resolution,
-  FrameRate
+  ComposePart
 } from '@norskvideo/norsk-sdk';
 
-// should probably just re-implement this or...
 import { SilenceSource } from '@norskvideo/norsk-studio-built-ins/lib/input.silence/runtime';
 import { InstanceRouteInfo, OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomAutoDuplexNode, SubscriptionOpts } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
+import path from 'path';
+import fs from 'fs/promises';
+import YAML from 'yaml';
 import { Context } from '@norskvideo/norsk-sdk';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { Request, Response } from 'express';
 import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, IceServer, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { webRtcSettings } from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
+import { components } from './types';
+import { resolveRefs } from 'json-refs';
 import { OpenAPIV3 } from 'openapi-types';
 
 export type SourceSwitchConfig = {
@@ -102,145 +104,13 @@ export type SourceSwitchCommand = {
 }
 
 // HTTP API
-export type SourceSwitchHttpSourceId = string;
+export type SourceSwitchHttpStreamId = components['schemas']['stream'];
+export type SourceSwitchHttpSource = components['schemas']['active-source'];
+export type SourceSwitchHttpOverlay = components['schemas']['overlay'];
+export type SourceSwitchHttpStatus = components['schemas']['status'];
+export type SourceSwitchHttpTransition = components['schemas']['transition'];
+export type SourceSwitchHttpUpdate = components['schemas']['status-update'];
 
-const sourceSwitchHttpSourceIdSchema: OpenAPIV3.SchemaObject = {
-  type: 'string',
-  example: 'source1-stream'
-}
-
-export type SourceSwitchHttpSource = {
-  source: SourceSwitchHttpSourceId,
-  resolution: Resolution,
-  frameRate?: FrameRate,
-  age: number
-}
-
-const sourceSwitchHttpSourceSchema: OpenAPIV3.SchemaObject = {
-  type: 'object',
-  description: "Information about a source within the source switcher",
-  properties: {
-    source: sourceSwitchHttpSourceIdSchema,
-    resolution: {
-      type: 'object',
-      properties: {
-        width: { type: 'number' },
-        height: { type: 'number' }
-      }
-    },
-    frameRate: {
-      type: 'object',
-      nullable: true,
-      properties: {
-        frames: { type: 'number' },
-        seconds: { type: 'number' }
-      }
-    },
-    age: {
-      type: 'number',
-      description: "The number of milliseconds this source has been active"
-    }
-  }
-}
-
-export type SourceSwitchHttpOverlay = {
-  source: SourceSwitchHttpSourceId,
-  sourceRect?: SourceSwitchRect,
-  destRect?: SourceSwitchRect
-}
-
-const sourceSwitchRectSchema: OpenAPIV3.SchemaObject = {
-  type: 'object',
-  properties: {
-    x: { type: 'number' },
-    y: { type: 'number' },
-    width: { type: 'number' },
-    height: { type: 'number' },
-  }
-}
-
-const sourceSwitchHttpOverlaySchema: OpenAPIV3.SchemaObject = {
-  type: 'object',
-  properties: {
-    source: sourceSwitchHttpSourceIdSchema,
-    sourceRect: { ...sourceSwitchRectSchema, nullable: true },
-    destRect: { ...sourceSwitchRectSchema, nullable: true },
-  }
-}
-
-export type SourceSwitchHttpStatus = {
-  available: SourceSwitchHttpSource[]
-  active: {
-    primary: SourceSwitchHttpSourceId
-    overlays: SourceSwitchHttpOverlay[]
-  }
-}
-
-const sourceSwitchHttpStatusSchema: OpenAPIV3.SchemaObject = {
-  type: 'object',
-  properties: {
-    available: sourceSwitchHttpSourceSchema,
-    active: {
-      type: 'object',
-      properties: {
-        primary: sourceSwitchHttpSourceIdSchema,
-        overlays: {
-          type: 'array',
-          items: sourceSwitchHttpOverlaySchema
-        }
-      }
-    }
-  }
-}
-
-export type SourceSwitchHttpTransition = {
-  type: 'fade',
-  durationMs: number
-} | {
-  type: 'animate',
-  durationMs: number
-}
-
-// I assume this is actually wrong..
-const sourceSwitchTransitionSchema: OpenAPIV3.SchemaObject = {
-  discriminator: {
-    propertyName: 'type'
-  },
-  oneOf: [
-    {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['fade'] },
-        durationMs: { type: 'number', description: 'How long this transition should take' }
-      }
-    },
-    {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['animate'] },
-        durationMs: { type: 'number', description: 'How long this transition should take' }
-      }
-    }
-  ]
-}
-
-export type SourceSwitchHttpUpdate = {
-  transition?: SourceSwitchHttpTransition,
-  primary: SourceSwitchHttpSourceId,
-  overlays: SourceSwitchHttpOverlay[]
-}
-
-const sourceSwitchHttpUpdateSchema: OpenAPIV3.SchemaObject = {
-  type: 'object',
-  properties: {
-    primary: sourceSwitchHttpSourceIdSchema,
-    transition: { ...sourceSwitchTransitionSchema, nullable: true },
-    overlays: {
-      type: 'array',
-      items: sourceSwitchHttpOverlaySchema
-    }
-  }
-}
 
 export default class SourceSwitchDefinition implements ServerComponentDefinition<SourceSwitchConfig,
   SourceSwitch,
@@ -296,7 +166,11 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
     }
   }
 
-  instanceRoutes(): InstanceRouteInfo<SourceSwitchConfig, SourceSwitch, SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>[] {
+  async instanceRoutes(): Promise<InstanceRouteInfo<SourceSwitchConfig, SourceSwitch, SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>[]> {
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+
     return [
       {
         url: '/status',
@@ -327,7 +201,7 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
             description: "Information about the presently active source and any configured overlays",
             content: {
               "application/json": {
-                schema: sourceSwitchHttpStatusSchema
+                schema: resolved.components!.schemas!['status']
               },
             }
           }
@@ -394,7 +268,7 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
           description: "The new primary source and any overlays required on it",
           content: {
             "application/json": {
-              schema: sourceSwitchHttpUpdateSchema
+              schema: resolved.components!.schemas!['status-update']
             },
           }
         },

@@ -5,15 +5,21 @@ import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvi
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import Config from "@norskvideo/norsk-studio/lib/server/config";
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
-import { OpenAPIV3 } from 'openapi-types';
 import { Request, Response } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
 import multer from 'multer';
+import { components } from './types';
 
+import { resolveRefs } from 'json-refs';
+import YAML from 'yaml';
+import { OpenAPIV3 } from 'openapi-types';
 
-const dynamicBugPositions = ["topleft", "topright", "bottomleft", "bottomright"] as const;
-export type DynamicBugPosition = typeof dynamicBugPositions[number];
+export type DynamicBugPosition = components['schemas']['position'];
+export type DynamicBugFile = components['schemas']['bug'];
+export type DynamicBugApiConfig = components['schemas']['config'];
+const dynamicBugPositions: DynamicBugPosition[] = ['topleft', 'topright', 'bottomleft', 'bottomright'];
+
 
 export type DynamicBugConfig = {
   __global: {
@@ -22,48 +28,29 @@ export type DynamicBugConfig = {
   },
   id: string,
   displayName: string,
-  initialBug?: string
+  initialBug?: DynamicBugFile,
   initialPosition?: DynamicBugPosition;
 }
 
 export type DynamicBugState = {
   activeBug?: {
-    file?: string,
+    file?: DynamicBugFile,
     position?: DynamicBugPosition
   },
 }
 
 export type DynamicBugCommand = {
   type: 'change-bug',
-  file?: string,
+  file?: DynamicBugFile,
   position?: DynamicBugPosition
 }
 
 export type DynamicBugEvent = {
   type: 'bug-changed',
-  file?: string,
+  file?: DynamicBugFile,
   position?: DynamicBugPosition
 }
 
-const bugProperty: OpenAPIV3.SchemaObject = {
-  type: 'string',
-  description: 'The name of the image file',
-  example: 'Norsk.png',
-};
-const positionProperty: OpenAPIV3.SchemaObject = {
-  type: 'string',
-  description: 'Where to display the bug',
-  example: 'topright',
-  enum: dynamicBugPositions.slice() // The OpenApi type is mutable, so copy the array
-};
-
-const bugAndPositionSchema: OpenAPIV3.SchemaObject = {
-  type: 'object',
-  properties: {
-    bug: bugProperty,
-    position: positionProperty,
-  },
-};
 // Use the top level working dir and shove a bugs folder inside it
 function bugDir() {
   return path.join(Config.server.workingDir(), process.env.DYNAMICBUG_DIRECTORY ?? "bugs");
@@ -95,7 +82,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     }
   }
 
-  staticRoutes(): StaticRouteInfo[] {
+  async staticRoutes(): Promise<StaticRouteInfo[]> {
     const storage = multer.diskStorage({
       destination: bugDir(),
       filename: function(_req, file, cb) {
@@ -146,24 +133,28 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
   }
 
 
-  instanceRoutes(): InstanceRouteInfo<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent>[] {
+  async instanceRoutes(): Promise<InstanceRouteInfo<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent>[]> {
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
     return [
       {
         url: '/active-bug',
         method: 'GET',
         handler: ({ runtime }) => ((_req: Request, res: Response) => {
           const latest = runtime.updates.latest();
-          res.json({
+          const response: DynamicBugApiConfig = {
             bug: latest.activeBug?.file,
             position: latest.activeBug?.position
-          });
+          };
+          res.json(response);
         }),
         responses: {
           '200': {
             description: "Information about the currently overlaid bug (if any)",
             content: {
               "application/json": {
-                schema: bugAndPositionSchema
+                schema: resolved.components!.schemas!['config']
               },
             }
           }
@@ -201,11 +192,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
           description: "The bug filename and location (sending an empty JSON object will delete the bug)",
           content: {
             'application/json': {
-              schema: bugAndPositionSchema,
-              example: {
-                bug: "Norsk.png",
-                position: "topleft",
-              }
+              schema: resolved.components!.schemas!['config']
             }
           },
         },

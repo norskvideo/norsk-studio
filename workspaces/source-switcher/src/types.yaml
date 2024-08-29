@@ -1,0 +1,120 @@
+openapi: 3.0.0
+components:
+  schemas:
+    stream:
+      type: string
+      example: source1-stream
+    rect:
+      type: object
+      required:
+        - x
+        - y
+        - width
+        - height
+      properties:
+        x:
+          type: number
+        "y":
+          type: number
+        width:
+          type: number
+        height:
+          type: number
+
+    overlay:
+      type: object
+      required:
+        - source
+      properties:
+        source:
+          $ref: '#/components/schemas/stream'
+        sourceRect:
+          $ref: '#/components/schemas/rect'
+        destRect:
+          $ref: '#/components/schemas/rect'
+      
+    status-update:
+      type: object
+      required:
+        - primary
+      properties:
+        primary:
+          $ref: '#/components/schemas/stream'
+        transition:
+          $ref: '#/components/schemas/transition'
+        overlays:
+          type: array
+          items:
+            $ref: '#/components/schemas/overlay'
+    active-source:
+      type: object
+      required:
+        - source
+        - resolution
+        - age
+      properties:
+        source:
+          $ref: '#/components/schemas/stream'
+        resolution:
+          type: object
+          properties:
+            width: 
+              type: 'number'
+            height: 
+              type: 'number'
+        age:
+          type: number
+          description: "The number of milliseconds this source has been active"
+        frameRate:
+          type: object
+          properties:
+            frames: 
+              type: 'number'
+            seconds: 
+              type: 'number'
+      
+    status:
+      type: object
+      required:
+        - active
+        - available
+      properties:
+        active:
+          type: object
+          required:
+            - primary
+            - overlays
+          properties:
+            primary:
+              $ref: '#/components/schemas/stream'
+            overlays:
+              type: array
+              items:
+                $ref: '#/components/schemas/overlay'
+        available:
+          type: array
+          items:
+            $ref: '#/components/schemas/active-source'
+                
+    transition:
+      discriminator:
+        propertyName: type
+      oneOf:
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - fade
+          durationMs:
+            type: number
+            description: How long this transition should take
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - animate
+          durationMs:
+            type: number
+            description: How long this transition should take
