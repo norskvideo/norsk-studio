@@ -132,10 +132,10 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
   const fileInputClass = "block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400";
   return (
     <div className="space-y-3">
-      <h2 className="text-xl font-bold">Controls</h2>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Controls</h2>
 
       <div>
-        <label htmlFor="select-bug" className="block mb-1">
+        <label htmlFor="select-bug" className="block text-gray-900 dark:text-white mb-1">
           Source
         </label>
         <select
@@ -155,7 +155,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
 
       {bug && (
         <div>
-          <label htmlFor="select-position" className="block mb-1">
+          <label htmlFor="select-position" className="block text-gray-900 dark:text-white mb-1">
             Position
           </label>
           <select
