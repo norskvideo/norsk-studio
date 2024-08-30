@@ -10,7 +10,8 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
   const [showFileInput, setShowFileInput] = useState(false);
   const [showUploadButton, setShowUploadButton] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{success: boolean,message: string | null}>({ success: false, message: null });
-  const [showDeleteOptions, setShowDeleteOptions] = useState(false);
+  const [showDeleteDropdown, setShowDeleteDropdown] = useState(false);
+  const [bugToDelete, setBugToDelete] = useState<string>("");
 
   const updateBugs = useCallback(async () => {
     try {
@@ -77,7 +78,9 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
     setTimeout(() => setUploadStatus({ success: false, message: null }), 5000);
   };
 
-  const deleteBug = async (filename: string) => {
+  const deleteBug = async () => {
+    if (!bugToDelete) return;
+
     try {
       // This is a hack until I figure out how to get openAPI to generate path parameters 
       // we can use with Swagger UI
@@ -86,7 +89,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ filename }),
+        body: JSON.stringify({ filename: bugToDelete }),
       });
       
       // const response = await fetch(`${urls.componentUrl}/bugs/${filename}`, {
@@ -99,7 +102,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
           message: "Bug deleted successfully!",
         });
         await updateBugs();
-        if (bug === filename) {
+        if (bug === bugToDelete) {
           setBug(undefined);
           sendCommand({
             type: "change-bug",
@@ -107,6 +110,8 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
             position: undefined,
           });
         }
+        setBugToDelete("");
+        setShowDeleteDropdown(false);
       } else {
         const errorData = await response.json();
         setUploadStatus({
@@ -123,10 +128,10 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
   };
 
   const buttonClass = "mt-2 mb-5 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800";
-  const deleteButtonClass = "mt-2 mb-5 text-white w-full justify-center bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-red-700 dark:hover:bg-red-800 dark:focus:ring-red-900";
+  const deleteButtonClass = "mt-2 text-white w-full justify-center bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-red-700 dark:hover:bg-red-800 dark:focus:ring-red-900";
   const fileInputClass = "block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400";
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <h2 className="text-xl font-bold">Controls</h2>
 
       <div>
@@ -187,7 +192,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
           onClick={() => setShowFileInput(true)}
           style={{ marginBottom: "1rem" }}
         >
-          Upload a Bug
+          Upload  Bug
         </button>
       )}
 
@@ -202,7 +207,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
           />
           {showUploadButton && (
             <button type="button" className={buttonClass} onClick={uploadFile}>
-              Upload Bug
+              Upload
             </button>
           )}
         </form>
@@ -211,33 +216,36 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
       <button
         type="button"
         className={deleteButtonClass}
-        onClick={() => setShowDeleteOptions(!showDeleteOptions)}
+        onClick={() => setShowDeleteDropdown(!showDeleteDropdown)}
         style={{ marginBottom: "1rem" }}
       >
-        {showDeleteOptions ? "Hide Delete Options" : "Delete Bugs"}
+        {showDeleteDropdown ? "Hide Delete Options" : "Delete Bugs"}
       </button>
 
-      {showDeleteOptions && (
-        <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+      {showDeleteDropdown && (
+        <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
           <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
-            Available Bugs
+            Select Bug to Delete
           </h3>
-          <ul className="space-y-2">
+          <select 
+            className="w-full mb-2 node-editor-select-input"
+            value={bugToDelete}
+            onChange={(e) => setBugToDelete(e.target.value)}
+          >
+            <option value=""> Select a bug</option>
             {bugs.map((bugName) => (
-              <li
-                key={bugName}
-                className="flex justify-between items-center text-gray-800 dark:text-gray-200"
-              >
-                <span>{bugName}</span>
-                <button
-                  onClick={async () => deleteBug(bugName)}
-                  className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                >
-                  Delete
-                </button>
-              </li>
+              <option key={bugName} value={bugName}>
+                {bugName}
+              </option>
             ))}
-          </ul>
+          </select>
+          <button
+            onClick={deleteBug}
+            disabled={!bugToDelete}
+            className={`${deleteButtonClass} ${!bugToDelete ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            Delete Selected Bug
+          </button>
         </div>
       )}
 
