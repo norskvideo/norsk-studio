@@ -23,7 +23,7 @@ export type Ma35DStatsOutputEvent = {
 export type Ma35DStatsOutputCommand = object;
 
 export default class Ma35DStatsOutputDefinition implements ServerComponentDefinition<Ma35DStatsOutputSettings, CreatedMediaNode, Ma35DStatsOutputState, Ma35DStatsOutputCommand, Ma35DStatsOutputEvent> {
-  async create(norsk: Norsk, cfg: Ma35DStatsOutputSettings, cb: OnCreated<CreatedMediaNode>, runtime: StudioRuntime<Ma35DStatsOutputState, Ma35DStatsOutputEvent>) {
+  async create(norsk: Norsk, cfg: Ma35DStatsOutputSettings, cb: OnCreated<CreatedMediaNode>, runtime: StudioRuntime<Ma35DStatsOutputState, Ma35DStatsOutputCommand, Ma35DStatsOutputEvent>) {
     const node = new Ma35DStatsOutput(norsk, runtime, cfg);
     cb(node);
   }
@@ -33,12 +33,12 @@ class Ma35DStatsOutput implements CreatedMediaNode {
   id: string;
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
   norsk: Norsk;
-  updates: RuntimeUpdates<Ma35DStatsOutputState, Ma35DStatsOutputEvent>;
+  updates: RuntimeUpdates<Ma35DStatsOutputState, Ma35DStatsOutputCommand, Ma35DStatsOutputEvent>;
 
   cfg: Ma35DStatsOutputSettings;
   node?: SinkMediaNode<string>;
 
-  constructor(norsk: Norsk, { updates, shared }: StudioRuntime<Ma35DStatsOutputState, Ma35DStatsOutputEvent>, cfg: Ma35DStatsOutputSettings) {
+  constructor(norsk: Norsk, { updates, shared }: StudioRuntime<Ma35DStatsOutputState, Ma35DStatsOutputCommand, Ma35DStatsOutputEvent>, cfg: Ma35DStatsOutputSettings) {
     this.id = cfg.id;
     this.cfg = cfg;
     this.norsk = norsk;

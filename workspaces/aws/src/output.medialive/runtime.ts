@@ -36,7 +36,7 @@ export type MediaLiveEvent = {
 export type MediaLiveCommand = object;
 
 export default class MediaConnectSourceDefinition implements ServerComponentDefinition<MediaLiveConfig, MediaLiveOutput, MediaLiveState, MediaLiveCommand, MediaLiveEvent> {
-  async create(norsk: Norsk, cfg: MediaLiveConfig, cb: OnCreated<MediaLiveOutput>, { updates }: StudioRuntime<MediaLiveState, MediaLiveEvent>) {
+  async create(norsk: Norsk, cfg: MediaLiveConfig, cb: OnCreated<MediaLiveOutput>, { updates }: StudioRuntime<MediaLiveState, MediaLiveCommand, MediaLiveEvent>) {
     const node = await MediaLiveOutput.create(norsk, cfg, updates);
     cb(node);
   }
@@ -92,15 +92,15 @@ export class MediaLiveOutput extends CustomSinkNode {
   norsk: Norsk;
   cfg: MediaLiveConfig;
   initialised: Promise<void>;
-  updates: RuntimeUpdates<MediaLiveState, MediaLiveEvent>;
+  updates: RuntimeUpdates<MediaLiveState, MediaLiveCommand, MediaLiveEvent>;
 
-  static async create(norsk: Norsk, cfg: MediaLiveConfig, updates: RuntimeUpdates<MediaLiveState, MediaLiveEvent>) {
+  static async create(norsk: Norsk, cfg: MediaLiveConfig, updates: RuntimeUpdates<MediaLiveState, MediaLiveCommand, MediaLiveEvent>) {
     const node = new MediaLiveOutput(cfg, norsk, updates);
     await node.initialised;
     return node;
   }
 
-  constructor(cfg: MediaLiveConfig, norsk: Norsk, updates: RuntimeUpdates<MediaLiveState, MediaLiveEvent>) {
+  constructor(cfg: MediaLiveConfig, norsk: Norsk, updates: RuntimeUpdates<MediaLiveState, MediaLiveCommand, MediaLiveEvent>) {
     super(cfg.id);
     this.norsk = norsk;
     this.cfg = cfg;

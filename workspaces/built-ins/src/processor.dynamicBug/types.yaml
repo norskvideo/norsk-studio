@@ -1,0 +1,25 @@
+openapi: 3.0.0
+components:
+  schemas:
+    position:
+      type: string
+      description: "Where the bug is to be displayed"
+      example: 'topright'
+      enum: 
+        - topleft
+        - topright
+        - bottomleft
+        - bottomright
+    bug:
+      type: string
+      description: "The name of the image file"
+      example: 'Norsk.png'
+    config:
+      type: object
+      description: "The configuration for the dynamic bug"
+      properties:
+        bug:  
+          $ref: "#/components/schemas/bug"
+        position:  
+          $ref: "#/components/schemas/position"
+

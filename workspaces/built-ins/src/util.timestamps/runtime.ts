@@ -32,7 +32,7 @@ export type TimestampOutputCommand = object;
 // but I had a quick look and I'd need to write rust, erlang, purescript, and typescript
 // to surface this functionality
 export default class TimestampOutputDefinition implements ServerComponentDefinition<TimestampOutputSettings, SimpleSinkWrapper, TimestampOutputState, TimestampOutputCommand, TimestampOutputEvent> {
-  async create(norsk: Norsk, cfg: TimestampOutputSettings, cb: OnCreated<SimpleSinkWrapper>, runtime: StudioRuntime<TimestampOutputState, TimestampOutputEvent>) {
+  async create(norsk: Norsk, cfg: TimestampOutputSettings, cb: OnCreated<SimpleSinkWrapper>, runtime: StudioRuntime<TimestampOutputState, TimestampOutputCommand, TimestampOutputEvent>) {
     const node = new TimestampOutput(norsk, runtime, cfg);
     await node.initialised;
     cb(node);
@@ -42,12 +42,12 @@ export default class TimestampOutputDefinition implements ServerComponentDefinit
 class TimestampOutput extends CustomSinkNode {
   initialised: Promise<void>;
   norsk: Norsk;
-  updates: RuntimeUpdates<TimestampOutputState, TimestampOutputEvent>;
+  updates: RuntimeUpdates<TimestampOutputState, TimestampOutputCommand, TimestampOutputEvent>;
 
   cfg: TimestampOutputSettings;
   node?: SinkMediaNode<string>;
 
-  constructor(norsk: Norsk, { updates }: StudioRuntime<TimestampOutputState, TimestampOutputEvent>, cfg: TimestampOutputSettings) {
+  constructor(norsk: Norsk, { updates }: StudioRuntime<TimestampOutputState, TimestampOutputCommand, TimestampOutputEvent>, cfg: TimestampOutputSettings) {
     super(cfg.id);
     this.cfg = cfg;
     this.norsk = norsk;

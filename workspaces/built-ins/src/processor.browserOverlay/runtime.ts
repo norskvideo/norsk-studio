@@ -1,4 +1,4 @@
-import { BrowserInputNode, Norsk, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
+import { BrowserInputNode, Norsk, VideoComposeDefaults, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
 
 import { CreatedMediaNode, OnCreated, RelatedMediaNodes, ServerComponentDefinition, StudioNodeSubscriptionSource } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
@@ -19,10 +19,7 @@ export default class BrowserOverlayDefinition implements ServerComponentDefiniti
     const node = await BrowserOverlay.create(norsk, cfg);
     cb(node);
   }
-
 }
-
-
 
 //
 // And everything below this line is Norsk
@@ -96,33 +93,32 @@ export class BrowserOverlay implements CreatedMediaNode {
             this.relatedMediaNodes.removeOutput(thisCompose);
           },
           referenceStream: 'video',
-          referenceResolution: { width: 100, height: 100 },
           hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ["quadra", "nvidia"]),
           parts: [
             {
               pin: "video",
               opacity: 1.0,
               zIndex: 0,
-              sourceRect: { x: 0, y: 0, width: 100, height: 100 },
-              destRect: { x: 0, y: 0, width: 100, height: 100 }
+              compose: VideoComposeDefaults.fullscreen()
             }, {
               pin: "overlay",
               opacity: 1.0,
               zIndex: 1,
-              sourceRect: { x: 0, y: 0, width: 100, height: 100 },
-              destRect: { x: 0, y: 0, width: 100, height: 100 }
+              compose: VideoComposeDefaults.fullscreen()
             }
           ],
           outputResolution: { width: nextVideo.width, height: nextVideo.height }
         })
       }
       if (!this.browser) {
-        const thisBrowser = this.browser = await this.norsk.input.browser({
+        this.browser = await this.norsk.input.browser({
           onCreate: (n) => {
+            this.browser = n;
             this.relatedMediaNodes.addInput(n);
           },
           onClose: () => {
-            this.relatedMediaNodes.removeInput(thisBrowser);
+            if (this.browser)
+              this.relatedMediaNodes.removeInput(this.browser);
           },
           id: `${this.cfg.id}-browser`,
           url: this.cfg.url,

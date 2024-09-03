@@ -4,7 +4,7 @@ import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscri
 import { CustomAutoDuplexNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
-import {webRtcSettings} from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
+import { webRtcSettings } from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
 
 export type MonetiseOutputSettings = {
   id: string;
@@ -40,7 +40,7 @@ export type MonetiseOutputCommand = {
 };
 
 export default class WhepOutputDefinition implements ServerComponentDefinition<MonetiseOutputSettings, MonetiseOutput, MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent> {
-  async create(norsk: Norsk, cfg: MonetiseOutputSettings, cb: OnCreated<MonetiseOutput>, runtime: StudioRuntime<MonetiseOutputState, MonetiseOutputEvent>) {
+  async create(norsk: Norsk, cfg: MonetiseOutputSettings, cb: OnCreated<MonetiseOutput>, runtime: StudioRuntime<MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent>) {
     const node = new MonetiseOutput(norsk, runtime, cfg);
     await node.initialised;
     cb(node);
@@ -62,7 +62,7 @@ export default class WhepOutputDefinition implements ServerComponentDefinition<M
 class MonetiseOutput extends CustomAutoDuplexNode {
   initialised: Promise<void>;
   norsk: Norsk;
-  updates: RuntimeUpdates<MonetiseOutputState, MonetiseOutputEvent>;
+  updates: RuntimeUpdates<MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent>;
   shared: StudioShared;
 
   cfg: MonetiseOutputSettings;
@@ -75,7 +75,7 @@ class MonetiseOutput extends CustomAutoDuplexNode {
 
   start: Date;
 
-  constructor(norsk: Norsk, runtime: StudioRuntime<MonetiseOutputState, MonetiseOutputEvent>, cfg: MonetiseOutputSettings) {
+  constructor(norsk: Norsk, runtime: StudioRuntime<MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent>, cfg: MonetiseOutputSettings) {
     super(cfg.id);
     this.cfg = cfg;
     this.norsk = norsk;
@@ -89,7 +89,7 @@ class MonetiseOutput extends CustomAutoDuplexNode {
     const whepCfg: SdkSettings = {
       id: `${this.cfg.id}-whep`,
       bufferDelayMs: 500.0,
-      ... webRtcSettings(this.cfg.__global.iceServers),
+      ...webRtcSettings(this.cfg.__global.iceServers),
     };
     this.whep = await this.norsk.output.whep(whepCfg);
     this.ancillary = await this.norsk.processor.transform.ancillary({ id: `${this.cfg.id}-inject` });

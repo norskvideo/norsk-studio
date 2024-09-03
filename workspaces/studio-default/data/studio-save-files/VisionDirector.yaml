@@ -20,15 +20,15 @@ __layout:
   - id: webrtc-0
     x: 1936
     y: 560
-  - id: vision_dir-1
-    x: 496
-    y: 384
   - id: hls_anddash-1
     x: 1920
     y: 384
   - id: fixedladder-0
     x: 1328
     y: 208
+  - id: source_switch
+    x: 496
+    y: 384
 __globalConfig: {}
 components:
   - type: input.srt-listener
@@ -85,19 +85,19 @@ components:
       displayName: Live Camera
       id: live_camera-0
     subscriptions:
-      - source: vision_dir-1
+      - source: source_switch
         streams:
           type: take-first-stream
           select:
             - video
             - audio
-  - type: processor.transform.browserOverlay
+  - type: processor.browserOverlay
     config:
       url: https://app.singular.live/output/6CTPhPRe7yc5lkxgUixA5q/Default?aspect=9:5
       displayName: Lower Third
       id: lower_third-0
     subscriptions:
-      - source: vision_dir-1
+      - source: source_switch
         streams:
           type: take-first-stream
           select:
@@ -126,7 +126,7 @@ components:
       displayName: WebRTC
       id: webrtc-0
     subscriptions:
-      - source: vision_dir-1
+      - source: source_switch
         streams:
           type: take-first-stream
           select:
@@ -137,31 +137,6 @@ components:
           select:
             - video
           filter: h264_1920x1080
-  - type: processor.control.multiCameraSelect
-    config:
-      resolution:
-        width: 1280
-        height: 720
-      frameRate:
-        frames: 25
-        seconds: 1
-      sampleRate: 48000
-      channelLayout: stereo
-      iceServers:
-        - stun:stun.l.google.com:19302
-      displayName: Vision Dir
-      id: vision_dir-1
-    subscriptions:
-      - source: srt_cameras-0
-        streams:
-          type: take-specific-streams
-          select:
-            - video
-            - audio
-          filter:
-            - camera1
-            - camera2
-            - camera3
   - type: output.autoCmaf
     config:
       displayName: HLS and DASH
@@ -175,7 +150,7 @@ components:
       s3Destinations: []
       id: hls_anddash-1
     subscriptions:
-      - source: vision_dir-1
+      - source: source_switch
         streams:
           type: take-first-stream
           select:
@@ -190,7 +165,7 @@ components:
             - h264_1280x720
             - h264_640x360
             - h264_320x180
-  - type: processor.transform.fixedLadder
+  - type: processor.fixedLadder
     config:
       displayName: fixedLadder
       rungs:
@@ -417,3 +392,26 @@ components:
           type: take-first-stream
           select:
             - video
+  - type: processor.sourceSwitcher
+    config:
+      displayName: Source Switch
+      resolution:
+        width: 1280
+        height: 720
+      frameRate:
+        frames: 25
+        seconds: 1
+      sampleRate: 48000
+      channelLayout: stereo
+      id: source_switch
+    subscriptions:
+      - source: srt_cameras-0
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+            - audio
+          filter:
+            - camera1
+            - camera2
+            - camera3

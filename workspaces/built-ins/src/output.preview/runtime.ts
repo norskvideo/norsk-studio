@@ -42,7 +42,7 @@ export type PreviewOutputCommand = object;
 // but I had a quick look and I'd need to write rust, erlang, purescript, and typescript
 // to surface this functionality
 export default class WhepOutputDefinition implements ServerComponentDefinition<PreviewOutputSettings, SimpleSinkWrapper, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent> {
-  async create(norsk: Norsk, cfg: PreviewOutputSettings, cb: OnCreated<SimpleSinkWrapper>, runtime: StudioRuntime<PreviewOutputState, PreviewOutputEvent>) {
+  async create(norsk: Norsk, cfg: PreviewOutputSettings, cb: OnCreated<SimpleSinkWrapper>, runtime: StudioRuntime<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>) {
     const node = new PreviewOutput(norsk, runtime, cfg);
     await node.initialised;
     cb(node);
@@ -52,7 +52,7 @@ export default class WhepOutputDefinition implements ServerComponentDefinition<P
 export class PreviewOutput extends CustomSinkNode {
   initialised: Promise<void>;
   norsk: Norsk;
-  updates: RuntimeUpdates<PreviewOutputState, PreviewOutputEvent>;
+  updates: RuntimeUpdates<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>;
   shared: StudioShared;
 
   cfg: PreviewOutputSettings;
@@ -61,7 +61,7 @@ export class PreviewOutput extends CustomSinkNode {
   audioLevels?: AudioMeasureLevelsNode;
   context: ContextPromiseControl = new ContextPromiseControl(this.subscribeImpl.bind(this));
 
-  constructor(norsk: Norsk, { updates, shared }: StudioRuntime<PreviewOutputState, PreviewOutputEvent>, cfg: PreviewOutputSettings) {
+  constructor(norsk: Norsk, { updates, shared }: StudioRuntime<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>, cfg: PreviewOutputSettings) {
     super(cfg.id);
     this.cfg = cfg;
     this.norsk = norsk;

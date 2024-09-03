@@ -23,7 +23,7 @@ components:
       displayName: srt-listener
       id: srtlistener-0
     subscriptions: []
-  - type: processor.transform.actionReplay
+  - type: processor.actionReplay
     config:
       displayName: actionReplay
       id: actionreplay-0

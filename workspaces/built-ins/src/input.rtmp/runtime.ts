@@ -23,7 +23,7 @@ export type RtmpInputEvent = {
 }
 
 export default class RtmpInputDefinition implements ServerComponentDefinition<RtmpInputSettings, SimpleInputWrapper, RtmpInputState> {
-  async create(norsk: Norsk, cfg: RtmpInputSettings, cb: OnCreated<SimpleInputWrapper>, { updates }: StudioRuntime<RtmpInputState, RtmpInputEvent>) {
+  async create(norsk: Norsk, cfg: RtmpInputSettings, cb: OnCreated<SimpleInputWrapper>, { updates }: StudioRuntime<RtmpInputState, object, RtmpInputEvent>) {
     let activeStreams: string[] = [];
     const wrapper = new SimpleInputWrapper(cfg.id, async () => {
       return await norsk.input.rtmpServer({

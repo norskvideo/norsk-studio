@@ -21,7 +21,7 @@ export type StatisticsOutputEvent = {
 export type StatisticsOutputCommand = object;
 
 export default class StatisticsOutputDefinition implements ServerComponentDefinition<StatisticsOutputSettings, SimpleSinkWrapper, StatisticsOutputState, StatisticsOutputCommand, StatisticsOutputEvent> {
-  async create(norsk: Norsk, cfg: StatisticsOutputSettings, cb: OnCreated<SimpleSinkWrapper>, { updates }: StudioRuntime<StatisticsOutputState, StatisticsOutputEvent>) {
+  async create(norsk: Norsk, cfg: StatisticsOutputSettings, cb: OnCreated<SimpleSinkWrapper>, { updates }: StudioRuntime<StatisticsOutputState, StatisticsOutputCommand, StatisticsOutputEvent>) {
     const node = new StatisticsOutput(norsk, updates, cfg);
     await node.initialised;
     cb(node);
@@ -31,11 +31,11 @@ export default class StatisticsOutputDefinition implements ServerComponentDefini
 class StatisticsOutput extends CustomSinkNode {
   initialised: Promise<void>;
   norsk: Norsk;
-  updates: RuntimeUpdates<StatisticsOutputState, StatisticsOutputEvent>;
+  updates: RuntimeUpdates<StatisticsOutputState, StatisticsOutputCommand, StatisticsOutputEvent>;
 
   cfg: StatisticsOutputSettings;
 
-  constructor(norsk: Norsk, updates: RuntimeUpdates<StatisticsOutputState, StatisticsOutputEvent>, cfg: StatisticsOutputSettings) {
+  constructor(norsk: Norsk, updates: RuntimeUpdates<StatisticsOutputState, StatisticsOutputCommand, StatisticsOutputEvent>, cfg: StatisticsOutputSettings) {
     super(cfg.id);
     this.cfg = cfg;
     this.norsk = norsk;

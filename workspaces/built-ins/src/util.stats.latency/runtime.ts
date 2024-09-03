@@ -21,7 +21,7 @@ export type LatencyStatsOutputEvent = {
 export type LatencyStatsOutputCommand = object;
 
 export default class LatencyStatsOutputDefinition implements ServerComponentDefinition<LatencyStatsOutputSettings, CreatedMediaNode, LatencyStatsOutputState, LatencyStatsOutputCommand, LatencyStatsOutputEvent> {
-  async create(norsk: Norsk, cfg: LatencyStatsOutputSettings, cb: OnCreated<CreatedMediaNode>, runtime: StudioRuntime<LatencyStatsOutputState, LatencyStatsOutputEvent>) {
+  async create(norsk: Norsk, cfg: LatencyStatsOutputSettings, cb: OnCreated<CreatedMediaNode>, runtime: StudioRuntime<LatencyStatsOutputState, LatencyStatsOutputCommand, LatencyStatsOutputEvent>) {
     const node = new LatencyStatsOutput(norsk, runtime, cfg);
     cb(node);
   }
@@ -31,7 +31,7 @@ class LatencyStatsOutput implements CreatedMediaNode {
   id: string;
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
   norsk: Norsk;
-  updates: RuntimeUpdates<LatencyStatsOutputState, LatencyStatsOutputEvent>;
+  updates: RuntimeUpdates<LatencyStatsOutputState, LatencyStatsOutputCommand, LatencyStatsOutputEvent>;
   shared: StudioShared;
 
   cfg: LatencyStatsOutputSettings;
@@ -45,7 +45,7 @@ class LatencyStatsOutput implements CreatedMediaNode {
 
   created: boolean = false;
 
-  constructor(norsk: Norsk, { updates, shared }: StudioRuntime<LatencyStatsOutputState, LatencyStatsOutputEvent>, cfg: LatencyStatsOutputSettings) {
+  constructor(norsk: Norsk, { updates, shared }: StudioRuntime<LatencyStatsOutputState, LatencyStatsOutputCommand, LatencyStatsOutputEvent>, cfg: LatencyStatsOutputSettings) {
     this.id = cfg.id;
     this.cfg = cfg;
     this.norsk = norsk;

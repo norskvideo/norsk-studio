@@ -2,7 +2,7 @@
 LOG_LEVEL=error npm run test --workspace workspaces/built-ins -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/built-ins.json
 BUILT_INS=$?
 
-LOG_LEVEL=error npm run test --workspace workspaces/vision-director -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/vd.json
+LOG_LEVEL=error npm run test --workspace workspaces/source-swicher -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/vd.json
 VISION_DIRECTOR=$?
 
 cat $PWD/built-ins.json $PWD/vd.json | jq -s \
@@ -32,7 +32,7 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
               , "color": (if .[1].stats.failures == 0 then 5763719 else 15548997 end)
               , "description": ("[norsk-studio/" + $GITHUB_REF + "](https://github.com/norskvideo/norsk-studio/actions/runs/" + $GITHUB_RUN_ID + ")"
                 + "\r\n"
-                + (("**Workspace:** Vision Director \r\n") 
+                + (("**Workspace:** Source Switcher \r\n") 
                 + "**Tests: **" 
                 + ((.[1].stats.passes | tostring) +  " passed") 
                 +(if .[1].stats.failures > 0 then 

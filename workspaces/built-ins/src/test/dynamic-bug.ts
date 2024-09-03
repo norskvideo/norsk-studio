@@ -67,7 +67,6 @@ describe("Dynamic Bug", () => {
   let norsk: Norsk = undefined!;
 
   afterEach(async () => {
-    console.log("closing norsk");
     await norsk?.close();
   })
 
@@ -98,6 +97,7 @@ describe("Dynamic Bug", () => {
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
     const bug = result.components["bug"] as DynamicBug;
+
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
@@ -116,9 +116,13 @@ describe("Dynamic Bug", () => {
       })
     ])
     await waitForCondition(() => sink.streamCount() == 1, 10000.0);
+
     await sourceOne.close();
 
-    await waitForCondition(() => sink.streamCount() == 0, 10000.0);
+    // this is what studio does for you
+    bug.subscribe([]);
+
+    await waitForCondition(() => sink.streamCount() == 0, 60000.0);
 
     const sourceTwo = await videoAndAudio(norsk, 'sourceTwo', videoOptsTwo);
 
@@ -294,7 +298,6 @@ describe("Dynamic Bug", () => {
     let bug: DynamicBug = undefined!;
 
     beforeEach(async () => {
-      console.log("opening norsk");
       const compiled = await testDocument();
       norsk = await Norsk.connect({ onShutdown: () => { } });
       const app = express();

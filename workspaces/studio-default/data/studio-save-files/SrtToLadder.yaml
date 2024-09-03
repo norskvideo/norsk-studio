@@ -21,7 +21,7 @@ components:
         - camera1
       id: srtlistener-0
     subscriptions: []
-  - type: processor.transform.fixedLadder
+  - type: processor.fixedLadder
     config:
       displayName: fixedLadder
       rungs:

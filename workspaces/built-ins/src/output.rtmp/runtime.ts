@@ -23,8 +23,8 @@ export type RtmpOutputEvent = {
   type: "rtmp-server-connection-failed-retry",
 }
 
-export default class RtmpOutputDefinition implements ServerComponentDefinition<RtmpOutputSettings, SimpleSinkWrapper, RtmpOutputState, RtmpOutputEvent> {
-  async create(norsk: Norsk, cfg: RtmpOutputSettings, cb: OnCreated<SimpleSinkWrapper>, { updates }: StudioRuntime<RtmpOutputState, RtmpOutputEvent>) {
+export default class RtmpOutputDefinition implements ServerComponentDefinition<RtmpOutputSettings, SimpleSinkWrapper, RtmpOutputState, object, RtmpOutputEvent> {
+  async create(norsk: Norsk, cfg: RtmpOutputSettings, cb: OnCreated<SimpleSinkWrapper>, { updates }: StudioRuntime<RtmpOutputState, object, RtmpOutputEvent>) {
     const node = new RtmpOutput(norsk, updates, cfg)
     await node.initialised;
     cb(node);
@@ -34,12 +34,12 @@ export default class RtmpOutputDefinition implements ServerComponentDefinition<R
 class RtmpOutput extends CustomSinkNode {
   initialised: Promise<void>;
   norsk: Norsk;
-  updates: RuntimeUpdates<RtmpOutputState, RtmpOutputEvent>;
+  updates: RuntimeUpdates<RtmpOutputState, object, RtmpOutputEvent>;
 
   cfg: RtmpOutputSettings;
   rtmp?: RtmpOutputNode;
 
-  constructor(norsk: Norsk, updates: RuntimeUpdates<RtmpOutputState, RtmpOutputEvent>, cfg: RtmpOutputSettings) {
+  constructor(norsk: Norsk, updates: RuntimeUpdates<RtmpOutputState, object, RtmpOutputEvent>, cfg: RtmpOutputSettings) {
     super(cfg.id);
     this.cfg = cfg;
     this.norsk = norsk;

@@ -30,7 +30,7 @@ export type SrtInputEvent = {
 { type: "source-disconnected", streamId: string }
 
 export default class SrtInputDefinition implements ServerComponentDefinition<SrtInputSettings, SimpleInputWrapper, SrtInputState> {
-  async create(norsk: Norsk, cfg: SrtInputSettings, cb: OnCreated<SimpleInputWrapper>, { updates }: StudioRuntime<SrtInputState, SrtInputEvent>) {
+  async create(norsk: Norsk, cfg: SrtInputSettings, cb: OnCreated<SimpleInputWrapper>, { updates }: StudioRuntime<SrtInputState, object, SrtInputEvent>) {
     const wrapper = new SimpleInputWrapper(cfg.id, async () => {
 
       // This could be runtime state

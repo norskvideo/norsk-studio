@@ -33,7 +33,7 @@ export type AudioLevelCommand = {
 };
 
 export default class AudioLevelDefinition implements ServerComponentDefinition<AudioLevelSettings, AudioLevel, AudioLevelState, AudioLevelCommand, AudioLevelEvent> {
-  async create(norsk: Norsk, cfg: AudioLevelSettings, cb: OnCreated<AudioLevel>, { updates }: StudioRuntime<AudioLevelState, AudioLevelEvent>) {
+  async create(norsk: Norsk, cfg: AudioLevelSettings, cb: OnCreated<AudioLevel>, { updates }: StudioRuntime<AudioLevelState, AudioLevelCommand, AudioLevelEvent>) {
     const node = new AudioLevel(norsk, updates, cfg);
     await node.initialised
     cb(node);
@@ -58,7 +58,7 @@ function mkNodeGain(sliderGain: Db): Db {
 class AudioLevel extends CustomAutoDuplexNode {
   initialised: Promise<void>;
   norsk: Norsk;
-  updates: RuntimeUpdates<AudioLevelState, AudioLevelEvent>;
+  updates: RuntimeUpdates<AudioLevelState, AudioLevelCommand, AudioLevelEvent>;
 
   cfg: AudioLevelSettings;
   audioLevels?: AudioMeasureLevelsNode;
@@ -66,7 +66,7 @@ class AudioLevel extends CustomAutoDuplexNode {
   source?: StudioNodeSubscriptionSource;
   sendSetGainEvent: (relativeGain: Db, actualGain: Db) => void;
 
-  constructor(norsk: Norsk, updates: RuntimeUpdates<AudioLevelState, AudioLevelEvent>, cfg: AudioLevelSettings) {
+  constructor(norsk: Norsk, updates: RuntimeUpdates<AudioLevelState, AudioLevelCommand, AudioLevelEvent>, cfg: AudioLevelSettings) {
     super(cfg.id);
     this.cfg = cfg;
     this.norsk = norsk;

@@ -96,7 +96,7 @@ export const defaultGainRange: GainRange = {
 }
 
 export default class AudioMixerDefinition implements ServerComponentDefinition<AudioMixerSettings, AudioMixer, AudioMixerState, AudioMixerCommand, AudioMixerEvent> {
-  async create(norsk: Norsk, cfg: AudioMixerSettings, cb: OnCreated<AudioMixer>, { updates }: StudioRuntime<AudioMixerState, AudioMixerEvent>) {
+  async create(norsk: Norsk, cfg: AudioMixerSettings, cb: OnCreated<AudioMixer>, { updates }: StudioRuntime<AudioMixerState, AudioMixerCommand, AudioMixerEvent>) {
     const node = new AudioMixer(norsk, updates, cfg);
     await node.initialised
     cb(node);
@@ -147,7 +147,7 @@ function mkNodeGain(sliderGain: number): Db {
 export class AudioMixer extends CustomAutoDuplexNode {
   initialised: Promise<void>;
   norsk: Norsk;
-  updates: RuntimeUpdates<AudioMixerState, AudioMixerEvent>;
+  updates: RuntimeUpdates<AudioMixerState, AudioMixerCommand, AudioMixerEvent>;
 
   cfg: AudioMixerSettings;
   audioGainOutput?: AudioGainNode;
@@ -163,7 +163,7 @@ export class AudioMixer extends CustomAutoDuplexNode {
   sourcesSubscribedTo: { [id: MediaNodeId]: [AudioMixerSource, StreamKey][] } = {}
   audioMixerSubscriptions: AudioMixerSubscription[] = []
 
-  constructor(norsk: Norsk, updates: RuntimeUpdates<AudioMixerState, AudioMixerEvent>, cfg: AudioMixerSettings) {
+  constructor(norsk: Norsk, updates: RuntimeUpdates<AudioMixerState, AudioMixerCommand, AudioMixerEvent>, cfg: AudioMixerSettings) {
     super(cfg.id);
     this.cfg = cfg;
     this.norsk = norsk;
