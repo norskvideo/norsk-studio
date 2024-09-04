@@ -113,7 +113,7 @@ jobs:
       uses: actions/upload-artifact@master
       with:
         name: vd.log
-        path: workspaces/vision-director/logs/debug.log
+        path: workspaces/source-switcher/logs/debug.log
 
     - name: Upload docker logs to GitHub
       if: always()

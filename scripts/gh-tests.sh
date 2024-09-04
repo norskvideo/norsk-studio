@@ -2,7 +2,7 @@
 LOG_LEVEL=error npm run test --workspace workspaces/built-ins -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/built-ins.json
 BUILT_INS=$?
 
-LOG_LEVEL=error npm run test --workspace workspaces/source-swicher -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/vd.json
+LOG_LEVEL=error npm run test --workspace workspaces/source-switcher -- --reporter mocha-json-output-reporter --reporter-options output=$PWD/vd.json
 VISION_DIRECTOR=$?
 
 cat $PWD/built-ins.json $PWD/vd.json | jq -s \
