@@ -43,8 +43,8 @@ jobs:
       with:
         file: shell.nix
 
-    - name: Run Build (With Latest)
-      run: "npm install --workspaces @norskvideo/norsk-sdk@latest && npm install @norskvideo/norsk-studio@latest && npm install && npm run build"
+    - name: Run Build 
+      run: "npm install && npm run build"
 
     - name: Run Tests
       env: 

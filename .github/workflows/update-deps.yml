@@ -38,7 +38,7 @@ jobs:
 
     - name: Do the dependency update
       run: 
-        "npm install --workspaces @norskvideo/norsk-sdk@latest && npm install --workspaces @norskvideo/norsk-studio && npm install"
+        "rm package-lock.json && npm install --workspaces @norskvideo/norsk-sdk@latest @norskvideo/norsk-studio@latest && npm install"
 
     - name: Check for changes
       id: changes
