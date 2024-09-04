@@ -1,4 +1,4 @@
-name: Publish
+sionname: Publish
 
 on:
   workflow_dispatch:
@@ -77,11 +77,11 @@ jobs:
         package: workspaces/built-ins
 
     - name: "Publish"
-      id: "publish-vd"
+      id: "publish-ss"
       uses: JS-DevTools/npm-publish@v3
       with:
         token: ${{ secrets.NPM_TOKEN }}
-        package: workspaces/vision-director
+        package: workspaces/source-switcher
 
     - name: "Publish"
       id: "publish-aws"
@@ -110,9 +110,9 @@ jobs:
         username: "Evil Jenkins"
         avatar_url: "https://i.imgur.com/HzrYPqf.png"
         content: ""
-        embed-title: "@norskvideo/norsk-studio-built-ins published"
+        embed-title: "@norskvideo/norsk-studio-source-switcher published"
         embed-color: 5763719 
-        embed-description: Version ${{ steps.publish-vd.outputs.version }}
+        embed-description: Version ${{ steps.publish-ss.outputs.version }}
 
     - name: Discord Webhook Action
       uses: tsickert/discord-webhook@v5.3.0

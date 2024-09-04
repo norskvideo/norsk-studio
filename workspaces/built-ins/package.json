@@ -7,7 +7,8 @@
     "build": "npx studio-wrap-infos src/ && npx npm-run-all build:* && rm -rf build",
     "build:server": "npx tsc",
     "build:client": "npx tsc -p tsconfig-client.json && npx studio-bundle build/info.js client/info.js",
-    "build:copy-css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
+    "build:css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
+    "build:types": "rsync --mkpath -v -r --include '*/' --include 'types.yaml' --exclude '*' src/ lib/",
     "build:tailwind": "npx tailwindcss -i src/shared/tailwind.css -o client/style.css",
     "build:eslint": "npx eslint src",
     "test": "LOG_LEVEL=${LOG_LEVEL:-error} NODE_ENV=test mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
@@ -21,8 +22,6 @@
   "dependencies": {
     "@norskvideo/norsk-sdk": "^1.0.375",
     "@norskvideo/norsk-studio": "^1.21.0",
-    "@norskvideo/norsk-studio-built-ins": "file:",
-    "@norskvideo/norsk-studio-vision-director": "file:../source-switcher",
     "@norskvideo/webrtc-client": "^0.1.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
