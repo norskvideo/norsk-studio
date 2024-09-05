@@ -42,7 +42,7 @@ const videoOptsTwo = {
 }
 
 function apiUrl(id: string, port: number): string {
-  return `http://127.0.0.1:${port}/${id}/active-bug`
+  return `http://127.0.0.1:${port}/${id}/active-graphic`
 }
 
 describe("Dynamic Bug", () => {

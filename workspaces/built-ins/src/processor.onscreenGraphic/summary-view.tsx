@@ -15,7 +15,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConf
 
   const updateBugs = useCallback(async () => {
     try {
-      const result = await fetch(`${urls.componentUrl}/bugs`);
+      const result = await fetch(`${urls.componentUrl}/graphics`);
       if (result.ok) {
         const newBugs = (await result.json()) as string[];
         setBugs(newBugs);
@@ -48,7 +48,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConf
     try {
       const form = new FormData();
       form.append("file", fileToUpload);
-      const response = await fetch(`${urls.componentUrl}/bugs`, {
+      const response = await fetch(`${urls.componentUrl}/graphics`, {
         method: "POST",
         body: form,
       });
@@ -84,7 +84,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConf
     try {
       // This is a hack until I figure out how to get openAPI to generate path parameters
       // we can use with Swagger UI
-      const response = await fetch(`${urls.componentUrl}/bug`, {
+      const response = await fetch(`${urls.componentUrl}/graphic`, {
         method: "DELETE",
         headers: {
           'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConf
         body: JSON.stringify({ filename: bugToDelete }),
       });
 
-      // const response = await fetch(`${urls.componentUrl}/bugs/${filename}`, {
+      // const response = await fetch(`${urls.componentUrl}/graphics/${filename}`, {
       //   method: "DELETE",
       // });
 

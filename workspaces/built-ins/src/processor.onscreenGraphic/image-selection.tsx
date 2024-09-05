@@ -13,7 +13,7 @@ function GraphicSelection(props: GraphicSelectionProps) {
 
   useEffect(() => {
     const fn = async () => {
-      const result = await fetch('components/processor.onscreenGraphic/bugs')
+      const result = await fetch('components/processor.onscreenGraphic/graphics')
       if (result.ok && result.body) {
         const bugs = await result.json() as string[];
         setBugs(bugs);

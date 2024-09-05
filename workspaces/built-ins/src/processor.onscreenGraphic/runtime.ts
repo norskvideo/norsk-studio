@@ -104,7 +104,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
     const upload = multer({ storage, fileFilter });
     return [
       {
-        url: '/bugs',
+        url: '/graphics',
         method: 'POST',
         handler: () => async (req, res) => {
           const uploader = upload.single('file');
@@ -146,7 +146,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         }
       },
       {
-        url: '/bugs',
+        url: '/graphics',
         method: 'GET',
         handler: (_) => (async (_req: Request, res: Response) => {
           const images = await getBugs();
@@ -155,7 +155,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         responses: {},
       },
       {
-        url: '/bug',
+        url: '/graphic',
         method: 'DELETE',
         handler: () => (async (req, res) => {
           const filename = req.body.filename;
@@ -206,7 +206,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
     return [
       {
-        url: '/active-bug',
+        url: '/active-graphic',
         method: 'GET',
         handler: ({ runtime }) => ((_req: Request, res: Response) => {
           const latest = runtime.updates.latest();
@@ -228,7 +228,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         }
       },
       {
-        url: '/active-bug',
+        url: '/active-graphic',
         method: 'POST',
         handler: ({ runtime }) => (async (req, res) => {
           if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
@@ -282,7 +282,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         }
       },
       {
-        url: '/active-bug',
+        url: '/active-graphic',
         method: 'DELETE',
         handler: ({ runtime }) => (async (_req, res) => {
           runtime.updates.sendCommand({
