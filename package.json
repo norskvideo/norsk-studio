@@ -4,6 +4,7 @@
     "clean": "npm run --workspaces clean",
     "build": "npm run --workspaces build",
     "server": "npm run --workspace workspaces/studio-default server",
+    "server-dev": "STUDIO_LIBRARY_ROOT=$PWD/node_modules npm run server",
     "gen-docs": "npm run --workspace workspaces/studio-default gen-docs",
     "start-swagger": "node workspaces/built-ins/lib/processor.dynamicBug/server.js",
     "test": "npm run --workspaces test",
