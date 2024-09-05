@@ -15,39 +15,39 @@ import { resolveRefs } from 'json-refs';
 import YAML from 'yaml';
 import { OpenAPIV3 } from 'openapi-types';
 
-export type DynamicBugPosition = components['schemas']['position'];
-export type DynamicBugFile = components['schemas']['bug'];
-export type DynamicBugApiConfig = components['schemas']['config'];
-const dynamicBugPositions: DynamicBugPosition[] = ['topleft', 'topright', 'bottomleft', 'bottomright'];
+export type OnscreenGraphicPosition = components['schemas']['position'];
+export type OnscreenGraphicFile = components['schemas']['bug'];
+export type OnscreenGraphicApiConfig = components['schemas']['config'];
+const onscreenGraphicPositions: OnscreenGraphicPosition[] = ['topleft', 'topright', 'bottomleft', 'bottomright'];
 
-export type DynamicBugConfig = {
+export type OnscreenGraphicConfig = {
   __global: {
     hardware?: HardwareAccelerationType,
     dataDir?: string
   },
   id: string,
   displayName: string,
-  initialBug?: DynamicBugFile,
-  initialPosition?: DynamicBugPosition;
+  initialBug?: OnscreenGraphicFile,
+  initialPosition?: OnscreenGraphicPosition;
 }
 
-export type DynamicBugState = {
+export type OnscreenGraphicState = {
   activeBug?: {
-    file?: DynamicBugFile,
-    position?: DynamicBugPosition
+    file?: OnscreenGraphicFile,
+    position?: OnscreenGraphicPosition
   },
 }
 
-export type DynamicBugCommand = {
+export type OnscreenGraphicCommand = {
   type: 'change-bug',
-  file?: DynamicBugFile,
-  position?: DynamicBugPosition
+  file?: OnscreenGraphicFile,
+  position?: OnscreenGraphicPosition
 }
 
-export type DynamicBugEvent = {
+export type OnscreenGraphicEvent = {
   type: 'bug-changed',
-  file?: DynamicBugFile,
-  position?: DynamicBugPosition
+  file?: OnscreenGraphicFile,
+  position?: OnscreenGraphicPosition
 }
 
 // Use the top level working dir and shove a bugs folder inside it
@@ -63,13 +63,13 @@ async function getBugs() {
   return images;
 }
 
-export default class DynamicBugDefinition implements ServerComponentDefinition<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent> {
-  async create(norsk: Norsk, cfg: DynamicBugConfig, cb: OnCreated<DynamicBug>, runtime: StudioRuntime<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
-    const node = await DynamicBug.create(norsk, cfg, runtime.updates);
+export default class OnscreenGraphicDefinition implements ServerComponentDefinition<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent> {
+  async create(norsk: Norsk, cfg: OnscreenGraphicConfig, cb: OnCreated<OnscreenGraphic>, runtime: StudioRuntime<OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>) {
+    const node = await OnscreenGraphic.create(norsk, cfg, runtime.updates);
     cb(node);
   }
 
-  async handleCommand(node: DynamicBug, command: DynamicBugCommand) {
+  async handleCommand(node: OnscreenGraphic, command: OnscreenGraphicCommand) {
     const commandType = command.type;
     switch (commandType) {
       case 'change-bug':
@@ -153,14 +153,14 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
           res.json(images);
         }),
         responses: {},
-      }, 
+      },
       {
         url: '/bug',
         method: 'DELETE',
         handler: () => (async (req, res) => {
-          const filename = req.body.filename; 
+          const filename = req.body.filename;
           const filePath = path.join(bugDir(), filename);
-      
+
           try {
             await fs.access(filePath);
             await fs.unlink(filePath);
@@ -200,7 +200,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
   }
 
 
-  async instanceRoutes(): Promise<InstanceRouteInfo<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent>[]> {
+  async instanceRoutes(): Promise<InstanceRouteInfo<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>[]> {
     const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
     const root = YAML.parse(types.toString());
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
@@ -210,7 +210,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
         method: 'GET',
         handler: ({ runtime }) => ((_req: Request, res: Response) => {
           const latest = runtime.updates.latest();
-          const response: DynamicBugApiConfig = {
+          const response: OnscreenGraphicApiConfig = {
             bug: latest.activeBug?.file,
             position: latest.activeBug?.position
           };
@@ -232,7 +232,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
         method: 'POST',
         handler: ({ runtime }) => (async (req, res) => {
           if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
-            if (!dynamicBugPositions.includes(req.body.position)) {
+            if (!onscreenGraphicPositions.includes(req.body.position)) {
               res.status(400).json({
                 error: "bad position",
                 details: req.body.position
@@ -296,15 +296,15 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
   }
 }
 
-export class DynamicBug implements CreatedMediaNode {
+export class OnscreenGraphic implements CreatedMediaNode {
   id: string;
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
 
   contexts: ContextPromiseControl = new ContextPromiseControl(this.handleContext.bind(this));
   norsk: Norsk;
-  cfg: DynamicBugConfig;
+  cfg: OnscreenGraphicConfig;
   bug?: string;
-  position?: DynamicBugPosition;
+  position?: OnscreenGraphicPosition;
 
   videoSource?: StudioNodeSubscriptionSource;
   composeNode?: VideoComposeNode<"video" | "bug">;
@@ -312,16 +312,16 @@ export class DynamicBug implements CreatedMediaNode {
   oldImageSource?: FileImageInputNode;
   activeImage: "a" | "b" = "a";
   initialised: Promise<void>;
-  updates: RuntimeUpdates<DynamicBugState, DynamicBugCommand, DynamicBugEvent>;
+  updates: RuntimeUpdates<OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>;
   currentVideo?: VideoStreamMetadata;
 
-  static async create(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
-    const node = new DynamicBug(norsk, cfg, updates);
+  static async create(norsk: Norsk, cfg: OnscreenGraphicConfig, updates: RuntimeUpdates<OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>) {
+    const node = new OnscreenGraphic(norsk, cfg, updates);
     await node.initialised;
     return node;
   }
 
-  constructor(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
+  constructor(norsk: Norsk, cfg: OnscreenGraphicConfig, updates: RuntimeUpdates<OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>) {
     this.cfg = cfg;
     this.id = cfg.id;
     this.norsk = norsk;
@@ -446,7 +446,7 @@ export class DynamicBug implements CreatedMediaNode {
     }
   }
 
-  async setupBug(bug?: string, position?: DynamicBugPosition) {
+  async setupBug(bug?: string, position?: OnscreenGraphicPosition) {
     this.position = position;
     if (!bug || bug === "") {
       debuglog("Clearing bug", { id: this.id })
@@ -477,7 +477,7 @@ export class DynamicBug implements CreatedMediaNode {
     this.updates.raiseEvent({ type: 'bug-changed', file: bug, position })
   }
 
-  imagePart(position: DynamicBugPosition): ComposePart<"bug"> {
+  imagePart(position: OnscreenGraphicPosition): ComposePart<"bug"> {
     // // We shouldn't need this, pending work on Compose
     // imageWidth = Math.min(videoWidth - 100, imageWidth);
     // imageHeight = Math.min(videoHeight - 100, imageHeight);
@@ -495,7 +495,7 @@ export class DynamicBug implements CreatedMediaNode {
           // Take the whole image
           sourceRect: { x: 0, y: 0, width: metadata.width, height: metadata.height },
 
-          // And do a per pixel blit of the image 'as is', with an offset of 5 pixels 
+          // And do a per pixel blit of the image 'as is', with an offset of 5 pixels
           destRect: (position == 'topleft' ? { x: 5, y: 5, width: imageWidth, height: imageHeight } :
             position == 'topright' ? { x: videoWidth - imageWidth - 5, y: 5, width: imageWidth, height: imageHeight } :
               position == 'bottomleft' ? { x: 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight } :

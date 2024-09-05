@@ -1,8 +1,8 @@
 import React, { ChangeEvent, useEffect, useState, useCallback } from "react";
-import type { DynamicBugState, DynamicBugConfig, DynamicBugCommand, DynamicBugPosition } from "./runtime";
+import type { OnscreenGraphicState, OnscreenGraphicConfig, OnscreenGraphicCommand, OnscreenGraphicPosition } from "./runtime";
 import { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
-function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, DynamicBugState, DynamicBugCommand>) {
+function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConfig, OnscreenGraphicState, OnscreenGraphicCommand>) {
   const [bug, setBug] = useState(state.activeBug?.file);
   const [position, setPosition] = useState(state.activeBug?.position);
   const [bugs, setBugs] = useState<string[]>([]);
@@ -82,7 +82,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
     if (!bugToDelete) return;
 
     try {
-      // This is a hack until I figure out how to get openAPI to generate path parameters 
+      // This is a hack until I figure out how to get openAPI to generate path parameters
       // we can use with Swagger UI
       const response = await fetch(`${urls.componentUrl}/bug`, {
         method: "DELETE",
@@ -91,7 +91,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
         },
         body: JSON.stringify({ filename: bugToDelete }),
       });
-      
+
       // const response = await fetch(`${urls.componentUrl}/bugs/${filename}`, {
       //   method: "DELETE",
       // });
@@ -162,7 +162,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
             id="select-position"
             className="w-full node-editor-select-input"
             value={position}
-            onChange={(e) => setPosition(e.target.value as DynamicBugPosition)}
+            onChange={(e) => setPosition(e.target.value as OnscreenGraphicPosition)}
           >
             <option value="topleft">Top Left</option>
             <option value="topright">Top Right</option>
@@ -227,7 +227,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<DynamicBugConfig, D
           <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
             Select Bug to Delete
           </h3>
-          <select 
+          <select
             className="w-full mb-2 node-editor-select-input"
             value={bugToDelete}
             onChange={(e) => setBugToDelete(e.target.value)}

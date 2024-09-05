@@ -7,12 +7,12 @@ import YAML from 'yaml';
 import { AddressInfo } from 'net';
 import { Server } from 'http';
 import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
-import { DynamicBugCommand, DynamicBugConfig, DynamicBugEvent, DynamicBugState } from "../processor.dynamicBug/runtime";
+import { OnscreenGraphicCommand, OnscreenGraphicConfig, OnscreenGraphicEvent, OnscreenGraphicState } from "../processor.onscreenGraphic/runtime";
 import { videoAndAudio, testSourceDescription } from "@norskvideo/norsk-studio/lib/test/_util/sources";
-import { DynamicBug } from "../processor.dynamicBug/runtime";
+import { OnscreenGraphic } from "../processor.onscreenGraphic/runtime";
 import { TraceSink, assertNodeOutputsVideoFrames, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 
-import DynamicBugInfo from "../processor.dynamicBug/info";
+import OnscreenGraphicInfo from "../processor.onscreenGraphic/info";
 import { BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
@@ -47,13 +47,13 @@ function apiUrl(id: string, port: number): string {
 
 describe("Dynamic Bug", () => {
 
-  async function testDocument(cfg?: Omit<DynamicBugConfig, "id" | "displayName" | "__global">) {
+  async function testDocument(cfg?: Omit<OnscreenGraphicConfig, "id" | "displayName" | "__global">) {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
-        new YamlNodeBuilder<DynamicBugConfig, DynamicBugState, DynamicBugCommand, DynamicBugEvent>
+        new YamlNodeBuilder<OnscreenGraphicConfig, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>
           ('bug',
-            DynamicBugInfo(RegistrationConsts),
+            OnscreenGraphicInfo(RegistrationConsts),
             cfg ?? {
 
             }
@@ -74,7 +74,7 @@ describe("Dynamic Bug", () => {
     const compiled = await testDocument();
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as DynamicBug;
+    const bug = result.components["bug"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
@@ -96,14 +96,14 @@ describe("Dynamic Bug", () => {
     const compiled = await testDocument();
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as DynamicBug;
+    const bug = result.components["bug"] as OnscreenGraphic;
 
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
     sink.subscribe([
       new StudioNodeSubscriptionSource(bug, compiled.components['bug'].yaml,
-        { type: 'take-all-streams', select: ["audio", "video"] }, DynamicBugInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+        { type: 'take-all-streams', select: ["audio", "video"] }, OnscreenGraphicInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
     ])
 
 
@@ -147,7 +147,7 @@ describe("Dynamic Bug", () => {
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as DynamicBug;
+    const bug = result.components["bug"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
@@ -161,7 +161,7 @@ describe("Dynamic Bug", () => {
     ])
 
     function latestState() {
-      return result.runtimeState.latest["bug"] as DynamicBugState;
+      return result.runtimeState.latest["bug"] as OnscreenGraphicState;
     }
 
     await Promise.all([
@@ -175,7 +175,7 @@ describe("Dynamic Bug", () => {
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as DynamicBug;
+    const bug = result.components["bug"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
@@ -191,7 +191,7 @@ describe("Dynamic Bug", () => {
     await bug.setupBug("test.png", "bottomleft")
 
     function latestState() {
-      return result.runtimeState.latest["bug"] as DynamicBugState;
+      return result.runtimeState.latest["bug"] as OnscreenGraphicState;
     }
 
     await Promise.all([
@@ -208,7 +208,7 @@ describe("Dynamic Bug", () => {
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as DynamicBug;
+    const bug = result.components["bug"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
@@ -224,7 +224,7 @@ describe("Dynamic Bug", () => {
     await bug.setupBug("test2.png", "bottomleft")
 
     function latestState() {
-      return result.runtimeState.latest["bug"] as DynamicBugState;
+      return result.runtimeState.latest["bug"] as OnscreenGraphicState;
     }
 
     await Promise.all([
@@ -241,13 +241,13 @@ describe("Dynamic Bug", () => {
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as DynamicBug;
+    const bug = result.components["bug"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
     sink.subscribe([
       new StudioNodeSubscriptionSource(bug, compiled.components['bug'].yaml,
-        { type: 'take-all-streams', select: ["audio", "video"] }, DynamicBugInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+        { type: 'take-all-streams', select: ["audio", "video"] }, OnscreenGraphicInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
     ])
 
     const sourceOne = await videoAndAudio(norsk, 'sourceOne', videoOptsOne);
@@ -261,7 +261,7 @@ describe("Dynamic Bug", () => {
 
 
     function latestState() {
-      return result.runtimeState.latest["bug"] as DynamicBugState;
+      return result.runtimeState.latest["bug"] as OnscreenGraphicState;
     }
 
 
@@ -295,7 +295,7 @@ describe("Dynamic Bug", () => {
     let port = 0;
     let result: RunResult = undefined!;
     let listener: Server = undefined!;
-    let bug: DynamicBug = undefined!;
+    let bug: OnscreenGraphic = undefined!;
 
     beforeEach(async () => {
       const compiled = await testDocument();
@@ -312,7 +312,7 @@ describe("Dynamic Bug", () => {
       });
       // const address = listener.address() as AddressInfo;
       // port = address.port;
-      bug = result.components["bug"] as DynamicBug;
+      bug = result.components["bug"] as OnscreenGraphic;
       const sink = new TraceSink(norsk as Norsk, "sink");
       await sink.initialised;
 
@@ -326,7 +326,7 @@ describe("Dynamic Bug", () => {
       ])
       sink.subscribe([
         new StudioNodeSubscriptionSource(bug, compiled.components['bug'].yaml,
-          { type: 'take-all-streams', select: ["audio", "video"] }, DynamicBugInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          { type: 'take-all-streams', select: ["audio", "video"] }, OnscreenGraphicInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
       ])
       await waitForCondition(() => sink.streamCount() == 1, 10000.0);
     })
@@ -345,7 +345,7 @@ describe("Dynamic Bug", () => {
       });
 
       function latestState() {
-        return result.runtimeState.latest["bug"] as DynamicBugState;
+        return result.runtimeState.latest["bug"] as OnscreenGraphicState;
       }
 
       expect(httpResult.status).equal(204);
@@ -361,7 +361,7 @@ describe("Dynamic Bug", () => {
       await bug.setupBug("test.png", "bottomleft")
 
       function latestState() {
-        return result.runtimeState.latest["bug"] as DynamicBugState;
+        return result.runtimeState.latest["bug"] as OnscreenGraphicState;
       }
 
       const httpResult = await fetch(apiUrl(bug.id, port), {
@@ -383,7 +383,7 @@ describe("Dynamic Bug", () => {
       await bug.setupBug("test.png", "bottomleft")
 
       function latestState() {
-        return result.runtimeState.latest["bug"] as DynamicBugState;
+        return result.runtimeState.latest["bug"] as OnscreenGraphicState;
       }
 
       const httpResult = await fetch(apiUrl(bug.id, port), {

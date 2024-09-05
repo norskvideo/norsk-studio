@@ -1,5 +1,5 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
-import type { DynamicBugCommand, DynamicBugConfig, DynamicBugEvent, DynamicBugState } from "./runtime";
+import type { OnscreenGraphicCommand, OnscreenGraphicConfig, OnscreenGraphicEvent, OnscreenGraphicState } from "./runtime";
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 import React from "react";
 
@@ -7,11 +7,11 @@ export default function ({
   defineComponent,
   Video
 }: Registration) {
-  const BugSelection = React.lazy(async () => import('./bug-selection'));
+  const BugSelection = React.lazy(async () => import('./image-selection'));
   const SummaryView = React.lazy(async () => import('./summary-view'));
 
-  return defineComponent<DynamicBugConfig, DynamicBugState, DynamicBugCommand, DynamicBugEvent>({
-    identifier: 'processor.dynamicBug',
+  return defineComponent<OnscreenGraphicConfig, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>({
+    identifier: 'processor.onscreenGraphic',
     category: 'processor',
     name: "Dynamic Bug",
     description: "",

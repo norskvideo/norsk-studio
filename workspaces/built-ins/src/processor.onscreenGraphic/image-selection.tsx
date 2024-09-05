@@ -1,11 +1,11 @@
 import { ChangeEvent, useEffect, useState } from "react";
-import type { DynamicBugConfig } from "./runtime";
+import type { OnscreenGraphicConfig } from "./runtime";
 
 type BugSelectionProps = {
   defaultValue?: string,
   id: string,
   onChanged: (value: string) => void,
-  latest: Partial<DynamicBugConfig>
+  latest: Partial<OnscreenGraphicConfig>
 }
 
 function BugSelection(props: BugSelectionProps) {
@@ -13,7 +13,7 @@ function BugSelection(props: BugSelectionProps) {
 
   useEffect(() => {
     const fn = async () => {
-      const result = await fetch('components/processor.dynamicBug/bugs')
+      const result = await fetch('components/processor.onscreenGraphic/bugs')
       if (result.ok && result.body) {
         const bugs = await result.json() as string[];
         setBugs(bugs);
