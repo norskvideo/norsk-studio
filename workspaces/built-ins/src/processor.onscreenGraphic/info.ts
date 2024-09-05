@@ -31,7 +31,7 @@ export default function ({
     },
     display: (desc) => {
       return {
-        default: desc.config.initialBug ?? 'none',
+        default: desc.config.initialGraphic ?? 'none',
       }
     },
     runtime: {
@@ -41,8 +41,8 @@ export default function ({
       handleEvent: (ev, state) => {
         const evType = ev.type;
         switch (evType) {
-          case "bug-changed":
-            return { ...state, activeBug: { file: ev.file, position: ev.position } };
+          case "graphic-changed":
+            return { ...state, activeGraphic: { file: ev.file, position: ev.position } };
           default:
             assertUnreachable(evType)
         }
@@ -53,8 +53,8 @@ export default function ({
         hardware: HardwareSelection()
       },
       form: {
-        initialBug: {
-          help: "The initial bug to render on the video (if any)",
+        initialGraphic: {
+          help: "The initial graphic to render on the video (if any)",
           hint: {
             type: "custom",
             optional: true,
@@ -62,7 +62,7 @@ export default function ({
           }
         },
         initialPosition: {
-          help: "The initial location at which to render the bug",
+          help: "The initial location at which to render the graphic",
           hint: {
             type: 'select',
             optional: true,

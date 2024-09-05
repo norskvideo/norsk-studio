@@ -3,23 +3,23 @@ components:
   schemas:
     position:
       type: string
-      description: "Where the bug is to be displayed"
+      description: "Where the graphic is to be displayed"
       example: 'topright'
-      enum: 
+      enum:
         - topleft
         - topright
         - bottomleft
         - bottomright
-    bug:
+    graphic:
       type: string
       description: "The name of the image file"
       example: 'Norsk.png'
     config:
       type: object
-      description: "The configuration for the dynamic bug"
+      description: "The configuration for the onscreen graphic"
       properties:
-        bug:  
-          $ref: "#/components/schemas/bug"
-        position:  
+        graphic:
+          $ref: "#/components/schemas/graphic"
+        position:
           $ref: "#/components/schemas/position"
 

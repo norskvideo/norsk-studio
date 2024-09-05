@@ -8,7 +8,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
-         * @description Where the bug is to be displayed
+         * @description Where the graphic is to be displayed
          * @example topright
          * @enum {string}
          */
@@ -17,10 +17,10 @@ export interface components {
          * @description The name of the image file
          * @example Norsk.png
          */
-        bug: string;
+        graphic: string;
         /** @description The configuration for the onscreen graphic */
         config: {
-            bug?: components["schemas"]["bug"];
+            graphic?: components["schemas"]["graphic"];
             position?: components["schemas"]["position"];
         };
     };

@@ -16,7 +16,7 @@ import YAML from 'yaml';
 import { OpenAPIV3 } from 'openapi-types';
 
 export type OnscreenGraphicPosition = components['schemas']['position'];
-export type OnscreenGraphicFile = components['schemas']['bug'];
+export type OnscreenGraphicFile = components['schemas']['graphic'];
 export type OnscreenGraphicApiConfig = components['schemas']['config'];
 const onscreenGraphicPositions: OnscreenGraphicPosition[] = ['topleft', 'topright', 'bottomleft', 'bottomright'];
 
@@ -27,36 +27,36 @@ export type OnscreenGraphicConfig = {
   },
   id: string,
   displayName: string,
-  initialBug?: OnscreenGraphicFile,
+  initialGraphic?: OnscreenGraphicFile,
   initialPosition?: OnscreenGraphicPosition;
 }
 
 export type OnscreenGraphicState = {
-  activeBug?: {
+  activeGraphic?: {
     file?: OnscreenGraphicFile,
     position?: OnscreenGraphicPosition
   },
 }
 
 export type OnscreenGraphicCommand = {
-  type: 'change-bug',
+  type: 'change-graphic',
   file?: OnscreenGraphicFile,
   position?: OnscreenGraphicPosition
 }
 
 export type OnscreenGraphicEvent = {
-  type: 'bug-changed',
+  type: 'graphic-changed',
   file?: OnscreenGraphicFile,
   position?: OnscreenGraphicPosition
 }
 
-// Use the top level working dir and shove a bugs folder inside it
-function bugDir() {
+// Use the top level working dir and put a graphics folder inside it
+function graphicsDir() {
   return path.join(Config.server.workingDir(), process.env.ONSCREENGRAPHIC_DIRECTORY ?? "graphics");
 }
 
-async function getBugs() {
-  const files = await fs.readdir(bugDir());
+async function getGraphics() {
+  const files = await fs.readdir(graphicsDir());
   const images = files.filter((f) => {
     return f.endsWith(".png") || f.endsWith(".jpg");
   })
@@ -72,8 +72,8 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
   async handleCommand(node: OnscreenGraphic, command: OnscreenGraphicCommand) {
     const commandType = command.type;
     switch (commandType) {
-      case 'change-bug':
-        await node.setupBug(command.file, command.position);
+      case 'change-graphic':
+        await node.setupGraphic(command.file, command.position);
         break;
       default:
         assertUnreachable(commandType);
@@ -83,7 +83,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
 
   async staticRoutes(): Promise<StaticRouteInfo[]> {
     const storage = multer.diskStorage({
-      destination: bugDir(),
+      destination: graphicsDir(),
       filename: function (_req, file, cb) {
         cb(null, path.basename(file.originalname));
       }
@@ -91,9 +91,9 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
 
     const fileFilter = async function (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
       try {
-        const existingBugs = await getBugs();
-        if (existingBugs.includes(file.originalname)) {
-          return cb(new Error('A bug with this name already exists'));
+        const existingGraphics = await getGraphics();
+        if (existingGraphics.includes(file.originalname)) {
+          return cb(new Error('A graphic with this name already exists'));
         } else {
           cb(null, true);
         }
@@ -110,7 +110,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
           const uploader = upload.single('file');
           uploader(req, res, (err) => {
             if (err) {
-              if (err.message === 'A bug with this name already exists') {
+              if (err.message === 'A graphic with this name already exists') {
                 return res.status(409).json({ error: err.message });
               }
               warninglog("An error occured during upload", err);
@@ -138,10 +138,10 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
           }
         },
         responses: {
-          '204': { description: "The file bug was uploaded successfully" },
+          '204': { description: "The file was uploaded successfully" },
           '400': { description: "No file was uploaded" },
           '404': { description: "Not Found" },
-          '409': { description: "A bug with the same name already exists" },
+          '409': { description: "A graphic with the same name already exists" },
           '500': { description: "File upload failed" },
         }
       },
@@ -149,7 +149,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         url: '/graphics',
         method: 'GET',
         handler: (_) => (async (_req: Request, res: Response) => {
-          const images = await getBugs();
+          const images = await getGraphics();
           res.json(images);
         }),
         responses: {},
@@ -159,7 +159,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         method: 'DELETE',
         handler: () => (async (req, res) => {
           const filename = req.body.filename;
-          const filePath = path.join(bugDir(), filename);
+          const filePath = path.join(graphicsDir(), filename);
 
           try {
             await fs.access(filePath);
@@ -167,10 +167,10 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
             res.status(204).send();
           } catch (error) {
             if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-              res.status(404).json({ error: 'Bug not found' });
+              res.status(404).json({ error: 'Graphic not found' });
             } else {
-              warninglog("Error deleting bug", error);
-              res.status(500).json({ error: 'Failed to delete bug' });
+              warninglog("Error deleting graphic", error);
+              res.status(500).json({ error: 'Failed to delete graphic' });
             }
           }
         }),
@@ -182,7 +182,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
                 properties: {
                   filename: {
                     type: 'string',
-                    description: 'The name of the bug file to delete'
+                    description: 'The name of the graphic file to delete'
                   }
                 },
                 required: ['filename']
@@ -191,9 +191,9 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
           }
         },
         responses: {
-          '204': { description: "The bug was successfully deleted" },
-          '404': { description: "The specified bug was not found" },
-          '500': { description: "Failed to delete the bug" }
+          '204': { description: "The graphic was successfully deleted" },
+          '404': { description: "The specified graphic was not found" },
+          '500': { description: "Failed to delete the graphic" }
         }
       }
     ]
@@ -211,14 +211,14 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         handler: ({ runtime }) => ((_req: Request, res: Response) => {
           const latest = runtime.updates.latest();
           const response: OnscreenGraphicApiConfig = {
-            bug: latest.activeBug?.file,
-            position: latest.activeBug?.position
+            graphic: latest.activeGraphic?.file,
+            position: latest.activeGraphic?.position
           };
           res.json(response);
         }),
         responses: {
           '200': {
-            description: "Information about the currently overlaid bug (if any)",
+            description: "Information about the currently overlaid graphic (if any)",
             content: {
               "application/json": {
                 schema: resolved.components!.schemas!['config']
@@ -231,7 +231,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         url: '/active-graphic',
         method: 'POST',
         handler: ({ runtime }) => (async (req, res) => {
-          if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
+          if ((req.body.graphic || req.body.position)) { // Allow empty requests to act as a delete
             if (!onscreenGraphicPositions.includes(req.body.position)) {
               res.status(400).json({
                 error: "bad position",
@@ -239,24 +239,24 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
               });
               return;
             }
-            const images = await getBugs();
-            if (!images.includes(req.body.bug)) {
+            const images = await getGraphics();
+            if (!images.includes(req.body.graphic)) {
               res.status(400).json({
-                error: "Unknown bug file",
-                details: req.body.bug,
+                error: "Unknown graphic",
+                details: req.body.graphic,
               });
               return;
             }
           }
           runtime.updates.sendCommand({
-            type: 'change-bug',
-            file: req.body.bug,
+            type: 'change-graphic',
+            file: req.body.graphic,
             position: req.body.position
           })
           res.status(204).send();
         }),
         requestBody: {
-          description: "The bug filename and location (sending an empty JSON object will delete the bug)",
+          description: "The graphic filename and location (sending an empty JSON object will delete the graphic)",
           content: {
             'application/json': {
               schema: resolved.components!.schemas!['config']
@@ -264,9 +264,9 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
           },
         },
         responses: {
-          '204': { description: "The active bug was successfully updated" },
+          '204': { description: "The active graphic was successfully updated" },
           '400': {
-            description: "Unknown bug",
+            description: "Unknown graphic",
             content: {
               "application/json": {
                 schema: {
@@ -286,11 +286,11 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         method: 'DELETE',
         handler: ({ runtime }) => (async (_req, res) => {
           runtime.updates.sendCommand({
-            type: 'change-bug'
+            type: 'change-graphic'
           })
           res.status(204).send();
         }),
-        responses: { '204': { description: "The active bug was successfully deleted" } }
+        responses: { '204': { description: "The active graphic was successfully deleted" } }
       },
     ]
   }
@@ -303,11 +303,11 @@ export class OnscreenGraphic implements CreatedMediaNode {
   contexts: ContextPromiseControl = new ContextPromiseControl(this.handleContext.bind(this));
   norsk: Norsk;
   cfg: OnscreenGraphicConfig;
-  bug?: string;
+  graphic?: string;
   position?: OnscreenGraphicPosition;
 
   videoSource?: StudioNodeSubscriptionSource;
-  composeNode?: VideoComposeNode<"video" | "bug">;
+  composeNode?: VideoComposeNode<"video" | "graphic">;
   imageSource?: FileImageInputNode;
   oldImageSource?: FileImageInputNode;
   activeImage: "a" | "b" = "a";
@@ -356,7 +356,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
       // with the resolution/etc of the incoming stream
       if (!this.composeNode) {
         debuglog("Creating compose node for onscreen graphic", { id: this.id, width: nextVideo.width, height: nextVideo.height });
-        const thisCompose = this.composeNode = await this.norsk.processor.transform.videoCompose<'video' | 'bug'>({
+        const thisCompose = this.composeNode = await this.norsk.processor.transform.videoCompose<'video' | 'graphic'>({
           onCreate: (n) => {
             this.relatedMediaNodes.addOutput(n);
             this.relatedMediaNodes.addInput(n);
@@ -402,7 +402,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
               this.videoPart(),
             ]
           })
-          debuglog("Closing old image source for bug", { id: this.id, oldNode: this.oldImageSource?.id, newNode: this.imageSource?.id })
+          debuglog("Closing old image source for graphic", { id: this.id, oldNode: this.oldImageSource?.id, newNode: this.imageSource?.id })
           void this.oldImageSource?.close();
           this.oldImageSource = undefined;
           await this.handleContext();
@@ -440,50 +440,50 @@ export class OnscreenGraphic implements CreatedMediaNode {
       this.composeNode?.subscribeToPins(this.videoSource?.selectVideoToPin("video") || [])
     } else {
       debuglog("Doing subscriptions for onscreen graphic with image source", { id: this.id, image: imageSource.id });
-      this.composeNode?.subscribeToPins((this.videoSource?.selectVideoToPin<"video" | "bug">("video") ?? []).concat([
-        { source: imageSource, sourceSelector: videoToPin("bug") }
+      this.composeNode?.subscribeToPins((this.videoSource?.selectVideoToPin<"video" | "graphic">("video") ?? []).concat([
+        { source: imageSource, sourceSelector: videoToPin("graphic") }
       ]))
     }
   }
 
-  async setupBug(bug?: string, position?: OnscreenGraphicPosition) {
+  async setupGraphic(graphic?: string, position?: OnscreenGraphicPosition) {
     this.position = position;
-    if (!bug || bug === "") {
-      debuglog("Clearing bug", { id: this.id })
+    if (!graphic || graphic === "") {
+      debuglog("Clearing graphic", { id: this.id })
       this.doSubs();
       await this.imageSource?.close();
       this.imageSource = undefined;
-      this.bug = undefined;
+      this.graphic = undefined;
       this.position = undefined;
-      this.updates.raiseEvent({ type: 'bug-changed' })
+      this.updates.raiseEvent({ type: 'graphic-changed' })
       await this.contexts.schedule();
       return;
-    } else if (bug !== this.bug) {
-      debuglog("Changing bug", { id: this.id, bug, position })
-      this.bug = bug;
+    } else if (graphic !== this.graphic) {
+      debuglog("Changing graphic", { id: this.id, graphic, position })
+      this.graphic = graphic;
       this.activeImage = this.activeImage == "a" ? "b" : "a";
       this.oldImageSource = this.imageSource;
       this.imageSource = await this.norsk.input.fileImage({
         id: `${this.id}-${this.activeImage}`,
-        sourceName: `${this.id}-bug-${this.activeImage}`,
-        fileName: path.join(bugDir(), bug)
+        sourceName: `${this.id}-graphic-${this.activeImage}`,
+        fileName: path.join(graphicsDir(), graphic)
       })
       this.setSources();
     } else {
-      debuglog("Changing bug position", { id: this.id, bug, position })
+      debuglog("Changing graphic position", { id: this.id, graphic, position })
       this.position = position;
       await this.contexts.schedule();
     }
-    this.updates.raiseEvent({ type: 'bug-changed', file: bug, position })
+    this.updates.raiseEvent({ type: 'graphic-changed', file: graphic, position })
   }
 
-  imagePart(position: OnscreenGraphicPosition): ComposePart<"bug"> {
+  imagePart(position: OnscreenGraphicPosition): ComposePart<"graphic"> {
     // // We shouldn't need this, pending work on Compose
     // imageWidth = Math.min(videoWidth - 100, imageWidth);
     // imageHeight = Math.min(videoHeight - 100, imageHeight);
 
-    const foo: ComposePart<"bug"> = {
-      id: "bug",
+    const foo: ComposePart<"graphic"> = {
+      id: "graphic",
       zIndex: 1,
       compose: (metadata, cfg) => {
         const videoWidth = cfg.outputResolution.width;
@@ -503,7 +503,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
         }
       },
       opacity: 1.0,
-      pin: "bug"
+      pin: "graphic"
     } as const;
     return foo;
   }
@@ -519,7 +519,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
   }
 
   async initialise() {
-    await this.setupBug(this.cfg.initialBug, this.cfg.initialPosition);
+    await this.setupGraphic(this.cfg.initialGraphic, this.cfg.initialPosition);
   }
 
   subscribe(sources: StudioNodeSubscriptionSource[]) {

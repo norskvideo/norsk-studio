@@ -45,14 +45,14 @@ function apiUrl(id: string, port: number): string {
   return `http://127.0.0.1:${port}/${id}/active-graphic`
 }
 
-describe("Dynamic Bug", () => {
+describe("Onscreen Graphic", () => {
 
   async function testDocument(cfg?: Omit<OnscreenGraphicConfig, "id" | "displayName" | "__global">) {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
         new YamlNodeBuilder<OnscreenGraphicConfig, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>
-          ('bug',
+          ('graphic',
             OnscreenGraphicInfo(RegistrationConsts),
             cfg ?? {
 
@@ -70,46 +70,46 @@ describe("Dynamic Bug", () => {
     await norsk?.close();
   })
 
-  it("Dynamic bug with no configuration, passthrough", async () => {
+  it("Onscreen graphic with no configuration, passthrough", async () => {
     const compiled = await testDocument();
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as OnscreenGraphic;
+    const graphic = result.components["graphic"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
 
     const source = await videoAndAudio(norsk, 'source', videoOpts);
 
-    bug.subscribe([new StudioNodeSubscriptionSource(source,
+    graphic.subscribe([new StudioNodeSubscriptionSource(source,
       testSourceDescription(),
       {
         type: 'take-all-streams', select: ['video']
       })
     ])
     await Promise.all([
-      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
+      assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
     ])
   })
 
-  it("Dynamic bug with no configuration, source change", async () => {
+  it("Onscreen graphic with no configuration, source change", async () => {
     const compiled = await testDocument();
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as OnscreenGraphic;
+    const graphic = result.components["graphic"] as OnscreenGraphic;
 
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
     sink.subscribe([
-      new StudioNodeSubscriptionSource(bug, compiled.components['bug'].yaml,
+      new StudioNodeSubscriptionSource(graphic, compiled.components['graphic'].yaml,
         { type: 'take-all-streams', select: ["audio", "video"] }, OnscreenGraphicInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
     ])
 
 
     const sourceOne = await videoAndAudio(norsk, 'sourceOne', videoOptsOne);
 
-    bug.subscribe([new StudioNodeSubscriptionSource(sourceOne,
+    graphic.subscribe([new StudioNodeSubscriptionSource(sourceOne,
       testSourceDescription(),
       {
         type: 'take-all-streams', select: ['video']
@@ -120,13 +120,13 @@ describe("Dynamic Bug", () => {
     await sourceOne.close();
 
     // this is what studio does for you
-    bug.subscribe([]);
+    graphic.subscribe([]);
 
     await waitForCondition(() => sink.streamCount() == 0, 60000.0);
 
     const sourceTwo = await videoAndAudio(norsk, 'sourceTwo', videoOptsTwo);
 
-    bug.subscribe([new StudioNodeSubscriptionSource(sourceTwo,
+    graphic.subscribe([new StudioNodeSubscriptionSource(sourceTwo,
       testSourceDescription(),
       {
         type: 'take-all-streams', select: ['video']
@@ -136,24 +136,24 @@ describe("Dynamic Bug", () => {
     // Browser overlay outputs the same as it gets in, only with extra browser overlay
     await Promise.all([
       await waitForAssert(() => sink.streamCount() == 1, () => sink.streamCount() == 1, 10000, 500),
-      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOptsTwo),
+      assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOptsTwo),
     ])
   })
 
-  it("Dynamic bug with initial configured image", async () => {
+  it("Onscreen graphic with initial configured image", async () => {
     const compiled = await testDocument({
-      initialBug: "test.png",
+      initialGraphic: "test.png",
       initialPosition: "bottomleft"
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as OnscreenGraphic;
+    const graphic = result.components["graphic"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
     const source = await videoAndAudio(norsk, 'source', videoOpts);
 
-    bug.subscribe([new StudioNodeSubscriptionSource(source,
+    graphic.subscribe([new StudioNodeSubscriptionSource(source,
       testSourceDescription(),
       {
         type: 'take-all-streams', select: ['video']
@@ -161,98 +161,98 @@ describe("Dynamic Bug", () => {
     ])
 
     function latestState() {
-      return result.runtimeState.latest["bug"] as OnscreenGraphicState;
+      return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
     }
 
     await Promise.all([
-      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
-      waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.file == "test.png"),
-      waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.position == "bottomleft")
+      assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
+      waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.file == "test.png"),
+      waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.position == "bottomleft")
     ])
   })
-  it("Dynamic bug with no configured image, configured during run", async () => {
+  it("Onscreen graphic with no configured image, configured during run", async () => {
     const compiled = await testDocument({
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as OnscreenGraphic;
+    const graphic = result.components["graphic"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
     const source = await videoAndAudio(norsk, 'source', videoOpts);
 
-    bug.subscribe([new StudioNodeSubscriptionSource(source,
+    graphic.subscribe([new StudioNodeSubscriptionSource(source,
       testSourceDescription(),
       {
         type: 'take-all-streams', select: ['video']
       })
     ])
 
-    await bug.setupBug("test.png", "bottomleft")
+    await graphic.setupGraphic("test.png", "bottomleft")
 
     function latestState() {
-      return result.runtimeState.latest["bug"] as OnscreenGraphicState;
+      return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
     }
 
     await Promise.all([
-      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
-      waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.file == "test.png"),
-      waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.position == "bottomleft")
+      assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
+      waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.file == "test.png"),
+      waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.position == "bottomleft")
     ])
   })
 
-  it("Dynamic bug with configured image, re-configured during run", async () => {
+  it("Onscreen graphic with configured image, re-configured during run", async () => {
     const compiled = await testDocument({
-      initialBug: "test.png",
+      initialGraphic: "test.png",
       initialPosition: "bottomleft"
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as OnscreenGraphic;
+    const graphic = result.components["graphic"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
     const source = await videoAndAudio(norsk, 'source', videoOpts);
 
-    bug.subscribe([new StudioNodeSubscriptionSource(source,
+    graphic.subscribe([new StudioNodeSubscriptionSource(source,
       testSourceDescription(),
       {
         type: 'take-all-streams', select: ['video']
       })
     ])
 
-    await bug.setupBug("test2.png", "bottomleft")
+    await graphic.setupGraphic("test2.png", "bottomleft")
 
     function latestState() {
-      return result.runtimeState.latest["bug"] as OnscreenGraphicState;
+      return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
     }
 
     await Promise.all([
-      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
-      waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.file == "test2.png"),
-      waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.position == "bottomleft")
+      assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
+      waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => latestState().activeGraphic?.file == "test2.png"),
+      waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => latestState().activeGraphic?.position == "bottomleft")
     ])
   })
 
-  it("Dynamic bug with configured image, re-configured during run, source reset", async () => {
+  it("Onscreen graphic with configured image, re-configured during run, source reset", async () => {
     const compiled = await testDocument({
-      initialBug: "test.png",
+      initialGraphic: "test.png",
       initialPosition: "bottomleft"
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
-    const bug = result.components["bug"] as OnscreenGraphic;
+    const graphic = result.components["graphic"] as OnscreenGraphic;
     const sink = new TraceSink(norsk as Norsk, "sink");
     await sink.initialised;
 
     sink.subscribe([
-      new StudioNodeSubscriptionSource(bug, compiled.components['bug'].yaml,
+      new StudioNodeSubscriptionSource(graphic, compiled.components['graphic'].yaml,
         { type: 'take-all-streams', select: ["audio", "video"] }, OnscreenGraphicInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
     ])
 
     const sourceOne = await videoAndAudio(norsk, 'sourceOne', videoOptsOne);
 
-    bug.subscribe([new StudioNodeSubscriptionSource(sourceOne,
+    graphic.subscribe([new StudioNodeSubscriptionSource(sourceOne,
       testSourceDescription(),
       {
         type: 'take-all-streams', select: ['video']
@@ -261,12 +261,12 @@ describe("Dynamic Bug", () => {
 
 
     function latestState() {
-      return result.runtimeState.latest["bug"] as OnscreenGraphicState;
+      return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
     }
 
 
-    await bug.setupBug("test2.png", "bottomleft")
-    await waitForCondition(() => latestState().activeBug?.file == "test2.png");
+    await graphic.setupGraphic("test2.png", "bottomleft")
+    await waitForCondition(() => latestState().activeGraphic?.file == "test2.png");
     await waitForCondition(() => sink.streamCount() == 1, 10000.0);
     await sourceOne.close();
 
@@ -274,7 +274,7 @@ describe("Dynamic Bug", () => {
 
     const sourceTwo = await videoAndAudio(norsk, 'sourceTwo', videoOptsTwo);
 
-    bug.subscribe([new StudioNodeSubscriptionSource(sourceTwo,
+    graphic.subscribe([new StudioNodeSubscriptionSource(sourceTwo,
       testSourceDescription(),
       {
         type: 'take-all-streams', select: ['video']
@@ -284,9 +284,9 @@ describe("Dynamic Bug", () => {
     // Browser overlay outputs the same as it gets in, only with extra browser overlay
     await Promise.all([
       await waitForAssert(() => sink.streamCount() == 1, () => sink.streamCount() == 1, 10000, 500),
-      assertNodeOutputsVideoFrames(norsk, result, "bug", videoOptsTwo),
-      waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.file == "test2.png"),
-      waitForAssert(() => latestState().activeBug?.file == "test2.png", () => latestState().activeBug?.position == "bottomleft")
+      assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOptsTwo),
+      waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => latestState().activeGraphic?.file == "test2.png"),
+      waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => latestState().activeGraphic?.position == "bottomleft")
     ])
   })
 
@@ -295,7 +295,7 @@ describe("Dynamic Bug", () => {
     let port = 0;
     let result: RunResult = undefined!;
     let listener: Server = undefined!;
-    let bug: OnscreenGraphic = undefined!;
+    let graphic: OnscreenGraphic = undefined!;
 
     beforeEach(async () => {
       const compiled = await testDocument();
@@ -312,20 +312,20 @@ describe("Dynamic Bug", () => {
       });
       // const address = listener.address() as AddressInfo;
       // port = address.port;
-      bug = result.components["bug"] as OnscreenGraphic;
+      graphic = result.components["graphic"] as OnscreenGraphic;
       const sink = new TraceSink(norsk as Norsk, "sink");
       await sink.initialised;
 
       const source = await videoAndAudio(norsk, 'source', videoOpts);
 
-      bug.subscribe([new StudioNodeSubscriptionSource(source,
+      graphic.subscribe([new StudioNodeSubscriptionSource(source,
         testSourceDescription(),
         {
           type: 'take-all-streams', select: ['video']
         })
       ])
       sink.subscribe([
-        new StudioNodeSubscriptionSource(bug, compiled.components['bug'].yaml,
+        new StudioNodeSubscriptionSource(graphic, compiled.components['graphic'].yaml,
           { type: 'take-all-streams', select: ["audio", "video"] }, OnscreenGraphicInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
       ])
       await waitForCondition(() => sink.streamCount() == 1, 10000.0);
@@ -335,36 +335,36 @@ describe("Dynamic Bug", () => {
       listener.close();
     })
 
-    it("Setting active bug via the http api", async () => {
-      const httpResult = await fetch(apiUrl(bug.id, port), {
+    it("Setting active graphic via the http api", async () => {
+      const httpResult = await fetch(apiUrl(graphic.id, port), {
         method: 'POST',
         body: JSON.stringify({
-          bug: 'test.png',
+          graphic: 'test.png',
           position: 'bottomleft'
         })
       });
 
       function latestState() {
-        return result.runtimeState.latest["bug"] as OnscreenGraphicState;
+        return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
       }
 
       expect(httpResult.status).equal(204);
 
       await Promise.all([
-        assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
-        waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.file == "test.png"),
-        waitForAssert(() => latestState().activeBug?.file == "test.png", () => latestState().activeBug?.position == "bottomleft")
+        assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
+        waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.file == "test.png"),
+        waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.position == "bottomleft")
       ])
     })
 
-    it("Clearing active bug via empty post to the http api", async () => {
-      await bug.setupBug("test.png", "bottomleft")
+    it("Clearing active graphic via empty post to the http api", async () => {
+      await graphic.setupGraphic("test.png", "bottomleft")
 
       function latestState() {
-        return result.runtimeState.latest["bug"] as OnscreenGraphicState;
+        return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
       }
 
-      const httpResult = await fetch(apiUrl(bug.id, port), {
+      const httpResult = await fetch(apiUrl(graphic.id, port), {
         method: 'POST',
         body: JSON.stringify({
         })
@@ -373,29 +373,29 @@ describe("Dynamic Bug", () => {
       expect(httpResult.status).equal(204);
 
       await Promise.all([
-        assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
-        waitForAssert(() => latestState().activeBug?.file == undefined, () => latestState().activeBug?.file == undefined),
-        waitForAssert(() => latestState().activeBug?.file == undefined, () => latestState().activeBug?.position == undefined),
+        assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
+        waitForAssert(() => latestState().activeGraphic?.file == undefined, () => latestState().activeGraphic?.file == undefined),
+        waitForAssert(() => latestState().activeGraphic?.file == undefined, () => latestState().activeGraphic?.position == undefined),
       ])
     })
 
-    it("Clearing active bug via delete to the http api", async () => {
-      await bug.setupBug("test.png", "bottomleft")
+    it("Clearing active graphic via delete to the http api", async () => {
+      await graphic.setupGraphic("test.png", "bottomleft")
 
       function latestState() {
-        return result.runtimeState.latest["bug"] as OnscreenGraphicState;
+        return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
       }
 
-      const httpResult = await fetch(apiUrl(bug.id, port), {
+      const httpResult = await fetch(apiUrl(graphic.id, port), {
         method: 'delete'
       });
 
       expect(httpResult.status).equal(204);
 
       await Promise.all([
-        assertNodeOutputsVideoFrames(norsk, result, "bug", videoOpts),
-        waitForAssert(() => latestState().activeBug?.file == undefined, () => latestState().activeBug?.file == undefined),
-        waitForAssert(() => latestState().activeBug?.file == undefined, () => latestState().activeBug?.position == undefined),
+        assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
+        waitForAssert(() => latestState().activeGraphic?.file == undefined, () => latestState().activeGraphic?.file == undefined),
+        waitForAssert(() => latestState().activeGraphic?.file == undefined, () => latestState().activeGraphic?.position == undefined),
       ])
     })
   })

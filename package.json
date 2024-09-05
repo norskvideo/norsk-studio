@@ -6,7 +6,6 @@
     "server": "npm run --workspace workspaces/studio-default server",
     "server-dev": "STUDIO_LIBRARY_ROOT=$PWD/node_modules npm run server",
     "gen-docs": "npm run --workspace workspaces/studio-default gen-docs",
-    "start-swagger": "node workspaces/built-ins/lib/processor.dynamicBug/server.js",
     "test": "npm run --workspaces test",
     "support:start": "docker compose down && docker compose up -d",
     "support:stop": "docker compose down",
