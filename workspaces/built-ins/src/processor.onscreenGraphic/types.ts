@@ -18,7 +18,7 @@ export interface components {
          * @example Norsk.png
          */
         bug: string;
-        /** @description The configuration for the dynamic bug */
+        /** @description The configuration for the onscreen graphic */
         config: {
             bug?: components["schemas"]["bug"];
             position?: components["schemas"]["position"];

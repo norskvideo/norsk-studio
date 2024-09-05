@@ -7,13 +7,13 @@ export default function ({
   defineComponent,
   Video
 }: Registration) {
-  const BugSelection = React.lazy(async () => import('./image-selection'));
+  const GraphicSelection = React.lazy(async () => import('./image-selection'));
   const SummaryView = React.lazy(async () => import('./summary-view'));
 
   return defineComponent<OnscreenGraphicConfig, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>({
     identifier: 'processor.onscreenGraphic',
     category: 'processor',
-    name: "Dynamic Bug",
+    name: "Onscreen Graphic",
     description: "",
     subscription: {
       // Only accept a single video stream
@@ -58,7 +58,7 @@ export default function ({
           hint: {
             type: "custom",
             optional: true,
-            component: BugSelection,
+            component: GraphicSelection,
           }
         },
         initialPosition: {

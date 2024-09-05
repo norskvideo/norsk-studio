@@ -1,14 +1,14 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import type { OnscreenGraphicConfig } from "./runtime";
 
-type BugSelectionProps = {
+type GraphicSelectionProps = {
   defaultValue?: string,
   id: string,
   onChanged: (value: string) => void,
   latest: Partial<OnscreenGraphicConfig>
 }
 
-function BugSelection(props: BugSelectionProps) {
+function GraphicSelection(props: GraphicSelectionProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,4 +53,4 @@ function BugSelection(props: BugSelectionProps) {
   }
 }
 
-export default BugSelection;
+export default GraphicSelection;

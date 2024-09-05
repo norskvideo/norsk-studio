@@ -52,7 +52,7 @@ export type OnscreenGraphicEvent = {
 
 // Use the top level working dir and shove a bugs folder inside it
 function bugDir() {
-  return path.join(Config.server.workingDir(), process.env.DYNAMICBUG_DIRECTORY ?? "bugs");
+  return path.join(Config.server.workingDir(), process.env.ONSCREENGRAPHIC_DIRECTORY ?? "graphics");
 }
 
 async function getBugs() {
@@ -342,10 +342,10 @@ export class OnscreenGraphic implements CreatedMediaNode {
       return;
     } else {
       const nextVideo = video.message.value;
-      debuglog("Creating compose for dynamic bug", { id: this.id, metadata: nextVideo });
+      debuglog("Creating compose for onscreen graphic", { id: this.id, metadata: nextVideo });
       if (this.currentVideo) {
         if (nextVideo.height !== this.currentVideo.height || nextVideo.width !== this.currentVideo.width) {
-          debuglog("Closing compose node in dynamic bug because of metadata change", { id: this.id, old: this.currentVideo, new: nextVideo });
+          debuglog("Closing compose node in onscreen graphic because of metadata change", { id: this.id, old: this.currentVideo, new: nextVideo });
           await this.composeNode?.close();
           this.currentVideo = undefined;
         }
@@ -355,7 +355,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
       // If we haven't got a compose node, then spin one up
       // with the resolution/etc of the incoming stream
       if (!this.composeNode) {
-        debuglog("Creating compose node for dynamic bug", { id: this.id, width: nextVideo.width, height: nextVideo.height });
+        debuglog("Creating compose node for onscreen graphic", { id: this.id, width: nextVideo.width, height: nextVideo.height });
         const thisCompose = this.composeNode = await this.norsk.processor.transform.videoCompose<'video' | 'bug'>({
           onCreate: (n) => {
             this.relatedMediaNodes.addOutput(n);
@@ -436,10 +436,10 @@ export class OnscreenGraphic implements CreatedMediaNode {
 
   doSubs(imageSource?: FileImageInputNode) {
     if (!imageSource) {
-      debuglog("Doing subscriptions for dynamic bug without image source");
+      debuglog("Doing subscriptions for onscreen graphic without image source");
       this.composeNode?.subscribeToPins(this.videoSource?.selectVideoToPin("video") || [])
     } else {
-      debuglog("Doing subscriptions for dynamic bug with image source", { id: this.id, image: imageSource.id });
+      debuglog("Doing subscriptions for onscreen graphic with image source", { id: this.id, image: imageSource.id });
       this.composeNode?.subscribeToPins((this.videoSource?.selectVideoToPin<"video" | "bug">("video") ?? []).concat([
         { source: imageSource, sourceSelector: videoToPin("bug") }
       ]))
