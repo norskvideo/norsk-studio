@@ -15,7 +15,7 @@ __globalConfig: {}
 components:
   - type: input.videoTestCard
     config:
-      displayName: videoTestCard
+      displayName: Video Test Card
       resolution:
         width: 1280
         height: 720
@@ -28,14 +28,14 @@ components:
     subscriptions: []
   - type: input.silence
     config:
-      displayName: silence
+      displayName: Silence
       sampleRate: 48000
       channelLayout: stereo
       id: silence-0
     subscriptions: []
   - type: output.whep
     config:
-      displayName: whep
+      displayName: WebRTC Output
       bufferDelayMs: 500
       id: whep-0
     subscriptions:
@@ -51,8 +51,8 @@ components:
             - audio
   - type: processor.onscreenGraphic
     config:
-      displayName: onscreengraphic
-      initialGraphic: smile.png
+      displayName: Onscreen Graphic
+      initialGraphic: Norsk.png
       initialPosition: topleft
       id: onscreengraphic
     subscriptions:
