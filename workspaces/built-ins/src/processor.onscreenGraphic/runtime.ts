@@ -9,7 +9,7 @@ import { Request, Response } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
 import multer from 'multer';
-import { components } from './types';
+import { components, paths } from './types';
 
 import { resolveRefs } from 'json-refs';
 import YAML from 'yaml';
@@ -102,10 +102,47 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
       }
     }
     const upload = multer({ storage, fileFilter });
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+
+    type Transmuted<T> = {
+      [Key in keyof T]: OpenAPIV3.PathItemObject;
+    };
+    const paths = resolved.paths as Transmuted<paths>;
+
+    const get = (path: keyof paths) => {
+      return {
+        ...coreInfo(path, paths[path]['get']!),
+        method: 'GET' as const,
+      }
+    };
+    const post = (path: keyof paths) => {
+      return {
+        ...coreInfo(path, paths[path]['post']!),
+        method: 'POST' as const,
+      }
+    };
+
+    const coreInfo = (path: string, op: OpenAPIV3.OperationObject) => {
+      return {
+        url: path,
+        summary: op.summary,
+        description: op.description,
+        requestBody: op.requestBody,
+        responses: op.responses,
+      }
+    }
     return [
       {
-        url: '/graphics',
-        method: 'POST',
+        ...get('/graphics'),
+        handler: (_) => (async (_req: Request, res: Response) => {
+          const images = await getGraphics();
+          res.json(images);
+        })
+      },
+      {
+        ...post('/graphics'),
         handler: () => async (req, res) => {
           const uploader = upload.single('file');
           uploader(req, res, (err) => {
@@ -119,40 +156,6 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
             res.status(204).send();
           });
         },
-        requestBody: {
-          description: "A multipart form containing the file to upload)",
-          content: {
-            'multipart/form-data': {
-              schema: {
-                type: "object",
-                properties: {
-                  // The property name 'file' will be used for all files.
-                  'file': {
-                    type: "string",
-                    format: "binary",
-                  }
-                },
-                required: ['file'],
-              }
-            }
-          }
-        },
-        responses: {
-          '204': { description: "The file was uploaded successfully" },
-          '400': { description: "No file was uploaded" },
-          '404': { description: "Not Found" },
-          '409': { description: "A graphic with the same name already exists" },
-          '500': { description: "File upload failed" },
-        }
-      },
-      {
-        url: '/graphics',
-        method: 'GET',
-        handler: (_) => (async (_req: Request, res: Response) => {
-          const images = await getGraphics();
-          res.json(images);
-        }),
-        responses: {},
       },
       {
         url: '/graphic',
@@ -160,7 +163,6 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         handler: () => (async (req, res) => {
           const filename = req.body.filename;
           const filePath = path.join(graphicsDir(), filename);
-
           try {
             await fs.access(filePath);
             await fs.unlink(filePath);
@@ -197,6 +199,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         }
       }
     ]
+
   }
 
 

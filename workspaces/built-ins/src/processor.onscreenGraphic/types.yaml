@@ -1,10 +1,58 @@
 openapi: 3.0.0
+info:
+  title: Onscreen Graphics Overlay Component
+  version: 1.0.0
+
+paths:
+  /graphics:
+    get:
+      summary: Get the list of currently available graphic files
+      description: Returns all the graphics files on the server
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                description: A list of the graphic files available
+                items:
+                  $ref: "#/components/schemas/graphic"
+    post:
+      summary: Upload a new graphic
+      description: Upload a new graphic as a multi-part form POST
+      requestBody:
+          description: A multipart form containing the file to upload)
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  # The property name 'file' will be used for all files.
+                  file:
+                    type: string
+                    format: binary
+                    required:
+                      - file
+      responses:
+        204:
+          description: The file was uploaded successfully
+        400:
+          description: No file was uploaded
+        404:
+          description: Not Found
+        409:
+          description: A graphic with the same name already exists
+        500:
+          description: File upload failed
+
+
 components:
   schemas:
     position:
       type: string
-      description: "Where the graphic is to be displayed"
-      example: 'topright'
+      description: Where the graphic is to be displayed
+      example: "topright"
       enum:
         - topleft
         - topright
@@ -12,14 +60,13 @@ components:
         - bottomright
     graphic:
       type: string
-      description: "The name of the image file"
-      example: 'Norsk.png'
+      description: The name of the image file
+      example: Norsk.png
     config:
       type: object
-      description: "The configuration for the onscreen graphic"
+      description: The configuration for the onscreen graphic
       properties:
         graphic:
           $ref: "#/components/schemas/graphic"
         position:
           $ref: "#/components/schemas/position"
-
