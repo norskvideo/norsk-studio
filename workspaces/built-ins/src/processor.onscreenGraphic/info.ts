@@ -13,8 +13,8 @@ export default function ({
   return defineComponent<OnscreenGraphicConfig, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>({
     identifier: 'processor.onscreenGraphic',
     category: 'processor',
-    name: "Onscreen Graphic",
-    description: "",
+    name: 'Onscreen Graphic',
+    description: 'Overlay graphics onto a video',
     subscription: {
       // Only accept a single video stream
       accepts: {
@@ -22,7 +22,7 @@ export default function ({
         media: Video
       },
       produces: {
-        type: "single-stream",
+        type: 'single-stream',
         media: Video
       }
     },

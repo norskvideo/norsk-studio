@@ -12,7 +12,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get the list of currently available graphic files
+         * Return the currently available graphic files
          * @description Returns all the graphics files on the server
          */
         get: {
@@ -57,7 +57,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description The file was uploaded successfully" */
+                /** @description The file was uploaded successfully */
                 204: {
                     headers: {
                         [name: string]: unknown;
@@ -95,6 +95,68 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/graphic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a graphic file from the server
+         * @description Deletes the passed filename from the server if present
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description The graphic to delete */
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @description The name of the graphic file to delete
+                         * @example graphic.png
+                         */
+                        filename: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The graphic was successfully deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The specified graphic was not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Failed to delete the graphic */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;

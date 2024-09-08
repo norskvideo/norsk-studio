@@ -123,6 +123,12 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         method: 'POST' as const,
       }
     };
+    const delete_ = (path: keyof paths) => {
+      return {
+        ...coreInfo(path, paths[path]['delete']!),
+        method: 'DELETE' as const,
+      }
+    };
 
     const coreInfo = (path: string, op: OpenAPIV3.OperationObject) => {
       return {
@@ -158,8 +164,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         },
       },
       {
-        url: '/graphic',
-        method: 'DELETE',
+        ...delete_('/graphic'),
         handler: () => (async (req, res) => {
           const filename = req.body.filename;
           const filePath = path.join(graphicsDir(), filename);
@@ -176,27 +181,6 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
             }
           }
         }),
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  filename: {
-                    type: 'string',
-                    description: 'The name of the graphic file to delete'
-                  }
-                },
-                required: ['filename']
-              }
-            }
-          }
-        },
-        responses: {
-          '204': { description: "The graphic was successfully deleted" },
-          '404': { description: "The specified graphic was not found" },
-          '500': { description: "Failed to delete the graphic" }
-        }
       }
     ]
 
@@ -210,6 +194,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
     return [
       {
         url: '/active-graphic',
+        summary: 'Info about the current graphic',
         method: 'GET',
         handler: ({ runtime }) => ((_req: Request, res: Response) => {
           const latest = runtime.updates.latest();
@@ -232,6 +217,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
       },
       {
         url: '/active-graphic',
+        summary: 'Change the current graphic file or position',
         method: 'POST',
         handler: ({ runtime }) => (async (req, res) => {
           if ((req.body.graphic || req.body.position)) { // Allow empty requests to act as a delete
@@ -286,6 +272,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
       },
       {
         url: '/active-graphic',
+        summary: 'Stop displaying the current graphic',
         method: 'DELETE',
         handler: ({ runtime }) => (async (_req, res) => {
           runtime.updates.sendCommand({

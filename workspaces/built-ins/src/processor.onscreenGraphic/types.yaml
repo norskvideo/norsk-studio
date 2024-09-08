@@ -6,7 +6,7 @@ info:
 paths:
   /graphics:
     get:
-      summary: Get the list of currently available graphic files
+      summary: Return the currently available graphic files
       description: Returns all the graphics files on the server
       responses:
         200:
@@ -32,8 +32,7 @@ paths:
                   file:
                     type: string
                     format: binary
-                    required:
-                      - file
+                    required: [file]
       responses:
         204:
           description: The file was uploaded successfully
@@ -45,6 +44,31 @@ paths:
           description: A graphic with the same name already exists
         500:
           description: File upload failed
+  /graphic:
+    delete:
+      summary: Delete a graphic file from the server
+      description: Deletes the passed filename from the server if present
+      tags: [foo]
+      requestBody:
+        description: The graphic to delete
+        content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filename:
+                    type: string
+                    description: 'The name of the graphic file to delete'
+                    example: graphic.png
+                required: ['filename']
+      responses:
+        204:
+          description: The graphic was successfully deleted
+        404:
+          description: The specified graphic was not found
+        500:
+          description: Failed to delete the graphic
+
 
 
 components:
