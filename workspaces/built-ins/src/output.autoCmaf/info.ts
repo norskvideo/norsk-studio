@@ -1,4 +1,5 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
+import { GlobalEzDrmConfig, GlobalAxinomConfig } from "@norskvideo/norsk-studio/lib/shared/config";
 import type { AutoCmafConfig, CmafOutputCommand, CmafOutputEvent, CmafOutputState } from "./runtime";
 import React from "react";
 
@@ -9,11 +10,12 @@ import React from "react";
 // We can as a starter not allow video from the same original source in twice?
 // and we can validate that at the top level
 
-export default function({
-  defineComponent,
-  All,
-  validation: { Z, Hostname },
-}: Registration) {
+export default function(R: Registration) {
+  const {
+    defineComponent,
+    All,
+    validation: { Z, Hostname },
+  } = R;
   const SummaryView = React.lazy(async () => import('./summary'));
   const FullscreenView = React.lazy(async () => import('./fullscreen'));
 
@@ -46,6 +48,24 @@ export default function({
       }
       // hard to validate on multiple audio streams, as you can have one per 'stream'
       // I think we need to raise sensible runtime errors somewhere
+
+
+      // `ctx.config.__global` is currently not set client-side
+      if (ctx.config.drmProvider && ctx.config.__global) {
+        if (ctx.config.drmProvider === 'ezdrm') {
+          if (!ctx.config.__global.ezdrmConfig?.token) {
+            ctx.addError("Provide EZDRM token in global configuration");
+          }
+        }
+        if (ctx.config.drmProvider === 'axinom') {
+          if (!ctx.config.__global.axinomConfig?.tenantId) {
+            ctx.addError("Provide Axinom DRM Tenant ID in global configuration");
+          }
+          if (!ctx.config.__global.axinomConfig?.managementKey) {
+            ctx.addError("Provide Axinom DRM Management Key in global configuration");
+          }
+        }
+      }
     },
     display: (desc) => {
       return {
@@ -59,6 +79,7 @@ export default function({
         switch (evType) {
           case 'url-published':
             state.url = ev.url;
+            state.drmToken = ev.drmToken;
             break;
           default:
             assertUnreachable(evType)
@@ -69,6 +90,10 @@ export default function({
       fullscreen: FullscreenView
     },
     configForm: {
+      global: {
+        ezdrmConfig: GlobalEzDrmConfig(R),
+        axinomConfig: GlobalAxinomConfig(R),
+      },
       form: {
         name: {
           help: "The name of the multivariant/dash playlist",
@@ -178,6 +203,23 @@ export default function({
               }
             }
           }
+        },
+        drmProvider: {
+          help: "Encrypt with a DRM provider (if configured globally)",
+          hint: {
+            type: 'select',
+            optional: true,
+            options: [
+              {
+                display: "EZDRM",
+                value: 'ezdrm',
+              },
+              {
+                display: "Axinom DRM",
+                value: 'axinom',
+              },
+            ],
+          },
         },
       }
     }
