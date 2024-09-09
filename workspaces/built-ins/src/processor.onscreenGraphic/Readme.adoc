@@ -1,0 +1,45 @@
+== Onscreen Graphic Component
+This component allows you to overlay a static image (or bug) onto a video stream. It provides a customizable interface for configuring the graphic's position and includes runtime controls for Onscreen adjustments.
+
+It offers the ability to update or remove the overlay image during runtime, making it highly adaptable for various broadcasting and video processing needs.
+
+=== Configuration
+
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| initialGraphic | The initial graphic to render on the video, if any | 𐄂
+| initialPosition a| The initial position for the graphic overlay on the video.  One of:
+
+- topleft
+- topright
+- bottomleft
+- bottomright | 𐄂
+|===
+
+=== Runtime Control (Studio UI)
+
+The component provides a UI for runtime control, allowing users to interact with the overlay in real time. This allows you to:
+
+* View the current configuration.
+* Adjust the graphic's position and image through a form.
+* Upload new graphics / images
+
+=== Environment Overrides
+
+[cols="1,2,1",options="header"]
+|===
+| NAME | Description | Default Value
+| ONSCREENGRAPHIC_DIRECTORY | The subdirectory from which all OnscreenGraphic components read image files and to which new images are uploaded.  This is relative to the top level document direction described [here]XXXX
+| graphics
+|===
+
+=== Component Level Overrides
+
+TBD
+
+
+
+

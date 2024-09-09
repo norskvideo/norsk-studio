@@ -15,65 +15,65 @@ import { resolveRefs } from 'json-refs';
 import YAML from 'yaml';
 import { OpenAPIV3 } from 'openapi-types';
 
-export type DynamicBugPosition = components['schemas']['position'];
-export type DynamicBugFile = components['schemas']['bug'];
-export type DynamicBugApiConfig = components['schemas']['config'];
-const dynamicBugPositions: DynamicBugPosition[] = ['topleft', 'topright', 'bottomleft', 'bottomright'];
+export type OnscreenGraphicPosition = components['schemas']['position'];
+export type OnscreenGraphicFile = components['schemas']['graphic'];
+export type OnscreenGraphicApiConfig = components['schemas']['config'];
+const onscreenGraphicPositions: OnscreenGraphicPosition[] = ['topleft', 'topright', 'bottomleft', 'bottomright'];
 
-export type DynamicBugConfig = {
+export type OnscreenGraphicConfig = {
   __global: {
     hardware?: HardwareAccelerationType,
     dataDir?: string
   },
   id: string,
   displayName: string,
-  initialBug?: DynamicBugFile,
-  initialPosition?: DynamicBugPosition;
+  initialGraphic?: OnscreenGraphicFile,
+  initialPosition?: OnscreenGraphicPosition;
 }
 
-export type DynamicBugState = {
-  activeBug?: {
-    file?: DynamicBugFile,
-    position?: DynamicBugPosition
+export type OnscreenGraphicState = {
+  activeGraphic?: {
+    file?: OnscreenGraphicFile,
+    position?: OnscreenGraphicPosition
   },
 }
 
-export type DynamicBugCommand = {
-  type: 'change-bug',
-  file?: DynamicBugFile,
-  position?: DynamicBugPosition
+export type OnscreenGraphicCommand = {
+  type: 'change-graphic',
+  file?: OnscreenGraphicFile,
+  position?: OnscreenGraphicPosition
 }
 
-export type DynamicBugEvent = {
-  type: 'bug-changed',
-  file?: DynamicBugFile,
-  position?: DynamicBugPosition
+export type OnscreenGraphicEvent = {
+  type: 'graphic-changed',
+  file?: OnscreenGraphicFile,
+  position?: OnscreenGraphicPosition
 }
 
-// Use the top level working dir and shove a bugs folder inside it
-function bugDir() {
-  return path.join(Config.server.workingDir(), process.env.DYNAMICBUG_DIRECTORY ?? "bugs");
+// Use the top level working dir and put a graphics folder inside it
+function graphicsDir() {
+  return path.join(Config.server.workingDir(), process.env.ONSCREENGRAPHIC_DIRECTORY ?? "graphics");
 }
 
-async function getBugs() {
-  const files = await fs.readdir(bugDir());
+async function getGraphics() {
+  const files = await fs.readdir(graphicsDir());
   const images = files.filter((f) => {
     return f.endsWith(".png") || f.endsWith(".jpg");
   })
   return images;
 }
 
-export default class DynamicBugDefinition implements ServerComponentDefinition<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent> {
-  async create(norsk: Norsk, cfg: DynamicBugConfig, cb: OnCreated<DynamicBug>, runtime: StudioRuntime<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
-    const node = await DynamicBug.create(norsk, cfg, runtime.updates);
+export default class OnscreenGraphicDefinition implements ServerComponentDefinition<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent> {
+  async create(norsk: Norsk, cfg: OnscreenGraphicConfig, cb: OnCreated<OnscreenGraphic>, runtime: StudioRuntime<OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>) {
+    const node = await OnscreenGraphic.create(norsk, cfg, runtime.updates);
     cb(node);
   }
 
-  async handleCommand(node: DynamicBug, command: DynamicBugCommand) {
+  async handleCommand(node: OnscreenGraphic, command: OnscreenGraphicCommand) {
     const commandType = command.type;
     switch (commandType) {
-      case 'change-bug':
-        await node.setupBug(command.file, command.position);
+      case 'change-graphic':
+        await node.setupGraphic(command.file, command.position);
         break;
       default:
         assertUnreachable(commandType);
@@ -83,7 +83,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
 
   async staticRoutes(): Promise<StaticRouteInfo[]> {
     const storage = multer.diskStorage({
-      destination: bugDir(),
+      destination: graphicsDir(),
       filename: function (_req, file, cb) {
         cb(null, path.basename(file.originalname));
       }
@@ -91,9 +91,9 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
 
     const fileFilter = async function (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
       try {
-        const existingBugs = await getBugs();
-        if (existingBugs.includes(file.originalname)) {
-          return cb(new Error('A bug with this name already exists'));
+        const existingGraphics = await getGraphics();
+        if (existingGraphics.includes(file.originalname)) {
+          return cb(new Error('A graphic with this name already exists'));
         } else {
           cb(null, true);
         }
@@ -104,13 +104,13 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
     const upload = multer({ storage, fileFilter });
     return [
       {
-        url: '/bugs',
+        url: '/graphics',
         method: 'POST',
         handler: () => async (req, res) => {
           const uploader = upload.single('file');
           uploader(req, res, (err) => {
             if (err) {
-              if (err.message === 'A bug with this name already exists') {
+              if (err.message === 'A graphic with this name already exists') {
                 return res.status(409).json({ error: err.message });
               }
               warninglog("An error occured during upload", err);
@@ -138,39 +138,39 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
           }
         },
         responses: {
-          '204': { description: "The file bug was uploaded successfully" },
+          '204': { description: "The file was uploaded successfully" },
           '400': { description: "No file was uploaded" },
           '404': { description: "Not Found" },
-          '409': { description: "A bug with the same name already exists" },
+          '409': { description: "A graphic with the same name already exists" },
           '500': { description: "File upload failed" },
         }
       },
       {
-        url: '/bugs',
+        url: '/graphics',
         method: 'GET',
         handler: (_) => (async (_req: Request, res: Response) => {
-          const images = await getBugs();
+          const images = await getGraphics();
           res.json(images);
         }),
         responses: {},
-      }, 
+      },
       {
-        url: '/bug',
+        url: '/graphic',
         method: 'DELETE',
         handler: () => (async (req, res) => {
-          const filename = req.body.filename; 
-          const filePath = path.join(bugDir(), filename);
-      
+          const filename = req.body.filename;
+          const filePath = path.join(graphicsDir(), filename);
+
           try {
             await fs.access(filePath);
             await fs.unlink(filePath);
             res.status(204).send();
           } catch (error) {
             if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-              res.status(404).json({ error: 'Bug not found' });
+              res.status(404).json({ error: 'Graphic not found' });
             } else {
-              warninglog("Error deleting bug", error);
-              res.status(500).json({ error: 'Failed to delete bug' });
+              warninglog("Error deleting graphic", error);
+              res.status(500).json({ error: 'Failed to delete graphic' });
             }
           }
         }),
@@ -182,7 +182,7 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
                 properties: {
                   filename: {
                     type: 'string',
-                    description: 'The name of the bug file to delete'
+                    description: 'The name of the graphic file to delete'
                   }
                 },
                 required: ['filename']
@@ -191,34 +191,34 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
           }
         },
         responses: {
-          '204': { description: "The bug was successfully deleted" },
-          '404': { description: "The specified bug was not found" },
-          '500': { description: "Failed to delete the bug" }
+          '204': { description: "The graphic was successfully deleted" },
+          '404': { description: "The specified graphic was not found" },
+          '500': { description: "Failed to delete the graphic" }
         }
       }
     ]
   }
 
 
-  async instanceRoutes(): Promise<InstanceRouteInfo<DynamicBugConfig, DynamicBug, DynamicBugState, DynamicBugCommand, DynamicBugEvent>[]> {
+  async instanceRoutes(): Promise<InstanceRouteInfo<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>[]> {
     const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
     const root = YAML.parse(types.toString());
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
     return [
       {
-        url: '/active-bug',
+        url: '/active-graphic',
         method: 'GET',
         handler: ({ runtime }) => ((_req: Request, res: Response) => {
           const latest = runtime.updates.latest();
-          const response: DynamicBugApiConfig = {
-            bug: latest.activeBug?.file,
-            position: latest.activeBug?.position
+          const response: OnscreenGraphicApiConfig = {
+            graphic: latest.activeGraphic?.file,
+            position: latest.activeGraphic?.position
           };
           res.json(response);
         }),
         responses: {
           '200': {
-            description: "Information about the currently overlaid bug (if any)",
+            description: "Information about the currently overlaid graphic (if any)",
             content: {
               "application/json": {
                 schema: resolved.components!.schemas!['config']
@@ -228,35 +228,35 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
         }
       },
       {
-        url: '/active-bug',
+        url: '/active-graphic',
         method: 'POST',
         handler: ({ runtime }) => (async (req, res) => {
-          if ((req.body.bug || req.body.position)) { // Allow empty requests to act as a delete
-            if (!dynamicBugPositions.includes(req.body.position)) {
+          if ((req.body.graphic || req.body.position)) { // Allow empty requests to act as a delete
+            if (!onscreenGraphicPositions.includes(req.body.position)) {
               res.status(400).json({
                 error: "bad position",
                 details: req.body.position
               });
               return;
             }
-            const images = await getBugs();
-            if (!images.includes(req.body.bug)) {
+            const images = await getGraphics();
+            if (!images.includes(req.body.graphic)) {
               res.status(400).json({
-                error: "Unknown bug file",
-                details: req.body.bug,
+                error: "Unknown graphic",
+                details: req.body.graphic,
               });
               return;
             }
           }
           runtime.updates.sendCommand({
-            type: 'change-bug',
-            file: req.body.bug,
+            type: 'change-graphic',
+            file: req.body.graphic,
             position: req.body.position
           })
           res.status(204).send();
         }),
         requestBody: {
-          description: "The bug filename and location (sending an empty JSON object will delete the bug)",
+          description: "The graphic filename and location (sending an empty JSON object will delete the graphic)",
           content: {
             'application/json': {
               schema: resolved.components!.schemas!['config']
@@ -264,9 +264,9 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
           },
         },
         responses: {
-          '204': { description: "The active bug was successfully updated" },
+          '204': { description: "The active graphic was successfully updated" },
           '400': {
-            description: "Unknown bug",
+            description: "Unknown graphic",
             content: {
               "application/json": {
                 schema: {
@@ -282,46 +282,46 @@ export default class DynamicBugDefinition implements ServerComponentDefinition<D
         }
       },
       {
-        url: '/active-bug',
+        url: '/active-graphic',
         method: 'DELETE',
         handler: ({ runtime }) => (async (_req, res) => {
           runtime.updates.sendCommand({
-            type: 'change-bug'
+            type: 'change-graphic'
           })
           res.status(204).send();
         }),
-        responses: { '204': { description: "The active bug was successfully deleted" } }
+        responses: { '204': { description: "The active graphic was successfully deleted" } }
       },
     ]
   }
 }
 
-export class DynamicBug implements CreatedMediaNode {
+export class OnscreenGraphic implements CreatedMediaNode {
   id: string;
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
 
   contexts: ContextPromiseControl = new ContextPromiseControl(this.handleContext.bind(this));
   norsk: Norsk;
-  cfg: DynamicBugConfig;
-  bug?: string;
-  position?: DynamicBugPosition;
+  cfg: OnscreenGraphicConfig;
+  graphic?: string;
+  position?: OnscreenGraphicPosition;
 
   videoSource?: StudioNodeSubscriptionSource;
-  composeNode?: VideoComposeNode<"video" | "bug">;
+  composeNode?: VideoComposeNode<"video" | "graphic">;
   imageSource?: FileImageInputNode;
   oldImageSource?: FileImageInputNode;
   activeImage: "a" | "b" = "a";
   initialised: Promise<void>;
-  updates: RuntimeUpdates<DynamicBugState, DynamicBugCommand, DynamicBugEvent>;
+  updates: RuntimeUpdates<OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>;
   currentVideo?: VideoStreamMetadata;
 
-  static async create(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
-    const node = new DynamicBug(norsk, cfg, updates);
+  static async create(norsk: Norsk, cfg: OnscreenGraphicConfig, updates: RuntimeUpdates<OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>) {
+    const node = new OnscreenGraphic(norsk, cfg, updates);
     await node.initialised;
     return node;
   }
 
-  constructor(norsk: Norsk, cfg: DynamicBugConfig, updates: RuntimeUpdates<DynamicBugState, DynamicBugCommand, DynamicBugEvent>) {
+  constructor(norsk: Norsk, cfg: OnscreenGraphicConfig, updates: RuntimeUpdates<OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>) {
     this.cfg = cfg;
     this.id = cfg.id;
     this.norsk = norsk;
@@ -342,10 +342,10 @@ export class DynamicBug implements CreatedMediaNode {
       return;
     } else {
       const nextVideo = video.message.value;
-      debuglog("Creating compose for dynamic bug", { id: this.id, metadata: nextVideo });
+      debuglog("Creating compose for onscreen graphic", { id: this.id, metadata: nextVideo });
       if (this.currentVideo) {
         if (nextVideo.height !== this.currentVideo.height || nextVideo.width !== this.currentVideo.width) {
-          debuglog("Closing compose node in dynamic bug because of metadata change", { id: this.id, old: this.currentVideo, new: nextVideo });
+          debuglog("Closing compose node in onscreen graphic because of metadata change", { id: this.id, old: this.currentVideo, new: nextVideo });
           await this.composeNode?.close();
           this.currentVideo = undefined;
         }
@@ -355,8 +355,8 @@ export class DynamicBug implements CreatedMediaNode {
       // If we haven't got a compose node, then spin one up
       // with the resolution/etc of the incoming stream
       if (!this.composeNode) {
-        debuglog("Creating compose node for dynamic bug", { id: this.id, width: nextVideo.width, height: nextVideo.height });
-        const thisCompose = this.composeNode = await this.norsk.processor.transform.videoCompose<'video' | 'bug'>({
+        debuglog("Creating compose node for onscreen graphic", { id: this.id, width: nextVideo.width, height: nextVideo.height });
+        const thisCompose = this.composeNode = await this.norsk.processor.transform.videoCompose<'video' | 'graphic'>({
           onCreate: (n) => {
             this.relatedMediaNodes.addOutput(n);
             this.relatedMediaNodes.addInput(n);
@@ -402,7 +402,7 @@ export class DynamicBug implements CreatedMediaNode {
               this.videoPart(),
             ]
           })
-          debuglog("Closing old image source for bug", { id: this.id, oldNode: this.oldImageSource?.id, newNode: this.imageSource?.id })
+          debuglog("Closing old image source for graphic", { id: this.id, oldNode: this.oldImageSource?.id, newNode: this.imageSource?.id })
           void this.oldImageSource?.close();
           this.oldImageSource = undefined;
           await this.handleContext();
@@ -436,54 +436,54 @@ export class DynamicBug implements CreatedMediaNode {
 
   doSubs(imageSource?: FileImageInputNode) {
     if (!imageSource) {
-      debuglog("Doing subscriptions for dynamic bug without image source");
+      debuglog("Doing subscriptions for onscreen graphic without image source");
       this.composeNode?.subscribeToPins(this.videoSource?.selectVideoToPin("video") || [])
     } else {
-      debuglog("Doing subscriptions for dynamic bug with image source", { id: this.id, image: imageSource.id });
-      this.composeNode?.subscribeToPins((this.videoSource?.selectVideoToPin<"video" | "bug">("video") ?? []).concat([
-        { source: imageSource, sourceSelector: videoToPin("bug") }
+      debuglog("Doing subscriptions for onscreen graphic with image source", { id: this.id, image: imageSource.id });
+      this.composeNode?.subscribeToPins((this.videoSource?.selectVideoToPin<"video" | "graphic">("video") ?? []).concat([
+        { source: imageSource, sourceSelector: videoToPin("graphic") }
       ]))
     }
   }
 
-  async setupBug(bug?: string, position?: DynamicBugPosition) {
+  async setupGraphic(graphic?: string, position?: OnscreenGraphicPosition) {
     this.position = position;
-    if (!bug || bug === "") {
-      debuglog("Clearing bug", { id: this.id })
+    if (!graphic || graphic === "") {
+      debuglog("Clearing graphic", { id: this.id })
       this.doSubs();
       await this.imageSource?.close();
       this.imageSource = undefined;
-      this.bug = undefined;
+      this.graphic = undefined;
       this.position = undefined;
-      this.updates.raiseEvent({ type: 'bug-changed' })
+      this.updates.raiseEvent({ type: 'graphic-changed' })
       await this.contexts.schedule();
       return;
-    } else if (bug !== this.bug) {
-      debuglog("Changing bug", { id: this.id, bug, position })
-      this.bug = bug;
+    } else if (graphic !== this.graphic) {
+      debuglog("Changing graphic", { id: this.id, graphic, position })
+      this.graphic = graphic;
       this.activeImage = this.activeImage == "a" ? "b" : "a";
       this.oldImageSource = this.imageSource;
       this.imageSource = await this.norsk.input.fileImage({
         id: `${this.id}-${this.activeImage}`,
-        sourceName: `${this.id}-bug-${this.activeImage}`,
-        fileName: path.join(bugDir(), bug)
+        sourceName: `${this.id}-graphic-${this.activeImage}`,
+        fileName: path.join(graphicsDir(), graphic)
       })
       this.setSources();
     } else {
-      debuglog("Changing bug position", { id: this.id, bug, position })
+      debuglog("Changing graphic position", { id: this.id, graphic, position })
       this.position = position;
       await this.contexts.schedule();
     }
-    this.updates.raiseEvent({ type: 'bug-changed', file: bug, position })
+    this.updates.raiseEvent({ type: 'graphic-changed', file: graphic, position })
   }
 
-  imagePart(position: DynamicBugPosition): ComposePart<"bug"> {
+  imagePart(position: OnscreenGraphicPosition): ComposePart<"graphic"> {
     // // We shouldn't need this, pending work on Compose
     // imageWidth = Math.min(videoWidth - 100, imageWidth);
     // imageHeight = Math.min(videoHeight - 100, imageHeight);
 
-    const foo: ComposePart<"bug"> = {
-      id: "bug",
+    const foo: ComposePart<"graphic"> = {
+      id: "graphic",
       zIndex: 1,
       compose: (metadata, cfg) => {
         const videoWidth = cfg.outputResolution.width;
@@ -495,7 +495,7 @@ export class DynamicBug implements CreatedMediaNode {
           // Take the whole image
           sourceRect: { x: 0, y: 0, width: metadata.width, height: metadata.height },
 
-          // And do a per pixel blit of the image 'as is', with an offset of 5 pixels 
+          // And do a per pixel blit of the image 'as is', with an offset of 5 pixels
           destRect: (position == 'topleft' ? { x: 5, y: 5, width: imageWidth, height: imageHeight } :
             position == 'topright' ? { x: videoWidth - imageWidth - 5, y: 5, width: imageWidth, height: imageHeight } :
               position == 'bottomleft' ? { x: 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight } :
@@ -503,7 +503,7 @@ export class DynamicBug implements CreatedMediaNode {
         }
       },
       opacity: 1.0,
-      pin: "bug"
+      pin: "graphic"
     } as const;
     return foo;
   }
@@ -519,7 +519,7 @@ export class DynamicBug implements CreatedMediaNode {
   }
 
   async initialise() {
-    await this.setupBug(this.cfg.initialBug, this.cfg.initialPosition);
+    await this.setupGraphic(this.cfg.initialGraphic, this.cfg.initialPosition);
   }
 
   subscribe(sources: StudioNodeSubscriptionSource[]) {

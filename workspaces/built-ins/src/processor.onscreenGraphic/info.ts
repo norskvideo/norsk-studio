@@ -1,5 +1,5 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
-import type { DynamicBugCommand, DynamicBugConfig, DynamicBugEvent, DynamicBugState } from "./runtime";
+import type { OnscreenGraphicCommand, OnscreenGraphicConfig, OnscreenGraphicEvent, OnscreenGraphicState } from "./runtime";
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 import React from "react";
 
@@ -7,13 +7,13 @@ export default function ({
   defineComponent,
   Video
 }: Registration) {
-  const BugSelection = React.lazy(async () => import('./bug-selection'));
+  const GraphicSelection = React.lazy(async () => import('./image-selection'));
   const SummaryView = React.lazy(async () => import('./summary-view'));
 
-  return defineComponent<DynamicBugConfig, DynamicBugState, DynamicBugCommand, DynamicBugEvent>({
-    identifier: 'processor.dynamicBug',
+  return defineComponent<OnscreenGraphicConfig, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>({
+    identifier: 'processor.onscreenGraphic',
     category: 'processor',
-    name: "Dynamic Bug",
+    name: "Onscreen Graphic",
     description: "",
     subscription: {
       // Only accept a single video stream
@@ -31,7 +31,7 @@ export default function ({
     },
     display: (desc) => {
       return {
-        default: desc.config.initialBug ?? 'none',
+        default: desc.config.initialGraphic ?? 'none',
       }
     },
     runtime: {
@@ -41,8 +41,8 @@ export default function ({
       handleEvent: (ev, state) => {
         const evType = ev.type;
         switch (evType) {
-          case "bug-changed":
-            return { ...state, activeBug: { file: ev.file, position: ev.position } };
+          case "graphic-changed":
+            return { ...state, activeGraphic: { file: ev.file, position: ev.position } };
           default:
             assertUnreachable(evType)
         }
@@ -53,16 +53,16 @@ export default function ({
         hardware: HardwareSelection()
       },
       form: {
-        initialBug: {
-          help: "The initial bug to render on the video (if any)",
+        initialGraphic: {
+          help: "The initial graphic to render on the video (if any)",
           hint: {
             type: "custom",
             optional: true,
-            component: BugSelection,
+            component: GraphicSelection,
           }
         },
         initialPosition: {
-          help: "The initial location at which to render the bug",
+          help: "The initial location at which to render the graphic",
           hint: {
             type: 'select',
             optional: true,
