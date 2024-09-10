@@ -5,7 +5,7 @@ import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-st
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
-import { BrowserOverlayConfig } from "../processor.browserOverlay/runtime";
+import { BrowserOverlayCommand, BrowserOverlayConfig, BrowserOverlayEvent, BrowserOverlayState } from "../processor.browserOverlay/runtime";
 import { videoAndAudio, testSourceDescription } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import { BrowserOverlay } from "../processor.browserOverlay/runtime";
 import { TraceSink, assertNodeOutputsVideoFrames, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
@@ -26,7 +26,7 @@ describe("Browser Overlay", () => {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
-        new YamlNodeBuilder<BrowserOverlayConfig>
+        new YamlNodeBuilder<BrowserOverlayConfig, BrowserOverlayState, BrowserOverlayCommand, BrowserOverlayEvent>
           ('browser',
             BrowserOverlayInfo(RegistrationConsts),
             {
@@ -77,7 +77,7 @@ describe("Browser Overlay with restart", () => {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
-        new YamlNodeBuilder<BrowserOverlayConfig>
+        new YamlNodeBuilder<BrowserOverlayConfig, BrowserOverlayState, BrowserOverlayCommand, BrowserOverlayEvent>
           ('browser',
             BrowserOverlayInfo(RegistrationConsts),
             {

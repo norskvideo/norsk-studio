@@ -101,7 +101,7 @@ export class PreviewOutput extends CustomSinkNode {
     const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0);
     const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0);
 
-    if (videoSource) {
+    if (videoSource && videoSource.selectVideo().length > 0) {
       if (!this.encoder) {
         debuglog("Finding preview encode for preview node", this.id);
         this.encoder = await this.shared.previewEncode(videoSource.selectVideo()[0], this.cfg.__global.hardware)
@@ -119,7 +119,7 @@ export class PreviewOutput extends CustomSinkNode {
     }
 
     const subscriptions: ReceiveFromAddressAuto[] = [];
-
+    
     if (this.encoder) {
       subscriptions.push({
         source: this.encoder,
@@ -145,11 +145,15 @@ export class PreviewOutput extends CustomSinkNode {
     };
 
     // In theory this can work for audio only or video only workflows
-    if (!this.whep && subscriptions.length > 0) {
+    if (!this.whep) {
       this.whep = await this.norsk.output.whep(whepCfg);
+    }
 
+    if (subscriptions.length > 0) {
       // And then whep gets encoded + original audio
-      this.whep?.subscribe(subscriptions, (ctx) => ctx.streams.length == subscriptions.length);
+      this.whep?.subscribe(subscriptions, (ctx) => {
+        return ctx.streams.length == subscriptions.length
+      });
     }
 
     if (subscriptions.length == 0) {
@@ -157,7 +161,7 @@ export class PreviewOutput extends CustomSinkNode {
       this.whep = undefined;
       this.updates.update({})
     }
-    if (subscriptions.length == 1 && !audioSource) {
+    if (subscriptions.length > 0 && !audioSource) {
       this.updates.update({ url: this.whep?.endpointUrl })
     }
   }

@@ -9,9 +9,6 @@ __layout:
     x: 1392
     y: 336
 __globalConfig:
-  ice-servers:
-    - stun:stun.l.google.com:19302
-  hardware-acceleration: quadra
 components:
   - type: processor.browserOverlay
     config:
