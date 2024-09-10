@@ -1,0 +1,65 @@
+openapi: 3.0.0
+info:
+  title: Browser Overlay Component
+  version: 1.0.0
+
+paths:
+  /url:
+    get:
+      summary: Returns the current URL
+      description: Returns the current URL that the browser is rendering
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+    post:
+      summary: Update the URL
+      requestBody:
+        description: The new URL to render
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+            example:
+              url: "www.myoverlay.com"
+  
+  /status:
+    get:
+      summary: Get the current status of the browser overlay
+      responses:
+        '200':
+          description: Returns the browser overlay status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+              example:
+                enabled: false
+  /enable:
+    post:
+      summary: Enable the browser overlay
+      responses:
+        204:
+          description: Browser overlay enabled
+        409:
+          description: Browser overlay already enabled
+
+  /disable:
+    post:
+      summary: Disable the browser overlay
+      responses:
+        204:
+          description: Browser overlay disabled
+        409:
+          description: Browser overlay already disabled
+      

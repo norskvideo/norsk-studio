@@ -311,11 +311,11 @@ export class BrowserOverlay implements CreatedMediaNode {
   }
 
   async changeUrl(newUrl: string) {
+    this.cfg.url = newUrl;
     if (this.browser) {
-      this.cfg.url = newUrl;
       this.browser.updateConfig({url: newUrl})
-      this.updates.raiseEvent({type: 'url-changed', url: this.cfg.url})
     }
+    this.updates.raiseEvent({type: 'url-changed', url: this.cfg.url})
   }
 
   async enable() {
