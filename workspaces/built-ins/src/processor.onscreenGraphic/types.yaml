@@ -4,10 +4,12 @@ info:
   version: 1.0.0
 
 paths:
+  # Static paths (available at runtime and design time)
   /graphics:
     get:
       summary: Return the currently available graphic files
       description: Returns all the graphics files on the server
+      x-route-type: static
       responses:
         200:
           description: Successful operation
@@ -21,6 +23,7 @@ paths:
     post:
       summary: Upload a new graphic
       description: Upload a new graphic as a multi-part form POST
+      x-route-type: static
       requestBody:
           description: A multipart form containing the file to upload)
           content:
@@ -48,6 +51,7 @@ paths:
     delete:
       summary: Delete a graphic file from the server
       description: Deletes the passed filename from the server if present
+      x-route-type: static
       tags: [foo]
       requestBody:
         description: The graphic to delete
@@ -68,6 +72,47 @@ paths:
           description: The specified graphic was not found
         500:
           description: Failed to delete the graphic
+
+  # Component instance paths (available at runtime only)
+  /active-graphic:
+    get:
+      summary: Info about the current graphic
+      description: Returns the configuration for current the onscreen graphic is any
+      x-route-type: instance
+      responses:
+        200:
+          description: Details of the configured graphic
+          content:
+            application/json:
+              schema:
+                  $ref: "#/components/schemas/config"
+        204:
+          description: No graphic configured
+        404:
+          description: Component not found
+    post:
+      summary: Change the current graphic file and/or position
+      description: Change the current graphic file and/or position
+      x-route-type: instance
+      requestBody:
+          description: The graphic filename and location (sending an empty JSON object will delete the graphic)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/config"
+                  - $ref: "#/components/schemas/emptyObject"
+      responses:
+        204:
+          description: The active graphic was successfully updated
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+        404:
+          description: Component not found
 
 
 
@@ -94,3 +139,17 @@ components:
           $ref: "#/components/schemas/graphic"
         position:
           $ref: "#/components/schemas/position"
+    emptyObject:
+      type: object
+      example: {}
+    errorResponse:
+      type: object
+      description: Details of why the request failed
+      properties:
+        error:
+          type: string
+          description: A description of the error
+        details:
+          type: string
+          description: The unacceptable data
+
