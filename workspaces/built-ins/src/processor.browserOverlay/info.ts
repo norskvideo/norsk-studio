@@ -1,7 +1,10 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import type { BrowserOverlayCommand, BrowserOverlayConfig, BrowserOverlayEvent, BrowserOverlayState } from "./runtime";
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
+import React from "react";
 
+const SummaryView = React.lazy(async () => import('./summary-view'));
+const InlineView = React.lazy(async () => import('./inline-view'));
 
 export default function({
   defineComponent,
@@ -33,6 +36,8 @@ export default function({
       }
     },
     runtime: {
+      summary: SummaryView,
+      inline: InlineView,
       initialState: () => ({
         currentUrl: "",
         enabled: true

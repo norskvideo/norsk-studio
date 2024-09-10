@@ -192,7 +192,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConf
           onClick={() => setShowFileInput(true)}
           style={{ marginBottom: "1rem" }}
         >
-          Upload  Graphic
+          Upload Graphic
         </button>
       )}
 
