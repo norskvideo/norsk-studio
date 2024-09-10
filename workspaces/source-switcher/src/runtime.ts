@@ -274,7 +274,7 @@ export default class SourceSwitchDefinition implements ServerComponentDefinition
         },
         responses: {
           '200': {
-            description: "The update was requested succesfully, and will be applied in due course"
+            description: "The update was requested successfully, and will be applied in due course"
           },
           '400': {
             description: "There was a problem with the request"
