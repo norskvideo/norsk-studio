@@ -1,13 +1,13 @@
 __layout:
-  - id: srtlistener-0
-    x: 352
-    y: 544
-  - id: fixedladder-0
-    x: 848
-    y: 176
-  - id: autocmaf-0
-    x: 1344
-    y: 544
+  - id: srt-listener
+    x: 448
+    y: 400
+  - id: fixedladder
+    x: 832
+    y: 128
+  - id: autocmaf
+    x: 1232
+    y: 400
 components:
   - type: input.srt-listener
     config:
@@ -19,18 +19,207 @@ components:
       sourceNames: permissive
       streamIds:
         - camera1
-      id: srtlistener-0
+      id: srt-listener
     subscriptions: []
   - type: processor.fixedLadder
     config:
       displayName: fixedLadder
       rungs:
-        - h264_1920x1080
-        - h264_1280x720
-        - h264_640x360
-      id: fixedladder-0
+        - name: h264_1280x720
+          software:
+            width: 1280
+            height: 720
+            codec:
+              type: x264
+              bitrateMode:
+                value: 2500
+                mode: abr
+              keyFrameIntervalMax: 50
+              keyFrameIntervalMin: 50
+              sceneCut: 0
+              preset: fast
+              tune: zerolatency
+              threads: 4
+              bframes: 0
+            frameRate:
+              frames: 25
+              seconds: 1
+          quadra:
+            width: 1280
+            height: 720
+            codec:
+              type: quadra-h264
+              intraPeriod: 50
+              bitrate: 2500000
+            frameRate:
+              frames: 25
+              seconds: 1
+          logan:
+            width: 1280
+            height: 720
+            codec:
+              type: logan-h264
+              intraPeriod: 50
+              bitrate: 2500000
+            frameRate:
+              frames: 25
+              seconds: 1
+          nvidia:
+            width: 1280
+            height: 720
+            codec:
+              type: nv-h264
+              idrPeriod: 50
+              rateControl:
+                mode: vbr
+                averageBitrate: 2500000
+            frameRate:
+              frames: 25
+              seconds: 1
+          ma35d:
+            width: 1280
+            height: 720
+            codec:
+              type: amdMA35D-h264
+              profile: main
+              rateControl:
+                mode: cbr
+                bitrate: 5000
+              gopSize: 50
+            frameRate:
+              frames: 25
+              seconds: 1
+        - name: h264_640x360
+          software:
+            width: 640
+            height: 360
+            codec:
+              type: x264
+              bitrateMode:
+                value: 1000
+                mode: abr
+              keyFrameIntervalMax: 50
+              keyFrameIntervalMin: 50
+              sceneCut: 0
+              preset: fast
+              tune: zerolatency
+              threads: 2
+              bframes: 0
+            frameRate:
+              frames: 25
+              seconds: 1
+          quadra:
+            width: 640
+            height: 360
+            codec:
+              type: quadra-h264
+              intraPeriod: 50
+              bitrate: 1000000
+            frameRate:
+              frames: 25
+              seconds: 1
+          logan:
+            width: 640
+            height: 360
+            codec:
+              type: logan-h264
+              intraPeriod: 50
+              bitrate: 1000000
+            frameRate:
+              frames: 25
+              seconds: 1
+          nvidia:
+            width: 640
+            height: 360
+            codec:
+              type: nv-h264
+              idrPeriod: 50
+              rateControl:
+                mode: vbr
+                averageBitrate: 1000000
+            frameRate:
+              frames: 25
+              seconds: 1
+          ma35d:
+            width: 640
+            height: 360
+            codec:
+              type: amdMA35D-h264
+              profile: main
+              rateControl:
+                mode: cbr
+                bitrate: 2000
+              gopSize: 50
+            frameRate:
+              frames: 25
+              seconds: 1
+        - name: h264_320x180
+          software:
+            width: 320
+            height: 180
+            codec:
+              type: x264
+              bitrateMode:
+                value: 800
+                mode: abr
+              keyFrameIntervalMax: 50
+              keyFrameIntervalMin: 50
+              sceneCut: 0
+              preset: fast
+              tune: zerolatency
+              threads: 1
+              bframes: 0
+            frameRate:
+              frames: 25
+              seconds: 1
+          quadra:
+            width: 320
+            height: 180
+            codec:
+              type: quadra-h264
+              intraPeriod: 50
+              bitrate: 800000
+            frameRate:
+              frames: 25
+              seconds: 1
+          logan:
+            width: 320
+            height: 180
+            codec:
+              type: logan-h264
+              intraPeriod: 50
+              bitrate: 800000
+            frameRate:
+              frames: 25
+              seconds: 1
+          nvidia:
+            width: 320
+            height: 180
+            codec:
+              type: nv-h264
+              idrPeriod: 50
+              rateControl:
+                mode: vbr
+                averageBitrate: 800000
+            frameRate:
+              frames: 25
+              seconds: 1
+          ma35d:
+            width: 320
+            height: 180
+            codec:
+              type: amdMA35D-h264
+              profile: main
+              rateControl:
+                mode: cbr
+                bitrate: 1000
+              gopSize: 50
+            frameRate:
+              frames: 25
+              seconds: 1
+      id: fixedladder
     subscriptions:
-      - source: srtlistener-0
+      - source: srt-listener
         streams:
           type: take-specific-stream
           select:
@@ -40,25 +229,25 @@ components:
     config:
       displayName: autoCmaf
       name: default
-      sessionId: false
+      sessionId: true
       segments:
         retentionPeriod: 60
         defaultSegmentCount: 0
         targetSegmentDuration: 4
         targetPartDuration: 1
       s3Destinations: []
-      id: autocmaf-0
+      id: autocmaf
     subscriptions:
-      - source: fixedladder-0
+      - source: fixedladder
         streams:
           type: take-specific-streams
           select:
             - video
           filter:
-            - h264_1920x1080
             - h264_1280x720
             - h264_640x360
-      - source: srtlistener-0
+            - h264_320x180
+      - source: srt-listener
         streams:
           type: take-specific-streams
           select:

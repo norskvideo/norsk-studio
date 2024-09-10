@@ -5,6 +5,10 @@ import { CreatedMediaNode, OnCreated, ServerComponentDefinition, StudioNodeSubsc
 import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { ReportBuilder } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { infolog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { AxinomConfig, EzDrmConfig } from '@norskvideo/norsk-studio/lib/shared/config';
+import { CryptoDetails } from '../shared/drm/cpix';
+import { ezdrmInit } from '../shared/drm/ezdrm';
+import { axinomInit } from '../shared/drm/axinom';
 
 
 export type AutoCmafS3Destination = {
@@ -20,6 +24,11 @@ export type AutoCmafConfig = {
   sessionId: boolean,
   segments: AutoCmafSegment,
   s3Destinations: AutoCmafS3Destination[],
+  drmProvider?: 'ezdrm' | 'axinom',
+  __global: {
+    ezdrmConfig?: EzDrmConfig,
+    axinomConfig?: AxinomConfig,
+  },
 }
 
 export type AutoCmafSegment = {
@@ -32,14 +41,16 @@ export type AutoCmafSegment = {
 }
 
 export type CmafOutputState = {
-  url?: string
-}
+  url?: string,
+  drmToken?: string,
+};
 
 
 export type CmafOutputEvent = {
   type: 'url-published',
-  url: string
-}
+  url: string,
+  drmToken?: string,
+};
 
 export type CmafOutputCommand = object;
 
@@ -50,7 +61,7 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
     const mv = node.mv;
     if (mv) {
       report.registerOutput(cfg.id, mv.url);
-      updates.raiseEvent({ type: 'url-published', url: mv.url })
+      updates.raiseEvent({ type: 'url-published', url: mv.url, drmToken: node.crypto?.token });
     }
   }
 }
@@ -61,6 +72,7 @@ export class AutoCmaf extends CustomSinkNode {
   cfg: AutoCmafConfig;
   currentSources: Map<CreatedMediaNode, StudioNodeSubscriptionSource> = new Map();
   currentMedia: { node?: AutoProcessorMediaNode<string>, key: StreamKey, scheduleAd: (marker: AdMarker, destinationId: string) => void }[] = [];
+  crypto?: CryptoDetails;
 
   // If there is only one program/source then this is the only one worth looking at
   mv?: CmafMultiVariantOutputNode;
@@ -126,7 +138,7 @@ export class AutoCmaf extends CustomSinkNode {
         host: d.host,
         sessionId: this.sessionId,
         pathPrefix: sanitisedPrefix,
-        // 
+        //
         // port: 443,
         port: 80,
         retentionPeriodSeconds: cfg.segments.retentionPeriod,
@@ -145,10 +157,26 @@ export class AutoCmaf extends CustomSinkNode {
   }
 
   async initialise() {
+    if (this.cfg.drmProvider) {
+      if (this.cfg.drmProvider === 'ezdrm') {
+        this.crypto = await ezdrmInit(this.cfg.__global?.ezdrmConfig);
+      }
+      if (this.cfg.drmProvider === 'axinom') {
+        this.crypto = await axinomInit(this.cfg.__global?.axinomConfig);
+      }
+    }
+    const mvCryptoSettings = this.crypto ? {
+      m3uAdditions: [
+        this.crypto.audio.multivariantSignaling,
+        this.crypto.video.multivariantSignaling,
+      ].join("\n"),
+      mpdAdditions: "",
+    } : {};
     const mv = await this.norsk.output.cmafMultiVariant({
       id: `${this.cfg.id}-multivariant`,
       playlistName: this.cfg.name,
-      destinations: this.destinations
+      destinations: this.destinations,
+      ...mvCryptoSettings,
     });
     this.setup({ sink: mv });
     this.mv = mv;
@@ -235,11 +263,17 @@ export class AutoCmaf extends CustomSinkNode {
         case undefined:
           throw "Bad server message";
         case "video": {
+          const videoCryptoSettings = this.crypto ? {
+            encryption: this.crypto.video,
+            m3uAdditions: this.crypto.video.mediaSignaling,
+            mpdAdditions: this.crypto.video.dashSignalling,
+          } : {};
           const video = await this.norsk.output.cmafVideo({
             segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
             partDurationSeconds: this.cfg.segments.targetPartDuration,
             destinations: this.destinations,
-            id: `${this.id}-${streamKeyString}-video`
+            id: `${this.id}-${streamKeyString}-video`,
+            ...videoCryptoSettings,
           });
           newMedia.node = video;
           newMedia.scheduleAd = (ad, destinationId: string) => {
@@ -257,11 +291,17 @@ export class AutoCmaf extends CustomSinkNode {
           break;
         }
         case "audio": {
+          const audioCryptoSettings = this.crypto ? {
+            encryption: this.crypto.audio,
+            m3uAdditions: this.crypto.audio.mediaSignaling,
+            mpdAdditions: this.crypto.audio.dashSignalling,
+          } : {};
           const audio = await this.norsk.output.cmafAudio({
             segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
             partDurationSeconds: this.cfg.segments.targetPartDuration,
             destinations: this.destinations,
-            id: `${this.id}-${streamKeyString}-audio`
+            id: `${this.id}-${streamKeyString}-audio`,
+            ...audioCryptoSettings,
           });
           newMedia.node = audio;
           newMedia.scheduleAd = (ad, destinationId: string) => {
