@@ -50,6 +50,37 @@ export type OnscreenGraphicEvent = {
   position?: OnscreenGraphicPosition
 }
 
+type Transmuted<T> = {
+  [Key in keyof T]: OpenAPIV3.PathItemObject;
+};
+function coreInfo<T>(path: keyof T, op: OpenAPIV3.OperationObject) {
+  return {
+    url: path,
+    summary: op.summary,
+    description: op.description,
+    requestBody: op.requestBody,
+    responses: op.responses,
+  }
+}
+function get<T>(path: keyof T, paths: Transmuted<T>)  {
+  return {
+    ...coreInfo(path, paths[path]['get']!),
+    method: 'GET' as const,
+  }
+}
+function post<T>(path: keyof T, paths: Transmuted<T>)  {
+  return {
+    ...coreInfo(path, paths[path]['post']!),
+    method: 'POST' as const,
+  }
+}
+function delete_<T>(path: keyof T, paths: Transmuted<T>)  {
+  return {
+    ...coreInfo(path, paths[path]['delete']!),
+    method: 'DELETE' as const,
+  }
+}
+
 // Use the top level working dir and put a graphics folder inside it
 function graphicsDir() {
   return path.join(Config.server.workingDir(), process.env.ONSCREENGRAPHIC_DIRECTORY ?? "graphics");
@@ -106,49 +137,18 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
     const root = YAML.parse(types.toString());
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
 
-    type Transmuted<T> = {
-      [Key in keyof T]: OpenAPIV3.PathItemObject;
-    };
     const paths = resolved.paths as Transmuted<paths>;
 
-    const get = (path: keyof paths) => {
-      return {
-        ...coreInfo(path, paths[path]['get']!),
-        method: 'GET' as const,
-      }
-    };
-    const post = (path: keyof paths) => {
-      return {
-        ...coreInfo(path, paths[path]['post']!),
-        method: 'POST' as const,
-      }
-    };
-    const delete_ = (path: keyof paths) => {
-      return {
-        ...coreInfo(path, paths[path]['delete']!),
-        method: 'DELETE' as const,
-      }
-    };
-
-    const coreInfo = (path: string, op: OpenAPIV3.OperationObject) => {
-      return {
-        url: path,
-        summary: op.summary,
-        description: op.description,
-        requestBody: op.requestBody,
-        responses: op.responses,
-      }
-    }
     return [
       {
-        ...get('/graphics'),
+        ...get<paths>('/graphics', paths),
         handler: (_) => (async (_req: Request, res: Response) => {
           const images = await getGraphics();
           res.json(images);
         })
       },
       {
-        ...post('/graphics'),
+        ...post<paths>('/graphics', paths),
         handler: () => async (req, res) => {
           const uploader = upload.single('file');
           uploader(req, res, (err) => {
@@ -164,7 +164,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         },
       },
       {
-        ...delete_('/graphic'),
+        ...delete_<paths>('/graphic', paths),
         handler: () => (async (req, res) => {
           const filename = req.body.filename;
           const filePath = path.join(graphicsDir(), filename);
@@ -186,44 +186,35 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
 
   }
 
-
   async instanceRoutes(): Promise<InstanceRouteInfo<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>[]> {
     const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
     const root = YAML.parse(types.toString());
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+    const paths = resolved.paths as Transmuted<paths>;
+
     return [
       {
-        url: '/active-graphic',
-        summary: 'Info about the current graphic',
-        method: 'GET',
+        ...get<paths>('/active-graphic', paths),
         handler: ({ runtime }) => ((_req: Request, res: Response) => {
           const latest = runtime.updates.latest();
-          const response: OnscreenGraphicApiConfig = {
-            graphic: latest.activeGraphic?.file,
-            position: latest.activeGraphic?.position
-          };
-          res.json(response);
-        }),
-        responses: {
-          '200': {
-            description: "Information about the currently overlaid graphic (if any)",
-            content: {
-              "application/json": {
-                schema: resolved.components!.schemas!['config']
-              },
-            }
+          if (latest.activeGraphic?.file && latest.activeGraphic?.position) {
+            res.json({
+              graphic: latest.activeGraphic.file,
+              position: latest.activeGraphic.position
+            });
           }
-        }
+          else {
+            res.status(204).send();
+          }
+        }),
       },
       {
-        url: '/active-graphic',
-        summary: 'Change the current graphic file or position',
-        method: 'POST',
+        ...post<paths>('/active-graphic', paths),
         handler: ({ runtime }) => (async (req, res) => {
           if ((req.body.graphic || req.body.position)) { // Allow empty requests to act as a delete
             if (!onscreenGraphicPositions.includes(req.body.position)) {
               res.status(400).json({
-                error: "bad position",
+                error: "Bad position",
                 details: req.body.position
               });
               return;
@@ -244,31 +235,6 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
           })
           res.status(204).send();
         }),
-        requestBody: {
-          description: "The graphic filename and location (sending an empty JSON object will delete the graphic)",
-          content: {
-            'application/json': {
-              schema: resolved.components!.schemas!['config']
-            }
-          },
-        },
-        responses: {
-          '204': { description: "The active graphic was successfully updated" },
-          '400': {
-            description: "Unknown graphic",
-            content: {
-              "application/json": {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    error: { type: 'string', description: "A description of the error" },
-                    details: { type: 'string', description: "The unacceptable data" }
-                  }
-                },
-              }
-            }
-          }
-        }
       },
       {
         url: '/active-graphic',
