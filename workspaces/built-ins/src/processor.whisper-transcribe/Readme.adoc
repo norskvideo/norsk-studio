@@ -7,7 +7,7 @@ This component transcribes audio from a video stream. It requires a single video
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| model | The ggml model path |   𐄂 
+| model | The ggml model path | ✓ 
 | translate | Whether to translate the output to English |   𐄂 
 | language | Source language (otherwise automatic) |   𐄂 
 |===
