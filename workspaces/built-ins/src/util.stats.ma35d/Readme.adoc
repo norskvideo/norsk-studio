@@ -1,0 +1,12 @@
+=== MA35D Stats
+This component tracks and processes statistics for the AMD MA35D processor which is used for the encoding, scaling and decoding of media. It collects stats related to each of these operations and maintains a history of up to 200 entries per operation for monitoring and analysis purposes.
+
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+|===
+
+

@@ -1,60 +1,29 @@
-=== Auto CMAF Output Component
+=== Auto CMAF
+This component is designed to handle the creation of CMAF outputs from multiple video and audio streams. It supports segmenting, publishing to S3 destinations, and managing ad insertions.
 
-The `output.autoCMAF` component is designed to handle the creation of CMAF outputs from multiple video and audio streams. It supports segmenting, publishing to S3 destinations, and managing ad insertions.
 
-== Features
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| name | The name of the multivariant&#x2F;dash playlist |  ✓  
+| sessionId | Generate a unique session id per run to avoid cache collisions |  ✓  
+| s3Destinations | S3 destinations to publish to |  ✓  
+| drmProvider | Encrypt with a DRM provider (if configured globally) |   𐄂 
+|===
 
-Some features of this component are:
+== Segments Configuration Options
 
-* Accepts multiple video and audio streams.
-* Configurable segment parameters (duration, retention, etc.).
-* Supports publishing to multiple S3 destinations.
-* Optionally include Ad markers in the published streams.
-
-== Configuration
-
-=== High level configs
-* id (string): Unique identifier for the component.
-* displayName (string): Display name in the UI.
-* name (string): Name for the multivariant/DASH playlist.
-* sessionId (boolean): Whether to generate a unique session ID to avoid cache collisions.
-  
-=== Segment Configuration
-These configs relate to how the media is segmented for playback.
-
-* retentionPeriod (number): Specifies the duration (in seconds) that segments are retained for playback.
-* defaultSegmentCount (number): Number of segments to display in a default playlist.
-* targetSegmentDuration (number): Sets the target duration for each segment. 
-* targetPartDuration (number): This specifies the duration of smaller parts within a segment.
-* holdBackSegments (number): Determines how many segments back a player should start playback. 
-- holdBackParts (number): Similar to 'holdBackSegments', but this applies to the smaller parts within a segment.
-
-=== S3 Destination Configuration
-
-- s3Destinations (array): List of S3 destinations to publish to, each with the following parameters:
-  - host (string): Hostname of the S3 bucket.
-  - prefix (string): Subdirectory of the bucket for playlists and segments.
-  - includeAdInsertions (boolean): Include ad markers in this publication.
-
-=== Example Configuration
-
-Here is an example of how to configure the `output.autoCMAF` component in a YAML file:
-
-[source, yaml]
-----
-  - type: output.autoCmaf
-    config:
-      displayName: autoCmaf
-      name: default
-      sessionId: true
-      segments:
-        retentionPeriod: 60
-        defaultSegmentCount: 0
-        targetSegmentDuration: 4
-        targetPartDuration: 1
-        s3Destinations: []
-        bufferDelayMs: 500
-      id: autoCmaf
-----
-
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| retentionPeriod | How many seconds of data to retain for playback in media playlists |  ✓ 
+| defaultSegmentCount | How many segments to display in a default playlist (0 means show all) |  ✓ 
+| targetSegmentDuration | How many seconds should be in each segment |  ✓ 
+| targetPartDuration | For low latency playlists, what size parts should be generated in seconds |  ✓ 
+| holdBackSegments | How many segments back should a player start |   𐄂  
+| holdBackParts | How many parts back should a player start |   𐄂  
+|===
 

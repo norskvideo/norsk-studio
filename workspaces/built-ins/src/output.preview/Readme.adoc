@@ -1,0 +1,13 @@
+=== Preview
+Preview allows for the real-time preview of media streams. It provides a way to visualize and monitor the output from various media sources before final processing or distribution.
+
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| bufferDelayMs | How many milliseconds in the jitter buffer |  ✓  
+|===
+
+

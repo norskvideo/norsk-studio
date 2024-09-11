@@ -1,5 +1,5 @@
-=== SRT Ingest (Listener)
-This component handles media ingest via the SRT(Secure Reliable Transport) protocol. It acts as a listener, receiving media streams from remote SRT sources and is highly configurable, allowing for custom IP addresses, ports, and stream handling behaviours.
+=== SRT Ingest (Caller)
+This component allows you to receive Secure Reliable Transport (SRT) streams by calling a remote SRT listener. It connects to the specified IP address and port to ingest media content, ensuring secure and reliable media transmission. Optional passphrase-based authentication and StreamId support are available for more secure and granular connection management.
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -7,11 +7,11 @@ This component handles media ingest via the SRT(Secure Reliable Transport) proto
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| port | The port this SRT input will listen on |  ✓  
-| ip | The IP address this SRT input will listen on |  ✓  
+| port | The port this SRT input will connect to |  ✓  
+| ip | The IP address this SRT input will connect to |  ✓  
+| sourceName | Source name to identify this by |  ✓  
 | passphrase | Optional: Authentication for this SRT input |   𐄂 
-| sourceNames | Either auto assign streams in the order they come in, or restrict connections to those with known stream ids |  ✓  
-| streamIds | List of stream ids to assign to the accepted streams |  ✓  
+| streamId | Optional: StreamId to use when calling the remote listener |   𐄂 
 |===
 
 == Socket Options

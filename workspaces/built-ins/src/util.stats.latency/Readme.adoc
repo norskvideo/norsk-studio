@@ -1,0 +1,14 @@
+=== Latency Probe
+This component tracks and processes latency statistics within a media processing pipeline. It measures the latency between two nodes in the system and maintains a history of up to 200 latency values for analysis and monitoring.
+
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| startNodeId | The node producing data that we want to measure from |   𐄂 
+| endNodeId | Destination node |   𐄂 
+|===
+
+
