@@ -21,7 +21,7 @@ export default function CodecEditor<Codec>(props: CodecEditorProps<Codec>) {
 
   return <textarea
     ref={textAreaRef}
-    className="w-full min-h-fit dark:text-white dark:bg-black"
+    className="w-full min-h-fit bg-white text-gray-900 dark:text-white dark:bg-black"
     onChange={(e) => {
       const target = e.currentTarget;
       try {

@@ -6,5 +6,5 @@ export default function CodecEditor(props: { width: number, height: number }) {
   //     { /* Multiselect dropdown here for enabling the rungs */}
   //   </div >
   // }
-  return <>{props.width}x{props.height}</>
+  return <div className="text-gray-900 dark:text-white">{props.width}x{props.height}</div>
 }
