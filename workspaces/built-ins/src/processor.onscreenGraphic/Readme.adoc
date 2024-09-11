@@ -16,7 +16,7 @@ It offers the ability to update or remove the overlay image during runtime, maki
 - topleft
 - topright
 - bottomleft
-- bottomright | 𐄂
+- bottomright | x
 |===
 
 === Runtime Control (Studio UI)

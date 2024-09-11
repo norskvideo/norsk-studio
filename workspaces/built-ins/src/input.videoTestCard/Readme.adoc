@@ -1,0 +1,16 @@
+=== Video Test Card
+The Video Test Card component generates a test card video stream with customizable settings. 
+
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| resolution | The resolution of the test card stream |  ✓  
+| frameRate | The frame rate of the test card stream |  ✓  
+| sourceName | Source name to use for this test card stream |  ✓  
+| pattern | The pattern on the test card stream |  ✓  
+|===
+
+

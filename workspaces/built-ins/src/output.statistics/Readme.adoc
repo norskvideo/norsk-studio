@@ -1,0 +1,13 @@
+=== Statistics
+This component accepts multiple media streams, captures and reports metrics or statistical data related to the media
+streams. These metrics can help monitor and analyze the performance of the streams over time.
+
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+|===
+
+

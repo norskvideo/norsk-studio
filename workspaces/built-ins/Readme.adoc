@@ -1,11 +1,11 @@
-== workspaces/built-ins
+== Built-ins Directory
 
 This built-ins directory contains a collection of the default components available for use within Studio.
-Its package.json builds a manifest for everything found in 'src' in src/index.ts, as well as building a client-side bundle for all of them.
+Its `package.json` builds a manifest for everything found in `src` in `src/index.ts`, as well as building a client-side bundle for all of them.
 
 === Structure
 
-Inside the 'src' folder, we have several subdirectories each containing components in a particular class:
+Inside the `src` folder, we have several subdirectories each containing components in a particular class:
 
 - Inputs: Modules that define how media streams are ingested.
 - Outputs: Modules that define how media streams are delivered to their destinations.

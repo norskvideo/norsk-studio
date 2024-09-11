@@ -1,110 +1,42 @@
-= Fixed ladder processor component
-
-== Overview
-
+=== Encode Ladder
 The Fixed Ladder Encoder is a processor component for encoding a single input video stream into multiple encoded renditions. It creates an encoding ladder, where each "rung" represents a different quality level or rendition of the original video, typically varying in resolution and bitrate.
 
-== Features
-* Encodes a single video stream into multiple renditions.
-* Supports both software and hardware-accelerated encoding.
-* Configurable encode settings for each rung (resolution, bitrate, codec settings)
-* Supports multiple codec types: H.264, HEVC(H.265)
-* Hardware acceleration support for AMD MA35D, NVIDIA, Quadra, and Logan.
 
-== Configurations
-
-=== Global configurations
-
-These are settings that apply to the entire ladder, rather than individual rungs.
-
-* hardware (optional): This specifies the type of hardware acceleration to be used for all the rungs that support hardware acceleration in the ladder.  The hardware options includes encoders like AMD MA35D, Nvidia, Logan, or Quadra. If this is not set, the ladder will default to using software encoding.
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| rungs | The rungs in this encode ladder |   𐄂 
+|===
 
 === Rung Configuration
-
 Each rung in the ladder can be configured with different codecs and settings depending on the hardware or software encoder available. The following rung types are supported:
 
-- `software` (optional, SoftwareLadderRung): Defines the rung for software-based encoding using `X264` or `X265`.
-- `ma35d` (optional, Ma35dLadderRung): Defines the rung for hardware-based encoding using AMD MA35D.
-- `logan` (optional, LoganLadderRung): Defines the rung for hardware-based encoding using Logan encoders.
-- `nvidia` (optional, NvidiaLadderRung): Defines the rung for hardware-based encoding using Nvidia encoders.
-- `quadra` (optional, QuadraLadderRung): Defines the rung for hardware-based encoding using Quadra encoders.
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
 
-Each rung definition should include:
+| software
+| Defines the rung for software-based encoding using X264 or X265.
+| 𐄂
 
-- `name` (string): A unique name for the rung.
-- Codec-specific settings (e.g., `bitrate`, `frameRate`, etc.).
+| ma35d
+| Defines the rung for hardware-based encoding using AMD MA35D.
+| 𐄂
 
-=== Example configuration
+| logan
+| Defines the rung for hardware-based encoding using Logan encoders.
+| 𐄂
 
-[source, yaml]
-----
-  - type: processor.transform.fixedLadder
-    config:
-      displayName: fixedLadder
-      rungs:
-        - name: h264_1280x720
-          software:
-            width: 1280
-            height: 720
-            codec:
-              type: x264
-              bitrateMode:
-                value: 2500
-                mode: abr
-              keyFrameIntervalMax: 50
-              keyFrameIntervalMin: 50
-              sceneCut: 0
-              preset: fast
-              tune: zerolatency
-              threads: 4
-              bframes: 0
-            frameRate:
-              frames: 25
-              seconds: 1
-          quadra:
-            width: 1280
-            height: 720
-            codec:
-              type: quadra-h264
-              intraPeriod: 50
-              bitrate: 2500000
-            frameRate:
-              frames: 25
-              seconds: 1
-          logan:
-            width: 1280
-            height: 720
-            codec:
-              type: logan-h264
-              intraPeriod: 50
-              bitrate: 2500000
-            frameRate:
-              frames: 25
-              seconds: 1
-          nvidia:
-            width: 1280
-            height: 720
-            codec:
-              type: nv-h264
-              idrPeriod: 50
-              rateControl:
-                mode: vbr
-                averageBitrate: 2500000
-            frameRate:
-              frames: 25
-              seconds: 1
-          ma35d:
-            width: 1280
-            height: 720
-            codec:
-              type: amdMA35D-h264
-              profile: main
-              rateControl:
-                mode: cbr
-                bitrate: 5000
-              gopSize: 50
-            frameRate:
-              frames: 25
-              seconds: 1
-      id: fixedladder
-----
+| nvidia
+| Defines the rung for hardware-based encoding using Nvidia encoders.
+| 𐄂
+
+| quadra
+| Defines the rung for hardware-based encoding using Quadra encoders.
+| 𐄂
+|===
+
+

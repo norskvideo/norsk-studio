@@ -1,0 +1,30 @@
+=== SRT Egest
+This component manages the sending of SRT (Secure Reliable Transport) streams. It allows you to configure various settings to control how the SRT output is handled, including connection details, buffer settings, and delay options. 
+
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| port | The port this SRT output will connect to or listen on |  ✓  
+| ip | The IP address this SRT output will connect to or listen on |  ✓  
+| bufferDelayMs | How many milliseconds in the jitter buffer |  ✓  
+| avDelayMs | How many milliseconds to delay A&#x2F;V to account for subtitles&#x2F;ancillary data |  ✓  
+| mode | Whether this SRT Output is calling a remote host, or listening on this host |  ✓  
+| passphrase | Optional: Authentication for this SRT output |   𐄂 
+| streamId | Optional: StreamId to use when calling a remote listener |   𐄂 
+|===
+
+=== Socket Options
+
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| receiveLatency | The latency value in the receiving direction of the socket (SRTO_RCVLATENCY) |   𐄂  
+| peerLatency | The latency value provided by the sender side as a minimum value for the receiver (SRTO_PEERLATENCY) |   𐄂  
+| inputBandwidth | Input bandwidth (SRTO_INPUTBW) |   𐄂  
+| overheadBandwidth | Overhead bandwidth (SRTO_OHEADBW) |   𐄂  
+| maxBandwidth | Max bandwidth (SRTO_MAXBW) |   𐄂  
+|===
+
