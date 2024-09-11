@@ -60,7 +60,7 @@ export default function({
       configForm: {
         form: {
           port: { help: "The port this RTMP input will listen on", hint: { type: 'numeric', validation: Port, defaultValue: defaultPort, global: unique('port') } },
-          ssl: { help: "Optional: SSL", hint: { type: 'boolean' } },
+          ssl: { help: "Optional: SSL", hint: { type: 'boolean', optional: true } },
           appName: { help: "Name of the app", hint: { type: "text", validation: Z.string().min(1), defaultValue: 'norsk' } },
           streamNames: {
             help: 'List of stream names to assign to the accepted streams',
