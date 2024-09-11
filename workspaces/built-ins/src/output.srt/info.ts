@@ -66,8 +66,8 @@ export default function(registration: Registration) {
             }]
           }
         },
-        passphrase: { help: "Optional: Authentication for this SRT output", hint: { type: 'text', validation: SrtPassphrase } },
-        streamId: { help: "Optional: StreamId to use when calling a remote listener", hint: { type: 'text', validation: SrtStreamId } },
+        passphrase: { help: "Optional: Authentication for this SRT output", hint: { type: 'text', optional: true, validation: SrtPassphrase } },
+        streamId: { help: "Optional: StreamId to use when calling a remote listener", hint: { type: 'text', optional: true, validation: SrtStreamId } },
         socketOptions: {
           help: "Socket Options",
           hint: {

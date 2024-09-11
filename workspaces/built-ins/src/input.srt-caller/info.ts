@@ -37,8 +37,8 @@ export default function({
           port: { help: "The port this SRT input will connect to", hint: { type: 'numeric', validation: Port, defaultValue: 5001 } },
           ip: { help: "The IP address this SRT input will connect to", hint: { type: 'text', validation: IpAddress, defaultValue: "0.0.0.0" } },
           sourceName: { help: "Source name to identify this by", hint: { type: 'text', validation: SourceName, defaultValue: "camera1" } },
-          passphrase: { help: "Optional: Authentication for this SRT input", hint: { type: 'text', validation: SrtPassphrase } },
-          streamId: { help: "Optional: StreamId to use when calling the remote listener", hint: { type: 'text', validation: SrtStreamId } },
+          passphrase: { help: "Optional: Authentication for this SRT input", hint: { type: 'text', optional: true, validation: SrtPassphrase } },
+          streamId: { help: "Optional: StreamId to use when calling the remote listener", hint: { type: 'text', optional: true, validation: SrtStreamId } },
           socketOptions: {
             help: "Socket Options",
             hint: {

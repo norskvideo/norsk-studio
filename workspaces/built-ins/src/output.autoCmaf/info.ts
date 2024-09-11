@@ -159,6 +159,7 @@ export default function(R: Registration) {
                 help: "How many segments back should a player start",
                 hint: {
                   type: "numeric",
+                  optional: true,
                   validation: Z.number().min(3).max(10).int().optional(),
                 },
               },
@@ -166,6 +167,7 @@ export default function(R: Registration) {
                 help: "How many parts back should a player start",
                 hint: {
                   type: "numeric",
+                  optional: true,
                   validation: Z.number().min(3).max(10).int().optional(),
                 },
               },
