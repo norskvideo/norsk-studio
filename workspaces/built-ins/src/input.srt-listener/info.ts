@@ -86,6 +86,7 @@ export default function({
             help: "Optional: Authentication for this SRT input",
             hint: {
               type: 'text',
+              optional: true,
               validation: SrtPassphrase,
               envOverride: true,
             }
