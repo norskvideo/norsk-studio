@@ -39,8 +39,8 @@ export default function({
     configForm: {
       form: {
         model: { help: "The ggml model path", hint: { type: 'text', validation: Z.string().min(1, "Choosing a model is mandatory") } },
-        translate: { help: "Whether to translate the output to English", hint: { type: 'boolean', defaultValue: false } },
-        language: { help: "Source language (otherwise automatic)", hint: { type: 'text', validation: Z.union([Z.string().length(0), Z.string().min(1)]) } }
+        translate: { help: "Whether to translate the output to English", hint: { type: 'boolean', optional: true, defaultValue: false } },
+        language: { help: "Source language (otherwise automatic)", hint: { type: 'text', optional: true, validation: Z.union([Z.string().length(0), Z.string().min(1)]) } }
       }
     }
   });
