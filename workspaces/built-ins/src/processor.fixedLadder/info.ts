@@ -4,10 +4,9 @@ import type { FixedLadderConfig, LadderRungDefinition, LoganLadderRung, Ma35dLad
 import type { ResolutionName } from "@norskvideo/norsk-studio/lib/extension/common";
 import type { AmdMA35DH264, AmdMA35DHevc, LoganH264, NvidiaH264, QuadraH264, StreamKey, X264Codec } from "@norskvideo/norsk-sdk";
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
-import type { CustomEditorProps, FormEntry, FormHint, FormHintSingle, NewForm } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import type { ConfigForm, CustomEditorProps, FormEntry, FormHint, FormHintSingle, NewForm } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
-
-export default function({
+export default function ({
   defineComponent,
   Video
 }: Registration) {
@@ -43,7 +42,7 @@ export default function({
         },
       }
     },
-    extraValidation: function(ctx) {
+    extraValidation: function (ctx) {
       ctx.requireVideo(1);
     },
     display: (desc) => {
@@ -108,7 +107,7 @@ export default function({
               logan: rungEditorForm('logan'),
               nvidia: rungEditorForm('nvidia'),
               ma35d: rungEditorForm('ma35d'),
-            },
+            } as ConfigForm<LadderRungDefinition>,
             view: RungView,
             defaultValue: rungNames.map((n) => {
               return {
