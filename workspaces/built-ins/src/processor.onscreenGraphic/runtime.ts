@@ -237,16 +237,13 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         }),
       },
       {
-        url: '/active-graphic',
-        summary: 'Stop displaying the current graphic',
-        method: 'DELETE',
+        ...delete_<paths>('/active-graphic', paths),
         handler: ({ runtime }) => (async (_req, res) => {
           runtime.updates.sendCommand({
             type: 'change-graphic'
           })
           res.status(204).send();
         }),
-        responses: { '204': { description: "The active graphic was successfully deleted" } }
       },
     ]
   }

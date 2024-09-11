@@ -113,7 +113,14 @@ paths:
                 $ref: '#/components/schemas/errorResponse'
         404:
           description: Component not found
-
+    delete:
+      summary: Stop displaying the current graphic
+      x-route-type: instance
+      responses:
+        204:
+          description: The active graphic was successfully hidden
+        404:
+          description: Component not found
 
 
 components:
