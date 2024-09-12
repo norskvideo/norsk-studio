@@ -2,8 +2,6 @@ import type Registration from "@norskvideo/norsk-studio/lib/extension/registrati
 import { GlobalEzDrmConfig, GlobalAxinomConfig } from "@norskvideo/norsk-studio/lib/shared/config";
 import type { AutoCmafConfig, CmafOutputCommand, CmafOutputEvent, CmafOutputState } from "./runtime";
 import React from "react";
-import { NodeDescription } from "@norskvideo/norsk-studio/lib/shared/document";
-import { BaseConfig } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
 // Accepts as many video and audio streams as you might want
 // It's of note that we probably don't want to accidentally subscribe to
