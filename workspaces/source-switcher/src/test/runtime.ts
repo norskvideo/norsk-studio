@@ -351,6 +351,52 @@ describe("Multi camera select", () => {
         ]);
       })
     });
-  })
 
+
+
+    describe("Adding an overlay to itself", () => {
+      it("results in compose being active", async () => {
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        const source = await videoAndAudio(norsk, "primary");
+        const compiled = await compileDocument();
+        result = await go(norsk, compiled);
+        const switcher = result.components['select'] as SourceSwitch;
+        switcher.subscribe([new StudioNodeSubscriptionSource(source, testSourceDescription(), { type: "take-first-stream", select: Av })]);
+
+        await waitForCondition(() => latestState()?.availableSources.length == 2)
+
+        sendCommand({
+          type: 'select-source', source: { id: 'primary' }, overlays: [
+            {
+              source: {
+                id: "primary",
+              }
+            }
+          ]
+        })
+
+        await Promise.all([
+          assertNodeOutputsAudioFrames(norsk, result, 'select'),
+          assertNodeOutputsVideoFrames(norsk, result, 'select'),
+          waitForAssert(
+            () => {
+              return latestState()?.activeSource.id == 'primary';
+            },
+            () => {
+              expect(switcher.activeSource.primary.id).equals('primary', "Active source primary on component");
+              expect(switcher.activeSource.pin).equals('select-compose-0', "Active source pin on component");
+              expect(latestState()?.activeSource.id).equals('primary', "active source in runtime state")
+              expect(latestState()?.activeOverlays[0].source.id).equals('primary', "active source overlay")
+              expect(latestState()?.availableSources).length(2, "available sources")
+              expect(latestState()?.availableSources.map((s) => s.id)).contains('primary')
+              expect(latestState()?.availableSources.map((s) => s.id)).contains('fallback')
+            },
+            60000.0,
+            2000.0
+          ),
+        ]);
+      })
+    });
+
+  })
 })
