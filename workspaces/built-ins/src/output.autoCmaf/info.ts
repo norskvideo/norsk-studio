@@ -2,6 +2,8 @@ import type Registration from "@norskvideo/norsk-studio/lib/extension/registrati
 import { GlobalEzDrmConfig, GlobalAxinomConfig } from "@norskvideo/norsk-studio/lib/shared/config";
 import type { AutoCmafConfig, CmafOutputCommand, CmafOutputEvent, CmafOutputState } from "./runtime";
 import React from "react";
+import { NodeDescription } from "@norskvideo/norsk-studio/lib/shared/document";
+import { BaseConfig } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
 // Accepts as many video and audio streams as you might want
 // It's of note that we probably don't want to accidentally subscribe to
@@ -48,6 +50,21 @@ export default function(R: Registration) {
       }
       // hard to validate on multiple audio streams, as you can have one per 'stream'
       // I think we need to raise sensible runtime errors somewhere
+
+      // This can be even more clever (check the types of the nodes and only warn if they are different for example)
+      // but this will get us through IBC
+      const uniqueVideoStreamNodes = ctx.subscriptions.reduce((acc, s) => {
+        if (s.streams.select.includes("video")) {
+          if (!acc.includes(s.source)) {
+            acc.push(s.source);
+          }
+        }
+        return acc;
+      }, [] as string[]);
+
+      if (uniqueVideoStreamNodes.length > 1) {
+        ctx.addWarning("More than one video source detected, did you mean to do this? (For example: Did you subscribe to both a source *and* a ladder?)");
+      }
 
 
       // `ctx.config.__global` is currently not set client-side
