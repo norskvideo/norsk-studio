@@ -1,0 +1,64 @@
+__layout:
+  - id: srt-listener
+    x: 400
+    y: 256
+  - id: sourceswitcher
+    x: 960
+    y: 256
+  - id: preview
+    x: 1552
+    y: 224
+__globalConfig:
+  ice-servers: []
+  ezdrm-config: {}
+  axinom-config: {}
+components:
+  - type: input.srt-listener
+    config:
+      displayName: srt-listener
+      port: 5001
+      ip: 0.0.0.0
+      passphrase: ""
+      socketOptions: {}
+      sourceNames: permissive
+      streamIds:
+        - camera1
+        - camera2
+        - camera3
+      id: srt-listener
+    subscriptions: []
+  - type: processor.sourceSwitcher
+    config:
+      displayName: sourceSwitcher
+      resolution:
+        width: 1920
+        height: 1080
+      frameRate:
+        frames: 25
+        seconds: 1
+      sampleRate: 48000
+      channelLayout: stereo
+      id: sourceswitcher
+    subscriptions:
+      - source: srt-listener
+        streams:
+          type: take-specific-streams
+          select:
+            - video
+            - audio
+          filter:
+            - camera1
+            - camera2
+            - camera3
+  - type: output.preview
+    config:
+      displayName: preview
+      bufferDelayMs: 500
+      id: preview
+    subscriptions:
+      - source: sourceswitcher
+        streams:
+          type: take-first-stream
+          select:
+            - video
+            - audio

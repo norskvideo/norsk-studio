@@ -125,14 +125,13 @@ async function maybeCreatePlayer(created: CreatedClient[], source: SourceSwitchS
 }
 
 
-// NB: These are screen coordinates relative to the top left of the video element
-// and will need transforming into video space before sending up
 type Overlay = {
   x: number;
   y: number;
   width: number;
   height: number;
   source: CreatedClient;
+  selected: boolean;
 }
 
 type State = {
@@ -212,8 +211,10 @@ function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceS
                       y: relativeY,
                       width: DEFAULT_OVERLAY_WIDTH,
                       height: videoRect.height / (videoRect.width / DEFAULT_OVERLAY_WIDTH),
-                      source: sourceVideo
+                      source: sourceVideo,
+                      selected: true
                     })
+                    selectOverlay(state.overlays.length - 1, state.overlays);
                     return { ...state }
                   })
                 }
@@ -226,6 +227,24 @@ function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceS
       console.error(e);
     })
   }, [])
+
+  function clearSelection(overlays: Overlay[]) {
+    overlays.forEach((o) => {
+      o.selected = false;
+    })
+  }
+
+  function selectOverlay(ti: number, overlays: Overlay[]) {
+    overlays.forEach((o, i) => {
+      if (i == ti) {
+        o.selected = true;
+      } else {
+
+        o.selected = false;
+      }
+    })
+
+  }
 
   useEffect(() => {
     const promise = async () => {
@@ -279,16 +298,28 @@ function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceS
       </div>
       <div id="live-views" className="grid grid-cols-2 gap-4 mb-6">
         <div id="video-live-preview" className="h-full relative 2xl:w-8/12 lg:w-10/12 justify-self-end">
-          <video id="video-live" muted autoPlay ref={refLivePreviewVideo}></video>
+          <video onClick={() => {
+            setState((s) => {
+              clearSelection(s.overlays);
+              return { ...s };
+            })
+          }} id="video-live" muted autoPlay ref={refLivePreviewVideo}></video>
           {state.overlays.map((o, i) => {
             return <video
               key={i}
+              onClick={() => {
+                setState((s) => {
+                  selectOverlay(i, s.overlays);
+                  return { ...s };
+                })
+              }}
               style={{
                 position: 'absolute',
                 left: `${o.x}px`,
                 top: `${o.y}px`,
                 width: `${o.width}px`,
-                height: `${o.height}px`
+                height: `${o.height}px`,
+                border: `${o.selected ? '2px solid #FFFF00' : ''}`
               }}
               muted={true}
               autoPlay={true}
@@ -298,6 +329,12 @@ function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceS
 
                   interact(ref)
                     .draggable({
+                      onstart: () => {
+                        setState((state) => {
+                          selectOverlay(i, state.overlays);
+                          return { ...state };
+                        })
+                      },
                       listeners: {
                         move: (event) => {
 
@@ -319,6 +356,9 @@ function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceS
                         })
                       ]
                     }).resizable({
+                      modifiers: [
+                        interact.modifiers.aspectRatio({ ratio: "preserve" })
+                      ],
                       // resize from all edges and corners
                       edges: { left: true, right: true, bottom: true, top: true },
                       preserveAspectRatio: true,
@@ -353,7 +393,8 @@ function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceS
                 const parentRect = refLivePreviewVideo.current.getBoundingClientRect();
                 multiCamera.sendCommand({
                   type: "select-source", source: state.livePreviewSource.source, overlays: state.overlays.map((o) => {
-                    // const video = multiCamera.state.availableSources.find((s) => s.id == o.source.source.id && s.key == o.source.source.key);
+                    // We'll go with percentages for now
+                    // Is that more or less arbitrary than exact pixels? I'm not sure
                     return {
                       source: o.source.source,
                       destRect: {
@@ -370,6 +411,11 @@ function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceS
           >
             Take {state.overlays.length > 0 ? "Composition" : state.livePreviewSource?.source.key ?? state.livePreviewSource?.source.id}
           </button>
+          {state.overlays.length > 0 ? <button
+            className={takeButtonClasses}
+            onClick={(_e) => {
+              setState({ ...state, overlays: [] })
+            }}>Clear Composition</button> : <></>}
           <div className="absolute top-0 left-0 z-10 ml-2 mt-2 p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white opacity-70">
             Live Preview: <span id="active-source-overlay">{state.livePreviewSource?.source.key ?? state.livePreviewSource?.source.id}</span>
           </div>
@@ -382,7 +428,7 @@ function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceS
         </div>
       </div>
     </div>
-  </div>
+  </div >
 }
 
 function sortSource(a: SourceSwitchSource, b: SourceSwitchSource) {
