@@ -298,6 +298,8 @@ type SourceSwitchConfigComplete = {
   onPlayerOnline: (ev: { source: SourceSwitchSource, url: string }) => void,
 } & SourceSwitchConfig
 
+type InternalSource = { pin: string, primary: SourceSwitchSource, overlays: SourceSwitchOverlay[] }
+
 export class SourceSwitch extends CustomAutoDuplexNode {
   norsk: Norsk;
   cfg: SourceSwitchConfigComplete;
@@ -305,14 +307,16 @@ export class SourceSwitch extends CustomAutoDuplexNode {
   video?: VideoTestcardGeneratorNode;
   smooth?: StreamSwitchSmoothNode<string>;
   initialised: Promise<void>;
-  activeSource: { pin: string, primary: SourceSwitchSource, overlays: SourceSwitchOverlay[] } = { pin: '', primary: { id: '' }, overlays: [] };
-  desiredSource: { pin: string, primary: SourceSwitchSource, overlays: SourceSwitchOverlay[] } = { pin: '', primary: { id: '' }, overlays: [] };
+  activeSource: InternalSource = { pin: '', primary: { id: '' }, overlays: [] };
+  desiredSource: InternalSource = this.activeSource;
+  pendingSource: InternalSource = this.activeSource;
   availableSources: SourceSwitchSource[] = [];
   lastSmoothSwitchContext: Map<string, StreamMetadata[]> = new Map();
   whepOutputs: Map<string, { whep: WhepOutputNode, encoder?: SourceMediaNode }> = new Map();
   encodePreview?: SourceMediaNode;
   whepPreview?: WhepOutputNode;
   subscriptions: StudioNodeSubscriptionSource[] = [];
+  overlayInputs: StreamKeyOverrideNode[] = [];
   updates: RuntimeUpdates<SourceSwitchState, SourceSwitchCommand, SourceSwitchEvent>;
   shared: StudioShared;
 
@@ -422,18 +426,25 @@ export class SourceSwitch extends CustomAutoDuplexNode {
   }
 
   onTransitionComplete(pin: string) {
-    debuglog("Transition complete", { id: this.id, source: this.activeSource })
-    this.cfg.onActiveSourceChanged?.(this.activeSource.primary, this.activeSource.overlays);
-
+    debuglog("Transition complete", { id: this.id, source: this.activeSource, pin })
     if (pin == this.pendingCompose?.id) {
+      if (this.activeCompose) {
+        void this.activeCompose.compose.close();
+        void this.activeCompose.output.close();
+      }
       this.activeCompose = this.pendingCompose;
       this.pendingCompose = undefined;
       this.doSubscriptions();
+
+      // We shouldn't end up here but..
     } else if (this.pendingCompose) {
       void this.pendingCompose.compose.close();
       void this.pendingCompose.output.close();
       this.pendingCompose = undefined;
     }
+    // Effectively unlocking things for change again
+    this.activeSource = this.desiredSource;
+    this.cfg.onActiveSourceChanged?.(this.activeSource.primary, this.activeSource.overlays);
   }
 
   async onSwitchContext(allStreams: Map<string, StreamMetadata[]>) {
@@ -442,20 +453,38 @@ export class SourceSwitch extends CustomAutoDuplexNode {
   }
 
   setActiveSource(source: SourceSwitchSource, overlays: SourceSwitchOverlay[]) {
-    if (!this.sourceIsAvailable(source)) return;
+    debuglog("Request to switch source registered", { id: this.cfg.id, source });
 
-    // Quit this if we started
-    if (this.pendingCompose) {
-      void this.pendingCompose.compose.close();
-      void this.pendingCompose.output.close();
-      this.pendingCompose = undefined;
+    if (!this.sourceIsAvailable(source)) {
+      warninglog("Request to switch source ignored because it doesn't exist", { id: this.cfg.id, source, available: this.availableSources });
+      return;
     }
+
+    // Don't allow multiple simultaneous requests
+    // Client should be showing UI when things are already afoot
+    // There are lots of 'awaits' in the pipeline and if we don't do this
+    // then we'll end up with race conditions
+    if (this.pendingCompose) return;
+    if (this.desiredSource != this.activeSource) return;
 
     if (overlays.length > 0) {
       void this.setupComposeSource(source, overlays);
     } else {
       this.desiredSource = { pin: sourceSwitchSourceToPin(source), primary: source, overlays: [] };
       void this.maybeSwitchSource();
+    }
+  }
+
+  async maybeSwitchToFallback(source: InternalSource) {
+    if (this.pendingSource.primary.id == "fallback") return;
+    const allStreams = this.lastSmoothSwitchContext;
+    const currentUnavailable = !this.sourceIsAvailable(source.primary) || allStreams.get(sourceSwitchSourceToPin(source.primary))?.length !== 2;
+    const fallbackAvailable = this.sourceIsAvailable({ id: 'fallback' }) && allStreams.get(sourceSwitchSourceToPin({ id: 'fallback' }))?.length == 2;
+    if (currentUnavailable && fallbackAvailable) {
+      debuglog("Switching to fallback source", { id: this.id });
+      this.desiredSource = { pin: 'fallback', primary: { id: 'fallback' }, overlays: [] };
+      this.pendingSource = this.desiredSource;
+      this.smooth?.switchSource("fallback")
     }
   }
 
@@ -466,26 +495,18 @@ export class SourceSwitch extends CustomAutoDuplexNode {
     this.availableSources = [...allStreams.keys()].map(pinToSourceSwitchSource);
 
     // Switch to desired source if available and not already done so
-    if (this.activeSource.pin !== this.desiredSource.pin) {
+    if (this.pendingSource !== this.desiredSource) {
       const currentAvailable = this.sourceIsAvailable(this.desiredSource.primary) && allStreams.get(this.desiredSource.pin)?.length == 2;
       if (currentAvailable) {
-        this.activeSource = this.desiredSource;
+        this.pendingSource = this.desiredSource;
         this.smooth?.switchSource(this.desiredSource.pin);
       }
     }
-
-    // Switch to fallback if our desired source isn't available
-    if (this.activeSource.pin !== 'fallback') {
-      const currentUnavailable = !this.sourceIsAvailable(this.desiredSource.primary) || allStreams.get(this.desiredSource.pin)?.length !== 2;
-      const fallbackAvailable = this.sourceIsAvailable({ id: 'fallback' }) && allStreams.get(sourceSwitchSourceToPin({ id: 'fallback' }))?.length == 2;
-      if (currentUnavailable && fallbackAvailable) {
-        debuglog("Switching to fallback source", { id: this.id });
-        if (this.desiredSource.pin == this.activeSource.pin) {
-          this.desiredSource = { pin: 'fallback', primary: { id: 'fallback' }, overlays: [] };
-        }
-        this.activeSource = { pin: 'fallback', primary: { id: 'fallback' }, overlays: [] };
-        this.smooth?.switchSource("fallback")
-      }
+    // Switch to fallback if either active/pending stops being available
+    else if (this.pendingSource != this.activeSource) {
+      await this.maybeSwitchToFallback(this.pendingSource);
+    } else {
+      await this.maybeSwitchToFallback(this.activeSource);
     }
 
     for (const existing of oldSources) {
@@ -542,6 +563,11 @@ export class SourceSwitch extends CustomAutoDuplexNode {
   }
 
   async setupComposeSource(source: SourceSwitchSource, overlays: SourceSwitchOverlay[]) {
+    if (this.pendingCompose) {
+      await this.pendingCompose.compose.close();
+      await this.pendingCompose.output.close();
+      this.pendingCompose = undefined;
+    }
     const id = `${this.id}-compose-${this.composeCount++}`;
     this.pendingCompose = {
       id,
@@ -602,18 +628,35 @@ export class SourceSwitch extends CustomAutoDuplexNode {
       { source: this.pendingCompose.compose, sourceSelector: selectVideo }
     ])
 
+    // Set up the overlays in order
+    // We need pending and active here too...
+    await this.ensureEnoughOverlaysExist(overlays);
+
+    // And hook them up
+    overlays.forEach((o, i) => {
+      const source = this.subscriptions.find((s) => s.source.id == o.source.id);
+      if (!source) {
+        this.overlayInputs[i].subscribe([]);
+        return;
+      }
+      this.overlayInputs[i].subscribe(
+        o.source.key ?
+          [source.selectVideoForKey(o.source.key)[0]] :
+          [source.selectVideo()[0]]
+      );
+    });
+
     // And the rest
     this.pendingCompose.compose.subscribeToPins([
       source.key ?
         background.selectVideoToPinForKey("background", source.key)[0] :
         background.selectVideoToPin("background")[0]
-      , ...overlays.flatMap((o, i) => {
-        const source = this.subscriptions.find((s) => s.source.id == o.source.id);
-        if (!source) return [];
-        return o.source.key ?
-          [source.selectVideoToPinForKey(`overlay-${i}`, o.source.key)[0]] :
-          [source.selectVideoToPin(`overlay-${i}`)[0]];
-      })])
+      , ...overlays.map((_o, i) => {
+        return {
+          source: this.overlayInputs[i],
+          sourceSelector: videoToPin(`overlay-${i}`)
+        }
+      })]);
 
     // This could be a mixer..
     this.pendingCompose.audio.subscribe([
@@ -626,6 +669,22 @@ export class SourceSwitch extends CustomAutoDuplexNode {
     };
     this.doSubscriptions();
   }
+
+  async ensureEnoughOverlaysExist(overlays: SourceSwitchOverlay[]) {
+    while (this.overlayInputs.length < overlays.length) {
+      const i = await this.norsk.processor.transform.streamKeyOverride({
+        id: `${this.id}-compose-input-${this.overlayInputs.length}`,
+        streamKey: {
+          programNumber: 1,
+          streamId: 256,
+          sourceName: "compose-input",
+          renditionName: `input-${this.overlayInputs.length}`
+        }
+      })
+      this.overlayInputs.push(i)
+    }
+  }
+
 
   sourceIsAvailable(source: SourceSwitchSource) {
     return !!this.availableSources.find((s) => s.id == source.id && s.key == source.key);

@@ -60,7 +60,7 @@ export default function(R: Registration) {
         const evType = ev.type;
         switch (evType) {
           case 'active-source-changed':
-            return { ...state, activeSource: ev.activeSource };
+            return { ...state, activeSource: ev.activeSource, activeOverlays: ev.overlays };
           case 'source-online':
             state.availableSources.push(ev.source);
             return { ...state };
