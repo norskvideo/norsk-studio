@@ -13,6 +13,7 @@ export default function(R: Registration) {
     identifier: 'util.timestamps',
     category: 'output',
     name: "Jitter",
+    description: "A jitter utility which processes and tracks timestamps.",
     subscription: {
       accepts: {
         type: "multi-stream",

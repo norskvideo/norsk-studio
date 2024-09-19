@@ -6,6 +6,7 @@ export default function({ defineComponent, Audio }: Registration) {
     identifier: 'input.silence',
     category: 'input',
     name: "Silence Generator",
+    description: "A component that produces silent audio streams with configurable sample rate and channel layout.",
     subscription: {
       produces: {
         type: "single-stream",

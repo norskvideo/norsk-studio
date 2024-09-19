@@ -14,6 +14,7 @@ export default function({ defineComponent, validation: { Z }, All }: Registratio
     identifier: 'output.medialive',
     category: 'output',
     name: "Media Live Output",
+    description: "Enables the integration with AWS Elemental MediaLive, allowing users to output multiple media streams to a MediaLive channel. ",
     subscription: {
       accepts: {
         type: "multi-stream",

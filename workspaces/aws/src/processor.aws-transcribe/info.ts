@@ -16,6 +16,7 @@ export default function({
     identifier: 'processor.aws-transcribe',
     category: 'processor',
     name: "AWS Transcribe",
+    description: "Transcribes audio from a video stream into subtitles using AWS's Transcribe service. Additionally, the processor can optionally translate the generated subtitles into another language using AWS Translate.",
     subscription: {
       // Must have video AND audio?
       // Or is video optional?

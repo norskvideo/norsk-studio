@@ -15,6 +15,7 @@ export default function({
     identifier: 'processor.audioLevel',
     category: 'processor',
     name: "Audio Levels",
+    description: "Monitors and adjusts the audio levels of an incoming audio stream, providing real-time visualization and control of audio gain.",
     subscription: {
       // Only accept a single audio stream
       accepts: {

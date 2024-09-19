@@ -12,6 +12,7 @@ export default function(R: Registration) {
     identifier: 'util.stats.ma35d',
     category: 'output',
     name: "MA35D Stats",
+    description: "Tracks and processes statistics for the AMD MA35D processor which is used for the encoding, scaling and decoding of media.",
     subscription: {
       accepts: undefined,
       produces: undefined

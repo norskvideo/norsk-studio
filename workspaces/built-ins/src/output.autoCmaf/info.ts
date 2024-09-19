@@ -32,6 +32,7 @@ export default function(R: Registration) {
     identifier: 'output.autoCmaf',
     category: 'output',
     name: "Auto CMAF",
+    description: "This component handles the creation of CMAF outputs from multiple video and audio streams.",
     subscription: {
       // Again, accept anything
       // but reject the same stream twice

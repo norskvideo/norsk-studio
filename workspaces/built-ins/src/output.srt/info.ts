@@ -19,6 +19,7 @@ export default function(registration: Registration) {
     identifier: 'output.srt',
     category: 'output',
     name: "SRT Egest",
+    description: "This component manages the sending of SRT (Secure Reliable Transport) streams. It allows you to configure various settings to control how the SRT output is handled, including connection details, buffer settings, and delay options.",
     subscription: {
       // No validation?
       // Streams have to be unique? That's a stretch goal

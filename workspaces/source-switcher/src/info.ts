@@ -17,6 +17,7 @@ export default function(R: Registration) {
     identifier: 'processor.sourceSwitcher',
     category: 'processor',
     name: "Source Switcher",
+    description: "This component manages multiple A/V (audio and video) streams from different sources, switching between the sources dynamically.",
     subscription: {
       accepts: {
         type: 'multi-stream',

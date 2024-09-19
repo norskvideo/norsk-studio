@@ -14,6 +14,7 @@ export default function ({
     identifier: 'output.rtmp',
     category: 'output',
     name: "RTMP Egest",
+    description: "This component handles the output of RTMP (Real-Time Messaging Protocol) streams. It is used to connect to a remote RTMP server and manage the streaming of media. ",
     subscription: {
       // No validation?
       // Accept either *just* audio, or *just* video, or audio *and* video

@@ -13,6 +13,7 @@ export default function({
     identifier: 'output.statistics',
     category: 'output',
     name: "Statistics",
+    description: "This component accepts multiple media streams, captures and reports metrics or statistical data related to the media streams.",
     subscription: {
       // No validation required
       accepts: {

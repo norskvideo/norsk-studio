@@ -15,6 +15,7 @@ export default function(R: Registration) {
     identifier: 'output.preview',
     category: 'output',
     name: "Preview",
+    description: "Preview allows for the real-time preview of media streams. It provides a way to visualize and monitor the output from various media sources before final processing or distribution.",
     subscription: {
       accepts: {
         type: "single-stream",

@@ -19,6 +19,7 @@ export default function({
       identifier: 'input.srt-caller',
       category: 'input',
       name: "SRT Ingest (Caller)",
+      description: "This component allows you to receive Secure Reliable Transport (SRT) streams by calling a remote SRT listener.",
       subscription: {
         accepts: undefined,
         produces: {

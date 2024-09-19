@@ -20,6 +20,7 @@ export default function({
       identifier: 'input.srt-listener',
       category: 'input',
       name: "SRT Ingest (Listener)",
+      description: "This component handles media ingest via the SRT(Secure Reliable Transport) protocol. It acts as a listener, receiving media streams from remote SRT sources and is highly configurable, allowing for custom IP addresses, ports, and stream handling behaviours.",
       subscription: {
         accepts: undefined,
         produces: {
