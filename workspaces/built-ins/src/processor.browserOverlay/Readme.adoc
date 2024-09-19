@@ -1,5 +1,5 @@
-=== Browser Overlay
-This component overlays a browser-rendered URL on top of a single video stream. It accepts one video stream as input and produces an output with the specified URL rendered as an overlay.
+== Browser Overlay
+Capture a live URL and overlay onto a video
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -7,7 +7,6 @@ This component overlays a browser-rendered URL on top of a single video stream. 
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| url | URL to render on top of the video |   ✓ 
+| url | URL to render on top of the video |  ✓ 
 |===
-
 

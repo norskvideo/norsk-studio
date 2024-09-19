@@ -1,5 +1,5 @@
-=== Jitter
-This component defines a jitter utility which processes and tracks timestamps. It receives multiple streams, captures incoming timestamps for each stream, and tracks them for analysis. The component maintains a list of the most recent timestamps, with a maximum capacity of 200 entries per stream.
+== Jitter
+A jitter utility which processes and tracks timestamps.
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -8,5 +8,4 @@ This component defines a jitter utility which processes and tracks timestamps. I
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
 |===
-
 

@@ -1,4 +1,4 @@
-=== SRT Ingest (Listener)
+== SRT Ingest (Listener)
 This component handles media ingest via the SRT(Secure Reliable Transport) protocol. It acts as a listener, receiving media streams from remote SRT sources and is highly configurable, allowing for custom IP addresses, ports, and stream handling behaviours.
 
 === Configuration
@@ -7,22 +7,21 @@ This component handles media ingest via the SRT(Secure Reliable Transport) proto
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| port | The port this SRT input will listen on |  ✓  
-| ip | The IP address this SRT input will listen on |  ✓  
-| passphrase | Optional: Authentication for this SRT input |   𐄂 
-| sourceNames | Either auto assign streams in the order they come in, or restrict connections to those with known stream ids |  ✓  
-| streamIds | List of stream ids to assign to the accepted streams |  ✓  
+| port | The port this SRT input will listen on |  ✓ 
+| ip | The IP address this SRT input will listen on |  ✓ 
+| passphrase | Optional: Authentication for this SRT input |  𐄂 
+| sourceNames | Either auto assign streams in the order they come in, or restrict connections to those with known stream ids |  ✓ 
+| streamIds | List of stream ids to assign to the accepted streams |  ✓ 
 |===
 
-== Socket Options
 
+=== Socket Options
 [cols="2,6,^1",options="header"]
 |===
 |Option | Description | Required
-| receiveLatency | The latency value in the receiving direction of the socket (SRTO_RCVLATENCY) |   𐄂  
-| peerLatency | The latency value provided by the sender side as a minimum value for the receiver (SRTO_PEERLATENCY) |   𐄂  
-| inputBandwidth | Input bandwidth (SRTO_INPUTBW) |   𐄂  
-| overheadBandwidth | Overhead bandwidth (SRTO_OHEADBW) |   𐄂  
-| maxBandwidth | Max bandwidth (SRTO_MAXBW) |   𐄂  
+| receiveLatency | The latency value in the receiving direction of the socket (SRTO_RCVLATENCY) |  𐄂 
+| peerLatency | The latency value provided by the sender side as a minimum value for the receiver (SRTO_PEERLATENCY) |  𐄂 
+| inputBandwidth | Input bandwidth (SRTO_INPUTBW) |  𐄂 
+| overheadBandwidth | Overhead bandwidth (SRTO_OHEADBW) |  𐄂 
+| maxBandwidth | Max bandwidth (SRTO_MAXBW) |  𐄂 
 |===
-
