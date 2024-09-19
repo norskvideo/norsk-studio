@@ -1,6 +1,5 @@
-=== Auto CMAF
-This component is designed to handle the creation of CMAF outputs from multiple video and audio streams. It supports segmenting, publishing to S3 destinations, and managing ad insertions.
-
+== Auto CMAF
+This component handles the creation of CMAF outputs from multiple video and audio streams.
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -8,14 +7,14 @@ This component is designed to handle the creation of CMAF outputs from multiple 
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| name | The name of the multivariant&#x2F;dash playlist |  ✓  
-| sessionId | Generate a unique session id per run to avoid cache collisions |  ✓  
-| s3Destinations | S3 destinations to publish to |  ✓  
-| drmProvider | Encrypt with a DRM provider (if configured globally) |   𐄂 
+| name | The name of the multivariant&#x2F;dash playlist |  ✓ 
+| sessionId | Generate a unique session id per run to avoid cache collisions |  ✓ 
+| s3Destinations | S3 destinations to publish to |  ✓ 
+| drmProvider | Encrypt with a DRM provider (if configured globally) |  𐄂 
 |===
 
-== Segments Configuration Options
 
+=== Segments
 [cols="2,6,^1",options="header"]
 |===
 |Option | Description | Required
@@ -23,7 +22,6 @@ This component is designed to handle the creation of CMAF outputs from multiple 
 | defaultSegmentCount | How many segments to display in a default playlist (0 means show all) |  ✓ 
 | targetSegmentDuration | How many seconds should be in each segment |  ✓ 
 | targetPartDuration | For low latency playlists, what size parts should be generated in seconds |  ✓ 
-| holdBackSegments | How many segments back should a player start |   𐄂  
-| holdBackParts | How many parts back should a player start |   𐄂  
+| holdBackSegments | How many segments back should a player start |  𐄂 
+| holdBackParts | How many parts back should a player start |  𐄂 
 |===
-

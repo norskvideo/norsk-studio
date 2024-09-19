@@ -1,5 +1,5 @@
-=== Source Switcher
-This component manages multiple A/V (audio and video) streams from different sources, switching between the sources dynamically. It accepts multiple input streams containing both audio and video and produces a single output stream with synchronized A/V content. The component ensures that each input stream contains both audio and video from the same source - any mismatch or missing media will trigger a validation error.
+== Source Switcher
+This component manages multiple A&#x2F;V (audio and video) streams from different sources, switching between the sources dynamically.
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -7,10 +7,9 @@ This component manages multiple A/V (audio and video) streams from different sou
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| resolution | All video will be normalised to this resolution |   ✓ 
-| frameRate | All video will be normalised to this frame rate |   ✓ 
-| sampleRate | All audio will be normalised to this sample rate |   ✓ 
-| channelLayout | All audio will be normalised to this channel layout |   ✓ 
+| resolution | All video will be normalised to this resolution |  ✓ 
+| frameRate | All video will be normalised to this frame rate |  ✓ 
+| sampleRate | All audio will be normalised to this sample rate |  ✓ 
+| channelLayout | All audio will be normalised to this channel layout |  ✓ 
 |===
-
 

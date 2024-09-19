@@ -1,5 +1,5 @@
-=== Whisper Transcribe
-This component transcribes audio from a video stream. It requires a single video stream to use as a reference and a single audio stream to transcribe. The component allows specifying the source language and can optionally translate the transcribed text to English.
+== Whisper Transcribe
+This component transcribes audio from a video stream.
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -7,9 +7,8 @@ This component transcribes audio from a video stream. It requires a single video
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| model | The ggml model path | ✓ 
-| translate | Whether to translate the output to English |   𐄂 
-| language | Source language (otherwise automatic) |   𐄂 
+| model | The ggml model path |  ✓ 
+| translate | Whether to translate the output to English |  𐄂 
+| language | Source language (otherwise automatic) |  𐄂 
 |===
-
 

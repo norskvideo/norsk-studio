@@ -1,5 +1,5 @@
-=== UDP TS Egest
-This component outputs multiple media streams over UDP in TS (Transport Stream) format. It accepts multiple input streams and sends them to a specified IP address and port. Key settings include the port for output, the destination IP, buffer delay in milliseconds, and the network interface to bind to. The component ensures that the UDP output is configured correctly with validations for port, IP address, buffer delay, and interface.
+== UDP TS Egest
+This component outputs multiple media streams over UDP in TS (Transport Stream) format. It accepts multiple input streams and sends them to a specified IP address and port.
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -7,10 +7,9 @@ This component outputs multiple media streams over UDP in TS (Transport Stream) 
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| port | The port this UDP TS output will send to |   ✓ 
-| destinationIp | The IP address this UDP TS output will send to |   ✓ 
-| bufferDelayMs | How many milliseconds in the jitter buffer |    ✓  
-| interface | Which interface to bind to for publishing |   ✓ 
+| port | The port this UDP TS output will send to |  ✓ 
+| destinationIp | The IP address this UDP TS output will send to |  ✓ 
+| bufferDelayMs | How many milliseconds in the jitter buffer |  ✓ 
+| interface | Which interface to bind to for publishing |  ✓ 
 |===
-
 

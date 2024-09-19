@@ -1,6 +1,5 @@
-=== Encode Ladder
-The Fixed Ladder Encoder is a processor component for encoding a single input video stream into multiple encoded renditions. It creates an encoding ladder, where each "rung" represents a different quality level or rendition of the original video, typically varying in resolution and bitrate.
-
+== Encode Ladder
+The Fixed Ladder Encoder is a processor component for encoding a single input video stream into multiple encoded renditions. It creates an encoding ladder, where each &#x60;rung&#x60; represents a different quality level or rendition of the original video, typically varying in resolution and bitrate.
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -8,35 +7,6 @@ The Fixed Ladder Encoder is a processor component for encoding a single input vi
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| rungs | The rungs in this encode ladder |   𐄂 
+| rungs | The rungs in this encode ladder |  ✓ 
 |===
-
-=== Rung Configuration
-Each rung in the ladder can be configured with different codecs and settings depending on the hardware or software encoder available. The following rung types are supported:
-
-[cols="2,6,^1",options="header"]
-|===
-| Option | Description | Required
-
-| software
-| Defines the rung for software-based encoding using X264 or X265.
-| 𐄂
-
-| ma35d
-| Defines the rung for hardware-based encoding using AMD MA35D.
-| 𐄂
-
-| logan
-| Defines the rung for hardware-based encoding using Logan encoders.
-| 𐄂
-
-| nvidia
-| Defines the rung for hardware-based encoding using Nvidia encoders.
-| 𐄂
-
-| quadra
-| Defines the rung for hardware-based encoding using Quadra encoders.
-| 𐄂
-|===
-
 

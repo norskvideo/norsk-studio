@@ -1,10 +1,5 @@
-=== WHEP Egest
-This component allows us to use WebRTC egress for outputs. 
-
-== Features
-* Accepts only a single stream. Can either be an audio stream, a video stream, or a stream with both audio and video 
-* Integration with ICE (Interactive Connectivity Establishment) servers for NAT traversal
-* Configurable jitter buffer for managing network inconsistencies
+== WHEP Egest
+This component allows us to use WebRTC egress for outputs.
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -12,7 +7,6 @@ This component allows us to use WebRTC egress for outputs.
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| bufferDelayMs | How many milliseconds in the jitter buffer |   ✓ 
+| bufferDelayMs | How many milliseconds in the jitter buffer |  ✓ 
 |===
-
 
