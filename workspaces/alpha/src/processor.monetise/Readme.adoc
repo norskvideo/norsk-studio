@@ -1,0 +1,11 @@
+== Monetise
+Allows for the monetization of video and audio streams by incorporating ads and handling their lifecycle within the output stream.
+
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+|===
+
