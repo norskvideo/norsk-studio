@@ -14,6 +14,7 @@ export default function(R: Registration) {
     identifier: 'processor.monetise',
     category: 'output',
     name: "Monetise",
+    description: "Allows for the monetization of video and audio streams by incorporating ads and handling their lifecycle within the output stream.",
     subscription: {
       accepts: {
         type: "single-stream",

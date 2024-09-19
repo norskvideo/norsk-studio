@@ -11,6 +11,7 @@ export default function({
     identifier: 'output.udpTs',
     category: 'output',
     name: "UDP TS Egest",
+    description: "This component outputs multiple media streams over UDP in TS (Transport Stream) format. It accepts multiple input streams and sends them to a specified IP address and port.",
     subscription: {
       // Just works with no validation
       // although uniqueness again, stretch goal

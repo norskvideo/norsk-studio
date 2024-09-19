@@ -11,6 +11,7 @@ export default function({ defineComponent, Av, validation: { Z } }: Registration
     identifier: 'input.mediaconnect',
     category: 'input',
     name: "Media Connect Input",
+    description: "Allows for integration with AWS Elemental MediaConnect, enabling users to ingest media flows from the cloud into their processing pipeline.",
     subscription: {
       produces: {
         type: "single-stream", // for now anyway

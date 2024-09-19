@@ -15,6 +15,7 @@ export default function({
     identifier: 'processor.cascadingSwitch',
     category: 'processor',
     name: "Cascading Switch",
+    description: "This component manages multiple A/V (audio and video) sources based on priority, allowing for the configuration of settings such as resolution, frame rate, sample rate, and channel layout.",
     subscription: {
       // This needs to change anyway
       // but it'll be the same as MCS

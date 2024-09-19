@@ -13,6 +13,7 @@ export default function(R: Registration) {
     identifier: 'util.stats.latency',
     category: 'output',
     name: "Latency Probe",
+    description: "This component tracks and processes latency statistics within a media processing pipeline.",
     subscription: {
       accepts: undefined,
       produces: undefined

@@ -15,6 +15,7 @@ export default function({
     identifier: 'processor.actionReplay',
     category: 'processor',
     name: "Action Replay",
+    description: "This component replays media content upon request, managing both audio and video streams.",
     subscription: {
       accepts: {
         type: 'single-stream',

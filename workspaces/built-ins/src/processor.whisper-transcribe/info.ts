@@ -11,6 +11,7 @@ export default function({
     identifier: 'processor.whisper-transcribe',
     category: 'processor',
     name: "Whisper Transcribe",
+    description: "This component transcribes audio from a video stream.",
     subscription: {
       accepts: {
         type: 'single-stream',

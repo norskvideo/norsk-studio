@@ -13,6 +13,7 @@ export default function(R: Registration) {
     identifier: 'output.whep',
     category: 'output',
     name: "WHEP Egest",
+    description: "This component allows us to use WebRTC egress for outputs.",
     subscription: {
       // No validation?
       // Accept either *just* audio, or *just* video, or audio *and* video

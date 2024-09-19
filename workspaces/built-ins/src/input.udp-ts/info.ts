@@ -10,6 +10,7 @@ export default function({
       identifier: 'input.udp-ts',
       category: 'input',
       name: "UDP TS ingest",
+      description: "This component receives and processes MPEG Transport Streams (TS) over UDP.",
       subscription: {
         accepts: undefined,
         produces: {

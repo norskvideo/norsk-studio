@@ -21,6 +21,7 @@ export default function({
     identifier: 'processor.audioMixer',
     category: 'processor',
     name: "Audio Mixer",
+    description: "Combines and manages multiple audio streams into a single output stream, providing fine-grained control over audio levels, gain adjustments, and mute functionality for each source in the mix.",
     subscription: {
       accepts: {
         type: "multi-stream",

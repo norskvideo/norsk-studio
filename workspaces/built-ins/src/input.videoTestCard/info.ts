@@ -12,6 +12,7 @@ export default function({
     identifier: 'input.videoTestCard',
     category: 'input',
     name: "Video Test Card",
+    description: "The Video Test Card component generates a test card video stream with customizable settings.",
     subscription: {
       accepts: undefined,
       produces: {

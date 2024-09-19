@@ -17,6 +17,7 @@ export default function ({
     identifier: 'processor.fixedLadder',
     category: 'processor',
     name: "Encode Ladder",
+    description: "The Fixed Ladder Encoder is a processor component for encoding a single input video stream into multiple encoded renditions. It creates an encoding ladder, where each `rung` represents a different quality level or rendition of the original video, typically varying in resolution and bitrate.",
     subscription: {
       // Only accept a single video stream
       accepts: {
