@@ -1,6 +1,6 @@
 {
   "name": "@norskvideo/norsk-studio-source-switcher",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",
@@ -25,7 +25,7 @@
     "@aws-sdk/client-translate": "^3.535.0",
     "@norskvideo/norsk-sdk": "^1.0.383",
     "@norskvideo/norsk-studio": "^1.24.0",
-    "@norskvideo/norsk-studio-built-ins": "1.15.0",
+    "@norskvideo/norsk-studio-built-ins": "1.16.0",
     "@norskvideo/webrtc-client": "^0.1.2",
     "express": "^4.18.2",
     "express-ws": "^5.0.2",
