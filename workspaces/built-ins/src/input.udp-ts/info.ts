@@ -4,7 +4,7 @@ import type { UdpTsInputSettings } from "./runtime"
 export default function({
   defineComponent,
   Av,
-  validation: { Z, Port, IpAddress, SourceName, unique } }: Registration) {
+  validation: { Z, Port, Hostname, SourceName, unique } }: Registration) {
   return defineComponent<UdpTsInputSettings>(
     {
       identifier: 'input.udp-ts',
@@ -21,13 +21,13 @@ export default function({
       display: (desc) => {
         return {
           port: desc.config.port.toString(),
-          ip: desc.config.ip
+          ip: desc.config.host
         }
       },
       configForm: {
         form: {
           port: { help: "The receiving port", hint: { type: 'numeric', validation: Port, defaultValue: 5001, global: unique('port') } },
-          ip: { help: "The receiving IP address", hint: { type: 'text', validation: IpAddress, defaultValue: "127.0.0.1" } },
+          host: { help: "The receiving IP address/hostname", hint: { type: 'text', validation: Hostname, defaultValue: "127.0.0.1" } },
           sourceName: { help: "Source name to identify this by", hint: { type: 'text', validation: SourceName, defaultValue: "udp-ts", global: unique('sourceName') } },
           interface: { help: "Optional interface to bind to", hint: { type: 'text', optional: true, validation: Z.union([Z.string().min(2).max(32), Z.string().length(0)]).optional() } },
           timeout: { help: "Timeout in milliseconds before determining the input is closed", hint: { type: 'numeric', validation: Z.number().refine((value: number) => value > 0 && value < 600_000, "Timeout must be less than 10 minutes"), defaultValue: 1000.0 } },

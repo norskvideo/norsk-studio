@@ -140,7 +140,7 @@ export class MediaLiveOutput extends CustomSinkNode {
     // Just assume RTP for now
     const udp = await this.norsk.output.udpTs({
       id: `${this.id}-udpTs`,
-      destinationIp: url.Ip,
+      destinationHost: url.Ip,
       port: parseInt(url.Port, 10),
       interface: 'any',
       rtpEncapsulate: true,

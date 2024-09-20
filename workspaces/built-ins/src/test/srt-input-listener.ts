@@ -47,7 +47,7 @@ describe("SRT Listener Input", () => {
     id: 'srt',
     displayName: 'srt',
     port: 65403,
-    ip: '0.0.0.0',
+    host: '0.0.0.0',
     sourceNames: 'permissive',
     streamIds: ['first'],
     socketOptions: {}
@@ -68,7 +68,7 @@ describe("SRT Listener Input", () => {
         const srt = await norsk!.output.srt({
           id: "av-srt",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403
         })
         srt.subscribe([{ source: av, sourceSelector: selectAV }])
@@ -108,7 +108,7 @@ describe("SRT Listener Input", () => {
         srt = await norsk!.output.srt({
           id: "av-srt",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403
         })
         srt.subscribe([{ source: av, sourceSelector: selectAV }])
@@ -132,7 +132,7 @@ describe("SRT Listener Input", () => {
         srt = await norsk!.output.srt({
           id: "av-srt",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403
         })
         srt.subscribe([{ source: av!, sourceSelector: selectAV }])
@@ -162,14 +162,14 @@ describe("SRT Listener Input", () => {
         srt1 = await norsk!.output.srt({
           id: "av-srt-1",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
         srt2 = await norsk!.output.srt({
           id: "av-srt-2",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403
         })
         srt2.subscribe([{ source: av!, sourceSelector: selectAV }])
@@ -203,7 +203,7 @@ describe("SRT Listener Input", () => {
     id: 'srt',
     displayName: 'srt',
     port: 65403,
-    ip: '0.0.0.0',
+    host: '0.0.0.0',
     sourceNames: 'permissive',
     streamIds: ['first', 'second'],
     socketOptions: {}
@@ -226,7 +226,7 @@ describe("SRT Listener Input", () => {
         srt1 = await norsk!.output.srt({
           id: "av-srt-1",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
@@ -265,7 +265,7 @@ describe("SRT Listener Input", () => {
         srt1 = await norsk!.output.srt({
           id: "av-srt-1",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403,
           streamId: 'second'
         })
@@ -306,14 +306,14 @@ describe("SRT Listener Input", () => {
         srt1 = await norsk!.output.srt({
           id: "av-srt-1",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
         srt2 = await norsk!.output.srt({
           id: "av-srt-2",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403
         })
         srt2.subscribe([{ source: av!, sourceSelector: selectAV }])
@@ -349,7 +349,7 @@ describe("SRT Listener Input", () => {
     id: 'srt',
     displayName: 'srt',
     port: 65403,
-    ip: '0.0.0.0',
+    host: '0.0.0.0',
     sourceNames: 'strict',
     streamIds: ['first'],
     socketOptions: {}
@@ -373,7 +373,7 @@ describe("SRT Listener Input", () => {
         srt1 = await norsk!.output.srt({
           id: "av-srt-1",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403
         })
         srt1.subscribe([{ source: av!, sourceSelector: selectAV }])
@@ -411,7 +411,7 @@ describe("SRT Listener Input", () => {
         srt1 = await norsk!.output.srt({
           id: "av-srt-1",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403,
           streamId: 'wrong'
         })
@@ -452,7 +452,7 @@ describe("SRT Listener Input", () => {
         srt1 = await norsk!.output.srt({
           id: "av-srt-1",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403,
           streamId: 'first'
         })
@@ -486,7 +486,7 @@ describe("SRT Listener Input", () => {
     id: 'srt',
     displayName: 'srt',
     port: 65403,
-    ip: '0.0.0.0',
+    host: '0.0.0.0',
     sourceNames: 'strict',
     streamIds: ['first', 'second'],
     socketOptions: {}
@@ -511,7 +511,7 @@ describe("SRT Listener Input", () => {
         srt1 = await norsk!.output.srt({
           id: "av-srt-1",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403,
           streamId: 'first'
         })
@@ -519,7 +519,7 @@ describe("SRT Listener Input", () => {
         srt2 = await norsk!.output.srt({
           id: "av-srt-2",
           mode: "caller",
-          ip: "127.0.0.1",
+          host: "127.0.0.1",
           port: 65403,
           streamId: 'second'
         })

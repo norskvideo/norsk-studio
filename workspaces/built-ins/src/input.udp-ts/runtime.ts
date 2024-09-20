@@ -1,7 +1,7 @@
 import { Norsk, UdpTsInputSettings as SdkSettings } from '@norskvideo/norsk-sdk';
 import { SimpleInputWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-export type UdpTsInputSettings = Pick<SdkSettings, 'interface' | 'timeout' | 'rtpDecapsulate' | 'sourceName' | 'ip' | 'port'> & {
+export type UdpTsInputSettings = Pick<SdkSettings, 'interface' | 'timeout' | 'rtpDecapsulate' | 'sourceName' | 'host' | 'port'> & {
   id: string,
   displayName: string,
 }

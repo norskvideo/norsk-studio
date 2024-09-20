@@ -31,7 +31,7 @@ describe("SRT Caller Input", () => {
             {
               sourceName: 'foo',
               port: 65403,
-              ip: '127.0.0.1',
+              host: '127.0.0.1',
               socketOptions: {}
             }
           ).reify())
@@ -51,7 +51,7 @@ describe("SRT Caller Input", () => {
     srt = await norsk!.output.srt({
       id: "av-srt-output",
       mode: "listener",
-      ip: "0.0.0.0",
+      host: "0.0.0.0",
       port: 65403
     })
     srt.subscribe([{ source: av, sourceSelector: selectAV }])
@@ -84,7 +84,7 @@ describe("SRT Caller Reconnect", () => {
             {
               sourceName: 'foo',
               port: 65403,
-              ip: '127.0.0.1',
+              host: '127.0.0.1',
               socketOptions: {}
             }
           ).reify())
@@ -104,7 +104,7 @@ describe("SRT Caller Reconnect", () => {
     srt = await norsk!.output.srt({
       id: "av-srt-output",
       mode: "listener",
-      ip: "0.0.0.0",
+      host: "0.0.0.0",
       port: 65403
     })
     srt.subscribe([{ source: av, sourceSelector: selectAV }])
@@ -134,7 +134,7 @@ describe("SRT Caller Reconnect", () => {
     srt = await norsk!.output.srt({
       id: "av-srt-output",
       mode: "listener",
-      ip: "0.0.0.0",
+      host: "0.0.0.0",
       port: 65403
     })
     srt.subscribe([{ source: av!, sourceSelector: selectAV }])

@@ -9,7 +9,7 @@ export default function({
   Av,
   validation: validation
 }: Registration) {
-  const { Port, IpAddress, SourceName, SrtPassphrase, SrtStreamId } = validation;
+  const { Port, Hostname, SourceName, SrtPassphrase, SrtStreamId } = validation;
   const SocketConfiguration = React.lazy(async () => {
     const views = await import('../shared/srt-form-views')
     return { default: views.SocketConfiguration }
@@ -30,13 +30,13 @@ export default function({
       display: (desc) => {
         return {
           port: desc.config.port.toString(),
-          ip: desc.config.ip
+          ip: desc.config.host
         }
       },
       configForm: {
         form: {
           port: { help: "The port this SRT input will connect to", hint: { type: 'numeric', validation: Port, defaultValue: 5001 } },
-          ip: { help: "The IP address this SRT input will connect to", hint: { type: 'text', validation: IpAddress, defaultValue: "0.0.0.0" } },
+          host: { help: "The IP address/hostname this SRT input will connect to", hint: { type: 'text', validation: Hostname, defaultValue: "0.0.0.0" } },
           sourceName: { help: "Source name to identify this by", hint: { type: 'text', validation: SourceName, defaultValue: "camera1" } },
           passphrase: { help: "Optional: Authentication for this SRT input", hint: { type: 'text', optional: true, validation: SrtPassphrase } },
           streamId: { help: "Optional: StreamId to use when calling the remote listener", hint: { type: 'text', optional: true, validation: SrtStreamId } },

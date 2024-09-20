@@ -7,7 +7,7 @@ import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 
 export type SrtInputSettings = Pick<SdkSettings
   , 'port'
-  | 'ip'
+  | 'host'
   | 'passphrase'>
   & {
     id: string,
