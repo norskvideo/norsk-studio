@@ -23,7 +23,7 @@
     "@aws-sdk/client-medialive": "^3.499.0",
     "@aws-sdk/client-mediapackage": "^3.499.0",
     "@aws-sdk/client-translate": "^3.535.0",
-    "@norskvideo/norsk-sdk": "^1.0.377",
+    "@norskvideo/norsk-sdk": "^1.0.383",
     "@norskvideo/norsk-studio": "^1.23.0",
     "@norskvideo/norsk-studio-built-ins": "^1.13.0",
     "@norskvideo/webrtc-client": "^0.1.2",
