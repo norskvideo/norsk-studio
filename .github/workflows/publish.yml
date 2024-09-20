@@ -61,6 +61,13 @@ jobs:
     - name: Version Bump
       run: npm version --workspaces ${{ inputs.new-version }}  --git-tag-version=false
 
+    - name: Project Dep Update
+      run: |
+          ./scripts/update-version.sh built-ins
+          ./scripts/update-version.sh source-switcher
+          ./scripts/update-version.sh aws
+          ./scripts/update-version.sh alpha
+
     - name: Commit New Version
       uses: stefanzweifel/git-auto-commit-action@v2.3.0
       env:
