@@ -9,6 +9,7 @@ import { AxinomConfig, EzDrmConfig } from '@norskvideo/norsk-studio/lib/shared/c
 import { CryptoDetails } from '../shared/drm/cpix';
 import { ezdrmInit } from '../shared/drm/ezdrm';
 import { axinomInit } from '../shared/drm/axinom';
+import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 
 
 export type AutoCmafS3Destination = {
@@ -78,6 +79,8 @@ export class AutoCmaf extends CustomSinkNode {
   mv?: CmafMultiVariantOutputNode;
   defaultProgramNumber: number = 0;
   defaultSourceName: string = '';
+
+  control: ContextPromiseControl = new ContextPromiseControl(this.handleContext.bind(this));
 
   // But we'll make further entries if we see further programs
   currentMultiVariants: { node?: CmafMultiVariantOutputNode, programNumber: number, sourceName: string }[] = [];
@@ -183,17 +186,10 @@ export class AutoCmaf extends CustomSinkNode {
   }
 
 
-  async sourceContextChange(responseCallback: (error?: SubscriptionError) => void) {
-    this.pendingResponses.push(responseCallback);
-    if (this.pendingResponses.length == 1) {
-      // This is the only thing in the queue - feel free to start it
-      setTimeout(() => void this.popContextStack(), 0);
-    }
-    // And we always wait for all of this to happen
-    return true;
-  }
-
-  async popContextStack() {
+  // Can now guarantee this is only going to be ran once at a time
+  // but work will be queued up and merged so it gets called the least amount of times
+  // a pile of work below where we create pending state so we don't overlap can be removed
+  async handleContext() {
     // This is where I get to create my nodes based on all the active sources?
     // but also by using our selectors to do that..
     const streams: {
@@ -392,10 +388,6 @@ export class AutoCmaf extends CustomSinkNode {
 
     const thisResponse = this.pendingResponses.shift();
 
-    if (this.pendingResponses.length > 0) {
-      await this.popContextStack();
-    }
-
     await Promise.all(creations);
 
     const defaultSources = this.currentMedia.flatMap((m) => {
@@ -430,23 +422,7 @@ export class AutoCmaf extends CustomSinkNode {
   }
 
   override subscribe(subs: StudioNodeSubscriptionSource[]) {
-    const newSources = new Map();
-    subs.forEach((sub) => {
-      newSources.set(sub.source, sub);
-    }, new Map<CreatedMediaNode, StudioNodeSubscriptionSource[]>());
-    this.currentSources.forEach((subscription, source) => {
-      if (!newSources.has(source)) {
-        subscription.unregisterForContextChange(this);
-      }
-    });
-    newSources.forEach((subscription, source) => {
-      if (!this.currentSources.has(source)) {
-        subscription.registerForContextChange(this);
-      }
-    });
-    this.currentSources = newSources;
-    // Now we manually invoke this puppy, because we want to do subscriptions based on current contexts if available
-    void this.sourceContextChange((() => { }));
+    this.control.setSources(subs);
   }
 }
 
