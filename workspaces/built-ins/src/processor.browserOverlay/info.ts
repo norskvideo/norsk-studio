@@ -1,5 +1,5 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
-import type { BrowserOverlayConfig } from "./runtime";
+import type { BrowserOverlayCommand, BrowserOverlayConfig, BrowserOverlayEvent, BrowserOverlayState } from "./runtime";
 import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 
 
@@ -8,10 +8,11 @@ export default function({
   Video,
   validation: { Z },
 }: Registration) {
-  return defineComponent<BrowserOverlayConfig>({
+  return defineComponent<BrowserOverlayConfig, BrowserOverlayState, BrowserOverlayCommand, BrowserOverlayEvent>({
     identifier: 'processor.browserOverlay',
     category: 'processor',
     name: "Browser Overlay",
+    description: 'Capture a live URL and overlay onto a video',
     subscription: {
       // Only accept a single video stream
       accepts: {
@@ -28,7 +29,26 @@ export default function({
     },
     display: (desc) => {
       return {
-        url: desc.config?.url
+        url: desc.config.url
+      }
+    },
+    runtime: {
+      initialState: () => ({
+        currentUrl: "",
+        enabled: true
+      }),
+      handleEvent: (ev, state) => {
+        const evType = ev.type;
+        switch (evType) {
+          case "url-changed":
+            return { ...state, currentUrl: ev.url };
+          case "enabled":
+            return { ...state, enabled: true };
+          case "disabled":
+            return { ...state, enabled: false};
+          default:
+            assertUnreachable(evType)
+        }
       }
     },
     configForm: {
@@ -40,4 +60,8 @@ export default function({
       }
     }
   });
+}
+
+function assertUnreachable(_: never): never {
+  throw new Error("Didn't expect to get here");
 }
