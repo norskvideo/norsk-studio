@@ -26,7 +26,7 @@
     "@aws-sdk/client-translate": "^3.535.0",
     "@norskvideo/norsk-api": "file:../../../norsk/client/workspaces/api",
     "@norskvideo/norsk-sdk": "file:../../../norsk/client/workspaces/sdk",
-    "@norskvideo/norsk-studio": "file:../../../studio-core",
+    "@norskvideo/norsk-studio": "file:../../../norsk-studio-core",
     "@norskvideo/webrtc-client": "^0.1.2",
     "express": "^4.18.2",
     "express-ws": "^5.0.2",

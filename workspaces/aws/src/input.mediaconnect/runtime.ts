@@ -123,7 +123,7 @@ export class MediaConnectSource extends CustomSourceNode {
     const srt = await this.norsk.input.srt({
       id: `${this.id}-srt`,
       mode: 'caller',
-      ip: output.ListenerAddress,
+      host: output.ListenerAddress,
       port: output.Port,
       sourceName: this.id,
       onConnection: () => {

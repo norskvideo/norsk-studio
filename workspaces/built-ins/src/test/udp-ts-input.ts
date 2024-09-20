@@ -29,7 +29,7 @@ describe("UDP TS Input", () => {
             {
               sourceName: 'foo',
               port: 65403,
-              ip: '127.0.0.1'
+              host: '127.0.0.1'
             }
           ).reify())
       .reify();
@@ -53,7 +53,7 @@ describe("UDP TS Input", () => {
     const udp = await norsk!.output.udpTs({
       id: "av-srt",
       port: 65403,
-      destinationIp: '127.0.0.1',
+      destinationHost: '127.0.0.1',
       interface: 'any'
     })
     udp.subscribe([{ source: av, sourceSelector: selectAV }])

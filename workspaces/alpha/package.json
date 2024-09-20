@@ -21,7 +21,7 @@
   "dependencies": {
     "@norskvideo/norsk-api": "file:../../../norsk/client/workspaces/api",
     "@norskvideo/norsk-sdk": "file:../../../norsk/client/workspaces/sdk",
-    "@norskvideo/norsk-studio": "file:../../../studio-core",
+    "@norskvideo/norsk-studio": "file:../../../norsk-studio-core",
     "openapi-types": "^12.1.3"
   },
   "main": "lib/index.js",

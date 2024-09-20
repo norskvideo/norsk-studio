@@ -33,7 +33,7 @@ describe("SRT Output", () => {
             SrtInfo(RegistrationConsts),
             {
               port: 65403,
-              ip: '0.0.0.0',
+              host: '0.0.0.0',
               mode: 'listener',
               socketOptions: {}
             }
@@ -58,7 +58,7 @@ describe("SRT Output", () => {
     const source = await videoAndAudio(norsk, 'source');
     const sink = await norsk.input.srt({
       id: 'sink',
-      ip: '127.0.0.1',
+      host: '127.0.0.1',
       port: 65403,
       mode: 'caller',
       sourceName: 'sink'

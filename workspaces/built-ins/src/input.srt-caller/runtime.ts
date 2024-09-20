@@ -4,7 +4,7 @@ import { SimpleInputWrapper } from '@norskvideo/norsk-studio/lib/extension/base-
 import { OnCreated, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 
-export type SrtInputSettings = Pick<SdkSettings, 'port' | 'ip' | 'sourceName' | 'passphrase' | 'streamId'> & {
+export type SrtInputSettings = Pick<SdkSettings, 'port' | 'host' | 'sourceName' | 'passphrase' | 'streamId'> & {
   id: string,
   displayName: string,
   socketOptions: SocketOptions

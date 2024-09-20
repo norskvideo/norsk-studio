@@ -9,7 +9,7 @@ export default function({
   defineComponent,
   Av,
   validation }: Registration) {
-  const { Z, Port, IpAddress, SourceName, SrtPassphrase, unique } = validation;
+  const { Z, Port, Hostname, SourceName, SrtPassphrase, unique } = validation;
   const SocketConfiguration = React.lazy(async () => {
     const views = await import('../shared/srt-form-views')
     return { default: views.SocketConfiguration }
@@ -41,7 +41,7 @@ export default function({
       display: (desc) => {
         return {
           port: desc.config.port.toString(),
-          ip: desc.config.ip
+          ip: desc.config.host
         }
       },
       runtime: {
@@ -74,11 +74,11 @@ export default function({
               envOverride: true
             }
           },
-          ip: {
-            help: "The IP address this SRT input will listen on",
+          host: {
+            help: "The IP address/hostname this SRT input will listen on",
             hint: {
               type: 'text',
-              validation: IpAddress,
+              validation: Hostname,
               defaultValue: "0.0.0.0",
               envOverride: true
             }

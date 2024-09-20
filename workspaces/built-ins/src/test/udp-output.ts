@@ -33,7 +33,7 @@ describe("TS UDP Output", () => {
             UdpInfo(RegistrationConsts),
             {
               port: 5101,
-              destinationIp: '0.0.0.0',
+              destinationHost: '0.0.0.0',
               interface: 'any'
             }
           ).reify())
@@ -56,7 +56,7 @@ describe("TS UDP Output", () => {
 
     const sink = await norsk.input.udpTs({
       id: 'sink',
-      ip: '127.0.0.1',
+      host: '127.0.0.1',
       port: 5101,
       sourceName: 'sink'
     });

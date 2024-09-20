@@ -5,7 +5,7 @@ import type Registration from "@norskvideo/norsk-studio/lib/extension/registrati
 export default function({
   defineComponent,
   All,
-  validation: { Port, IpAddress, JitterBuffer, Iface, Z },
+  validation: { Port, Hostname, JitterBuffer, Iface, Z },
 }: Registration) {
   return defineComponent<UdpTsOutputSettings>({
     identifier: 'output.udpTs',
@@ -23,7 +23,7 @@ export default function({
     display: (desc) => {
       return {
         port: desc.config.port.toString(),
-        destinationIp: desc.config.destinationIp,
+        destinationIp: desc.config.destinationHost,
         interface: desc.config.interface,
         bufferDelayMs: desc.config.bufferDelayMs?.toString() ?? 'none'
       }
@@ -31,7 +31,7 @@ export default function({
     configForm: {
       form: {
         port: { help: "The port this UDP TS output will send to", hint: { type: 'numeric', validation: Port, defaultValue: 8001 } },
-        destinationIp: { help: "The IP address this UDP TS output will send to", hint: { type: 'text', validation: IpAddress, defaultValue: "127.0.0.1" } },
+        destinationHost: { help: "The IP address/Hostname this UDP TS output will send to", hint: { type: 'text', validation: Hostname, defaultValue: "127.0.0.1" } },
         bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
         interface: { help: "Which interface to bind to for publishing", hint: { type: 'text', validation: Z.union([Z.string().length(0), Iface]), defaultValue: "any" } },
       }
