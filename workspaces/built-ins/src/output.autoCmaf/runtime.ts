@@ -1,10 +1,10 @@
-import { AdMarker, AutoProcessorMediaNode, CmafDestinationSettings, CmafMultiVariantOutputNode, Norsk, Scte35InsertCommand, SourceMediaNode, StreamKey, StreamMetadata, SubscriptionError, selectExactKey, selectPlaylist, streamKeysAreEqual } from '@norskvideo/norsk-sdk';
+import { AdMarker, AutoProcessorMediaNode, CmafDestinationSettings, CmafMultiVariantOutputNode, Norsk, Scte35InsertCommand, SourceMediaNode, StreamKey, StreamMetadata, selectExactKey, selectPlaylist, streamKeysAreEqual } from '@norskvideo/norsk-sdk';
 
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { CreatedMediaNode, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { ReportBuilder } from '@norskvideo/norsk-studio/lib/runtime/execution';
-import { infolog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { debuglog, infolog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { AxinomConfig, EzDrmConfig } from '@norskvideo/norsk-studio/lib/shared/config';
 import { CryptoDetails } from '../shared/drm/cpix';
 import { ezdrmInit } from '../shared/drm/ezdrm';
@@ -72,20 +72,20 @@ export class AutoCmaf extends CustomSinkNode {
   norsk: Norsk;
   cfg: AutoCmafConfig;
   currentSources: Map<CreatedMediaNode, StudioNodeSubscriptionSource> = new Map();
-  currentMedia: { node?: AutoProcessorMediaNode<string>, key: StreamKey, scheduleAd: (marker: AdMarker, destinationId: string) => void }[] = [];
+  currentMedia: { node: AutoProcessorMediaNode<string>, key: StreamKey, scheduleAd: (marker: AdMarker, destinationId: string) => void }[] = [];
   crypto?: CryptoDetails;
+
+
+  control: ContextPromiseControl = new ContextPromiseControl(this.handleContext.bind(this));
 
   // If there is only one program/source then this is the only one worth looking at
   mv?: CmafMultiVariantOutputNode;
   defaultProgramNumber: number = 0;
   defaultSourceName: string = '';
 
-  control: ContextPromiseControl = new ContextPromiseControl(this.handleContext.bind(this));
-
   // But we'll make further entries if we see further programs
   currentMultiVariants: { node?: CmafMultiVariantOutputNode, programNumber: number, sourceName: string }[] = [];
 
-  pendingResponses: ((error?: SubscriptionError) => void)[] = [];
   initialised: Promise<void>;
 
   sessionId?: string;
@@ -204,6 +204,7 @@ export class AutoCmaf extends CustomSinkNode {
     }[] = [];
 
 
+    // Build up a list of actually active streams
     this.currentSources.forEach((subscription) => {
       for (const stream of subscription.latestStreams()) {
         streams.push({
@@ -217,19 +218,14 @@ export class AutoCmaf extends CustomSinkNode {
 
     const subscribes: Promise<unknown>[] = [];
     const creations = streams.map(async (stream) => {
+      // If we've already created this one, then don't bother
       const existing = this.currentMedia.find((e) => streamKeysAreEqual(e.key, stream.key));
       if (existing) return;
 
-      // Create immediately so we can defer this promise and do any other context changes without
-      // double-creating things
-      const newMedia = {
-        key: stream.key,
-        node: undefined as (undefined | AutoProcessorMediaNode<string>),
-        scheduleAd: (_ad: AdMarker, _destinationId: string) => { }
-      }
-      this.currentMedia.push(newMedia);
+      debuglog("Handling new stream in AutoCMAF", { id: this.id, streamKey: stream.key });
 
       if (this.currentMultiVariants.length == 0) {
+        debuglog("Setting default multi-variant in AutoCMAF", { id: this.id, streamKey: stream.key });
         this.defaultProgramNumber = stream.key.programNumber;
         this.defaultSourceName = stream.key.sourceName;
       }
@@ -237,6 +233,7 @@ export class AutoCmaf extends CustomSinkNode {
       // Do we need another multivariant?
       if (!this.currentMultiVariants.find((v) => v.programNumber == stream.key.programNumber && v.sourceName == stream.key.sourceName)) {
         // Create immediately so we don't double-create later
+        // cos all these streams are potentially being created in parallel once we do any async action
         const newMv = {
           programNumber: stream.key.programNumber,
           sourceName: stream.key.sourceName,
@@ -248,13 +245,13 @@ export class AutoCmaf extends CustomSinkNode {
           playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
           destinations: this.destinations
         });
+        debuglog("Creating program-specific multi-variant in AutoCMAF", { id: this.id, streamKey: stream.key });
         newMv.node = mv;
         this.report.registerOutput(this.cfg.id, mv.url);
       }
 
       const streamKeyString = `${stream.key.sourceName}-${stream.key.programNumber}-${stream.key.streamId}-${stream.key.renditionName}`;
 
-      // Okay, so we need to do the thing
       switch (stream.metadata.message.case) {
         case undefined:
           throw "Bad server message";
@@ -271,18 +268,21 @@ export class AutoCmaf extends CustomSinkNode {
             id: `${this.id}-${streamKeyString}-video`,
             ...videoCryptoSettings,
           });
-          newMedia.node = video;
-          newMedia.scheduleAd = (ad, destinationId: string) => {
-            const now = new Date();
-            video.scheduleTag(ad, now, destinationId)
-          };
           subscribes.push(new Promise((resolve, _reject) => {
             video.subscribe([{
               source: stream.source,
               sourceSelector: selectExactKey(stream.key)
             }], (_) => true, (_) => resolve({}));
           }));
-
+          const newMedia = {
+            key: stream.key,
+            node: video,
+            scheduleAd: (ad: AdMarker, destinationId: string) => {
+              const now = new Date();
+              video.scheduleTag(ad, now, destinationId)
+            }
+          }
+          this.currentMedia.push(newMedia);
           this.registerInput(video);
           break;
         }
@@ -299,12 +299,6 @@ export class AutoCmaf extends CustomSinkNode {
             id: `${this.id}-${streamKeyString}-audio`,
             ...audioCryptoSettings,
           });
-          newMedia.node = audio;
-          newMedia.scheduleAd = (ad, destinationId: string) => {
-            const now = new Date();
-            audio.scheduleTag(ad, now, destinationId)
-          };
-
           subscribes.push(new Promise((resolve, _reject) => {
             audio.subscribe([{
               source: stream.source,
@@ -312,6 +306,15 @@ export class AutoCmaf extends CustomSinkNode {
             }], (_) => true, (_) => resolve({}));
           }));
 
+          const newMedia = {
+            key: stream.key,
+            node: audio,
+            scheduleAd: (ad: AdMarker, destinationId: string) => {
+              const now = new Date();
+              audio.scheduleTag(ad, now, destinationId)
+            }
+          }
+          this.currentMedia.push(newMedia);
           this.registerInput(audio);
           break;
         }
@@ -321,15 +324,19 @@ export class AutoCmaf extends CustomSinkNode {
             destinations: this.destinations,
             id: `${this.id}-${streamKeyString}-webvtt`
           });
-          newMedia.node = subtitle;
-          newMedia.scheduleAd = (ad, destinationId: string) => {
-            const now = new Date();
-            subtitle.scheduleTag(ad, now, destinationId)
-          };
           subtitle.subscribe([{
             source: stream.source,
             sourceSelector: selectExactKey(stream.key)
           }]);
+          const newMedia = {
+            key: stream.key,
+            node: subtitle,
+            scheduleAd: (ad: AdMarker, destinationId: string) => {
+              const now = new Date();
+              subtitle.scheduleTag(ad, now, destinationId)
+            }
+          }
+          this.currentMedia.push(newMedia);
           this.registerInput(subtitle);
           break;
         }
@@ -375,18 +382,12 @@ export class AutoCmaf extends CustomSinkNode {
       return true;
     })
 
-    // We'll stop the nodes, but leave the data in the collection until they're actually closed
-    // or we'll end up with clashes if the stream re-appears while we're stopping it
-    // deletions also get done before recursion to double enforce this
     for (const deletion of deletions) {
-      const node = deletion?.node;
-      deletion.node = undefined;
-      await node?.close();
+      const node = deletion.node;
       this.currentMedia = this.currentMedia.filter((x) =>
         !streamKeysAreEqual(x.key, deletion.key))
+      await node.close();
     }
-
-    const thisResponse = this.pendingResponses.shift();
 
     await Promise.all(creations);
 
@@ -415,13 +416,16 @@ export class AutoCmaf extends CustomSinkNode {
       mv.node?.subscribe(sources);
     }
 
+    // The most important thing really, don't release this current context change
+    // until all subscribes have been enacted
     await Promise.all(subscribes);
-
-    if (thisResponse)
-      thisResponse();
   }
 
   override subscribe(subs: StudioNodeSubscriptionSource[]) {
+    this.currentSources = new Map();
+    subs.forEach((s) => {
+      this.currentSources.set(s.source, s);
+    })
     this.control.setSources(subs);
   }
 }
