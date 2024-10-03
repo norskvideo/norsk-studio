@@ -55,6 +55,8 @@ import processor_fixedLadder from "./processor.fixedLadder/info";
 AllComponents.push((r: Registration) => processor_fixedLadder(r) as unknown as NodeInfo<BaseConfig>);
 import processor_onscreenGraphic from "./processor.onscreenGraphic/info";
 AllComponents.push((r: Registration) => processor_onscreenGraphic(r) as unknown as NodeInfo<BaseConfig>);
+import processor_streamKeyOverride from "./processor.streamKeyOverride/info";
+AllComponents.push((r: Registration) => processor_streamKeyOverride(r) as unknown as NodeInfo<BaseConfig>);
 import processor_whisper_transcribe from "./processor.whisper-transcribe/info";
 AllComponents.push((r: Registration) => processor_whisper_transcribe(r) as unknown as NodeInfo<BaseConfig>);
 import util_stats_latency from "./util.stats.latency/info";
