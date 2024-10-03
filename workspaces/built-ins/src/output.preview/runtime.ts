@@ -98,13 +98,13 @@ export class PreviewOutput extends CustomSinkNode {
 
   async subscribeImpl(sources: StudioNodeSubscriptionSource[]) {
     // can probably just have 's.hasMedia("video")'
-    const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0);
-    const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0);
+    const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0)?.selectVideo();
+    const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0)?.selectAudio();
 
-    if (videoSource && videoSource.selectVideo().length > 0) {
+    if (videoSource && videoSource.length > 0) {
       if (!this.encoder) {
         debuglog("Finding preview encode for preview node", this.id);
-        this.encoder = await this.shared.previewEncode(videoSource.selectVideo()[0], this.cfg.__global.hardware)
+        this.encoder = await this.shared.previewEncode(videoSource[0], this.cfg.__global.hardware)
         this.registerInput(this.encoder);
       }
     } else {
@@ -113,13 +113,13 @@ export class PreviewOutput extends CustomSinkNode {
 
     if (audioSource) {
       // Audio into levels
-      this.audioLevels?.subscribe(audioSource.selectAudio())
+      this.audioLevels?.subscribe(audioSource)
     } else {
       this.audioLevels?.subscribe([])
     }
 
     const subscriptions: ReceiveFromAddressAuto[] = [];
-    
+
     if (this.encoder) {
       subscriptions.push({
         source: this.encoder,
@@ -127,8 +127,8 @@ export class PreviewOutput extends CustomSinkNode {
       });
     }
 
-    if (audioSource) {
-      subscriptions.push(audioSource.selectAudio()[0]);
+    if (audioSource && audioSource.length > 0) {
+      subscriptions.push(audioSource[0]);
     }
 
     const whepCfg: SdkSettings = {
