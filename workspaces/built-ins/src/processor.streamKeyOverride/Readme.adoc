@@ -1,0 +1,16 @@
+== Stream Key Override
+No description yet
+
+=== Configuration
+[cols="2,6,^1",options="header"]
+|===
+|Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| mode | Multi-stream behavior |  ✓
+| sourceName | Override Source Name |  𐄂
+| programNumber | Override Program Number |  𐄂
+| streamId | Override Stream ID |  𐄂
+| renditionName | Override Rendition Name |  𐄂
+|===
+

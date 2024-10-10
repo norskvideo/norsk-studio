@@ -7,6 +7,6 @@ This component allows us to use WebRTC egress for outputs.
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| bufferDelayMs | How many milliseconds in the jitter buffer |  ✓ 
+| bufferDelayMs | How many milliseconds in the jitter buffer |  ✓
 |===
 

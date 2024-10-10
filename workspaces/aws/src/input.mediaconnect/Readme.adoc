@@ -7,7 +7,7 @@ Allows for integration with AWS Elemental MediaConnect, enabling users to ingest
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| flowArn | The flow to connect to |  ✓ 
-| outputArn | Output of the flow to be used |  ✓ 
+| flowArn | The flow to connect to |  ✓
+| outputArn | Output of the flow to be used |  ✓
 |===
 

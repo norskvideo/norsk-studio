@@ -7,7 +7,7 @@ Combines and manages multiple audio streams into a single output stream, providi
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| defaultGain | The default gain for audio dB |  ✓ 
-| channelLayout | Channel layout for audio output |  ✓ 
+| defaultGain | The default gain for audio dB |  ✓
+| channelLayout | Channel layout for audio output |  ✓
 |===
 

@@ -7,9 +7,9 @@ This component manages multiple A&#x2F;V (audio and video) streams from differen
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| resolution | All video will be normalised to this resolution |  ✓ 
-| frameRate | All video will be normalised to this frame rate |  ✓ 
-| sampleRate | All audio will be normalised to this sample rate |  ✓ 
-| channelLayout | All audio will be normalised to this channel layout |  ✓ 
+| resolution | All video will be normalised to this resolution |  ✓
+| frameRate | All video will be normalised to this frame rate |  ✓
+| sampleRate | All audio will be normalised to this sample rate |  ✓
+| channelLayout | All audio will be normalised to this channel layout |  ✓
 |===
 

@@ -7,7 +7,7 @@ A component that produces silent audio streams with configurable sample rate and
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| sampleRate | Samplerate in khz of the generated audio |  ✓ 
-| channelLayout | Channel layout of the generated audio |  ✓ 
+| sampleRate | Samplerate in khz of the generated audio |  ✓
+| channelLayout | Channel layout of the generated audio |  ✓
 |===
 

@@ -7,9 +7,9 @@ This component outputs multiple media streams over UDP in TS (Transport Stream) 
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| port | The port this UDP TS output will send to |  ✓ 
-| destinationIp | The IP address this UDP TS output will send to |  ✓ 
-| bufferDelayMs | How many milliseconds in the jitter buffer |  ✓ 
-| interface | Which interface to bind to for publishing |  ✓ 
+| port | The port this UDP TS output will send to |  ✓
+| destinationHost | The IP address&#x2F;Hostname this UDP TS output will send to |  ✓
+| bufferDelayMs | How many milliseconds in the jitter buffer |  ✓
+| interface | Which interface to bind to for publishing |  ✓
 |===
 

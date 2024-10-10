@@ -7,11 +7,11 @@ This component receives and processes MPEG Transport Streams (TS) over UDP.
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| port | The receiving port |  ✓ 
-| ip | The receiving IP address |  ✓ 
-| sourceName | Source name to identify this by |  ✓ 
-| interface | Optional interface to bind to |  𐄂 
-| timeout | Timeout in milliseconds before determining the input is closed |  ✓ 
-| rtpDecapsulate | Whether to expect the input TS to be encapsulated in RTP via RFC 2250 (default: false) |  ✓ 
+| port | The receiving port |  ✓
+| host | The receiving IP address&#x2F;hostname |  ✓
+| sourceName | Source name to identify this by |  ✓
+| interface | Optional interface to bind to |  𐄂
+| timeout | Timeout in milliseconds before determining the input is closed |  ✓
+| rtpDecapsulate | Whether to expect the input TS to be encapsulated in RTP via RFC 2250 (default: false) |  ✓
 |===
 

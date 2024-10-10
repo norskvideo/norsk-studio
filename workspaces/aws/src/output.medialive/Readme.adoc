@@ -1,5 +1,5 @@
 == Media Live Output
-Enables the integration with AWS Elemental MediaLive, allowing users to output multiple media streams to a MediaLive channel. 
+Enables the integration with AWS Elemental MediaLive, allowing users to output multiple media streams to a MediaLive channel.
 
 === Configuration
 [cols="2,6,^1",options="header"]
@@ -7,8 +7,8 @@ Enables the integration with AWS Elemental MediaLive, allowing users to output m
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| channelId | The channel to output to |  ✓ 
-| inputId | The input of the channel to output to |  ✓ 
-| destinationIndex | The publish URL to output to |  ✓ 
+| channelId | The channel to output to |  ✓
+| inputId | The input of the channel to output to |  ✓
+| destinationIndex | The publish URL to output to |  ✓
 |===
 

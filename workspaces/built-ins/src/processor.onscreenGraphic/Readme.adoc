@@ -7,7 +7,7 @@ Overlay graphics onto a video
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| initialGraphic | The initial graphic to render on the video (if any) |  𐄂 
-| initialPosition | The initial location at which to render the graphic |  𐄂 
+| initialGraphic | The initial graphic to render on the video (if any) |  𐄂
+| initialPosition | The initial location at which to render the graphic |  𐄂
 |===
 

@@ -7,7 +7,7 @@ Transcribes audio from a video stream into subtitles using AWS&#39;s Transcribe 
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| language | Source language to transcribe |  ✓ 
-| targetLanguage | Target language to translate to (optional). |  ✓ 
+| language | Source language to transcribe |  ✓
+| targetLanguage | Target language to translate to (optional). |  ✓
 |===
 

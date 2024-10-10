@@ -7,6 +7,6 @@ Capture a live URL and overlay onto a video
 |Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| url | URL to render on top of the video |  ✓ 
+| url | URL to render on top of the video |  ✓
 |===
 
