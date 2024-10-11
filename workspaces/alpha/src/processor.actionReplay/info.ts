@@ -32,10 +32,10 @@ export default function({
         ctx.addError("Action replay can only subscribe to a single source");
         return;
       }
-      if (!ctx.subscriptions[0].streams.select.includes("audio")) {
+      if (!ctx.subscriptions[0].validatedStreams.select.includes("audio")) {
         ctx.addError("Action replay requires audio in the subscription");
       }
-      if (!ctx.subscriptions[0].streams.select.includes("video")) {
+      if (!ctx.subscriptions[0].validatedStreams.select.includes("video")) {
         ctx.addError("Action replay requires video in the subscription");
       }
     },

@@ -22,8 +22,8 @@ export default function({ defineComponent, validation: { Z }, All }: Registratio
       },
     },
     extraValidation: function(ctx) {
-      const audioStreams = ctx.subscriptions.filter((s) => s.streams.select.includes("audio"));
-      const videoStreams = ctx.subscriptions.filter((s) => s.streams.select.includes("video"));
+      const audioStreams = ctx.subscriptions.filter((s) => s.validatedStreams.select.includes("audio"));
+      const videoStreams = ctx.subscriptions.filter((s) => s.validatedStreams.select.includes("video"));
 
       if (audioStreams.length == 0) {
         ctx.addWarning("Output has no audio, is this intentional")

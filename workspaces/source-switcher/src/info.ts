@@ -33,10 +33,10 @@ export default function(R: Registration) {
       // and they can't come from different sources
       // We might want a 'join' node for that purpose ( :-( )
       ctx.subscriptions.forEach((s) => {
-        if (s.streams.select.includes("audio") && s.streams.select.includes("video")) {
+        if (s.validatedStreams.select.includes("audio") && s.validatedStreams.select.includes("video")) {
           return;
         }
-        ctx.addError("Each subscription for Source Switcher must contain both video *and* audio, subscription to " + s.source + " only contains " + s.streams.select.join(","));
+        ctx.addError("Each subscription for Source Switcher must contain both video *and* audio, subscription to " + s.source + " only contains " + s.validatedStreams.select.join(","));
       })
     },
     display: (desc) => {

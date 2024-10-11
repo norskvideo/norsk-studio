@@ -24,8 +24,8 @@ export default function(R: Registration) {
       produces: undefined
     },
     extraValidation: (ctx) => {
-      const video = ctx.subscriptions.filter((s) => s.streams.select.includes("video"));
-      const audio = ctx.subscriptions.filter((s) => s.streams.select.includes("audio"));
+      const video = ctx.subscriptions.filter((s) => s.validatedStreams.select.includes("video"));
+      const audio = ctx.subscriptions.filter((s) => s.validatedStreams.select.includes("audio"));
       if (video.length == 1 && audio.length == 1) return;
       if (video.length == 0) {
         ctx.addError("Preview requires a video subscription in order to work")

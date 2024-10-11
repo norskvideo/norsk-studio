@@ -21,6 +21,7 @@ export default function({
         possibleMedia: All,
         keys: (_cfg, subs) => subs.flatMap(sub => {
           const sourceNode = sub.document.components[sub.source];
+          if (!sourceNode) return [];
           const produces = sourceNode.info.subscription.produces;
           if (produces?.type === "fixed-list") {
             return produces

@@ -31,10 +31,10 @@ export default function({
     extraValidation: function(ctx) {
       // For now, each subscription has to have audio and video to work
       ctx.subscriptions.forEach((s) => {
-        if (!s.streams.select.includes("video")) {
+        if (!s.validatedStreams.select.includes("video")) {
           ctx.addError(`Subscription to ${s.source} is missing video`)
         }
-        if (!s.streams.select.includes("audio")) {
+        if (!s.validatedStreams.select.includes("audio")) {
           ctx.addError(`Subscription to ${s.source} is missing audio`)
         }
 

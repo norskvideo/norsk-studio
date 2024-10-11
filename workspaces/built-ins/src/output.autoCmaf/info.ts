@@ -43,7 +43,7 @@ export default function(R: Registration) {
       }
     },
     extraValidation: (ctx) => {
-      const audioStreams = ctx.subscriptions.filter((s) => s.streams.select.includes("audio"));
+      const audioStreams = ctx.subscriptions.filter((s) => s.validatedStreams.select.includes("audio"));
       if (audioStreams.length == 0) {
         ctx.addError("AutoCMAF requires at least one audio stream")
       }
@@ -53,7 +53,7 @@ export default function(R: Registration) {
       // This can be even more clever (check the types of the nodes and only warn if they are different for example)
       // but this will get us through IBC
       const uniqueVideoStreamNodes = ctx.subscriptions.reduce((acc, s) => {
-        if (s.streams.select.includes("video")) {
+        if (s.validatedStreams.select.includes("video")) {
           if (!acc.includes(s.source)) {
             acc.push(s.source);
           }
