@@ -201,12 +201,11 @@ export default function(R: Registration) {
                 help: "The hostname of the s3 bucket to push to",
                 hint: {
                   type: "text",
-                  defaultValue: "",
                   validation: Hostname
                 }
               },
               prefix: {
-                help: "The sub directory of the bucket to place playlists + segments into",
+                help: "The sub directory of the bucket to place playlists and segments into",
                 hint: {
                   type: "text",
                   defaultValue: ""

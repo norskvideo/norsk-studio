@@ -1,13 +1,13 @@
 == AWS Transcribe
 Transcribes audio from a video stream into subtitles using AWS&#39;s Transcribe service. Additionally, the processor can optionally translate the generated subtitles into another language using AWS Translate.
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| language | Source language to transcribe |  ✓
-| targetLanguage | Target language to translate to (optional). |  ✓
+| language | Source language to transcribe (default: &quot;en-US&quot;) |  𐄂
+| targetLanguage | Target language to translate to (optional). |  𐄂
 |===
 

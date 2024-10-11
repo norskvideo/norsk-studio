@@ -1,15 +1,29 @@
 == Source Switcher
 This component manages multiple A&#x2F;V (audio and video) streams from different sources, switching between the sources dynamically.
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| resolution | All video will be normalised to this resolution |  ✓
-| frameRate | All video will be normalised to this frame rate |  ✓
-| sampleRate | All audio will be normalised to this sample rate |  ✓
-| channelLayout | All audio will be normalised to this channel layout |  ✓
+| resolution | All video will be normalised to this resolution (default: {&quot;width&quot;:1920,&quot;height&quot;:1080}) |  𐄂
+| frameRate | All video will be normalised to this frame rate (default: {&quot;frames&quot;:25,&quot;seconds&quot;:1}) |  𐄂
+| sampleRate | All audio will be normalised to this sample rate (default: 48000) |  𐄂
+| channelLayout | All audio will be normalised to this channel layout (default: &quot;stereo&quot;) |  𐄂
+|===
+
+
+=== Global Configuration
+
+
+==== Ice Servers
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| url | URL of the STUN&#x2F;TURN server (with turn:&#x2F;stun: prefix) as accessed by Norsk Studio |  ✓
+| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  ✓
+| username | Optional username |  ✓
+| credential | Optional password |  ✓
 |===
 

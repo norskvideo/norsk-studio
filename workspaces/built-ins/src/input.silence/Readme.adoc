@@ -1,13 +1,13 @@
 == Silence Generator
 A component that produces silent audio streams with configurable sample rate and channel layout.
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| sampleRate | Samplerate in khz of the generated audio |  ✓
-| channelLayout | Channel layout of the generated audio |  ✓
+| sampleRate | Samplerate in Hz of the generated audio (default: 48000) |  𐄂
+| channelLayout | Channel layout of the generated audio (default: &quot;stereo&quot;) |  𐄂
 |===
 

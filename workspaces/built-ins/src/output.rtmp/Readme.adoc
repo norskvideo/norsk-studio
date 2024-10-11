@@ -1,15 +1,15 @@
 == RTMP Egest
 This component handles the output of RTMP (Real-Time Messaging Protocol) streams. It is used to connect to a remote RTMP server and manage the streaming of media.
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
 | url | The URL of the remote RTMP server to connect to, including the full stream path and credentials |  ✓
-| bufferDelayMs | How many milliseconds in the jitter buffer |  ✓
-| avDelayMs | How many milliseconds to delay A&#x2F;V to account for subtitles |  ✓
-| retryConnectionTimeout | Number of seconds to wait until a retry is attempted to the RTMP server |  ✓
+| bufferDelayMs | How many milliseconds in the jitter buffer (default: 500) |  𐄂
+| avDelayMs | How many milliseconds to delay A&#x2F;V to account for subtitles (default: 50) |  𐄂
+| retryConnectionTimeout | Number of seconds to wait until a retry is attempted to the RTMP server (default: 5) |  𐄂
 |===
 

@@ -1,16 +1,16 @@
 == Cascading Switch
 This component manages multiple A&#x2F;V (audio and video) sources based on priority, allowing for the configuration of settings such as resolution, frame rate, sample rate, and channel layout.
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| resolution | All video will be normalised to this resolution |  ✓
-| frameRate | All video will be normalised to this frame rate |  ✓
-| sampleRate | All audio will be normalised to this sample rate |  ✓
-| channelLayout | All audio will be normalised to this channel layout |  ✓
-| sources | The priority order in which the sources will be chosen when available |  ✓
+| resolution | All video will be normalised to this resolution (default: {&quot;width&quot;:1920,&quot;height&quot;:1080}) |  𐄂
+| frameRate | All video will be normalised to this frame rate (default: {&quot;frames&quot;:25,&quot;seconds&quot;:1}) |  𐄂
+| sampleRate | All audio will be normalised to this sample rate (default: 48000) |  𐄂
+| channelLayout | All audio will be normalised to this channel layout (default: &quot;stereo&quot;) |  𐄂
+| sources | The priority order in which the sources will be chosen when available (default: []) |  𐄂
 |===
 

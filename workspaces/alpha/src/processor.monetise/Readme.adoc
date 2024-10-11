@@ -1,11 +1,25 @@
 == Monetise
 Allows for the monetization of video and audio streams by incorporating ads and handling their lifecycle within the output stream.
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
+|===
+
+
+=== Global Configuration
+
+
+==== Ice Servers
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| url | URL of the STUN&#x2F;TURN server (with turn:&#x2F;stun: prefix) as accessed by Norsk Studio |  ✓
+| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  ✓
+| username | Optional username |  ✓
+| credential | Optional password |  ✓
 |===
 

@@ -1,27 +1,95 @@
 == Auto CMAF
-This component handles the creation of CMAF outputs from multiple video and audio streams.
 
-=== Configuration
+The `output.autoCmaf` component is designed to handle the creation of CMAF outputs from multiple video and audio streams. It supports segmenting, publishing to S3 destinations, and managing ad insertions.
+
+==== Features
+
+Some features of this component are:
+
+* Accepts multiple video and audio streams.
+* Configurable segment parameters (duration, retention, etc.).
+* Supports publishing to multiple S3 destinations.
+* Optionally include Ad markers in the published streams.
+
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| name | The name of the multivariant&#x2F;dash playlist |  ✓
-| sessionId | Generate a unique session id per run to avoid cache collisions |  ✓
-| s3Destinations | S3 destinations to publish to |  ✓
+| name | The name of the multivariant&#x2F;dash playlist (default: &quot;default&quot;) |  𐄂
+| sessionId | Generate a unique session id per run to avoid cache collisions (default: false) |  𐄂
+| segments | Detailed segment configuration |  𐄂
+| s3Destinations | S3 destinations to publish to (default: []) |  𐄂
 | drmProvider | Encrypt with a DRM provider (if configured globally) |  𐄂
 |===
 
 
-=== Segments
+==== Segments
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
-| retentionPeriod | How many seconds of data to retain for playback in media playlists |  ✓
-| defaultSegmentCount | How many segments to display in a default playlist (0 means show all) |  ✓
-| targetSegmentDuration | How many seconds should be in each segment |  ✓
-| targetPartDuration | For low latency playlists, what size parts should be generated in seconds |  ✓
+| Option | Description | Required
+| retentionPeriod | How many seconds of data to retain for playback in media playlists (default: 60) |  𐄂
+| defaultSegmentCount | How many segments to display in a default playlist (0 means show all) (default: 0) |  𐄂
+| targetSegmentDuration | How many seconds should be in each segment (default: 4) |  𐄂
+| targetPartDuration | For low latency playlists, what size parts should be generated in seconds (default: 1) |  𐄂
 | holdBackSegments | How many segments back should a player start |  𐄂
 | holdBackParts | How many parts back should a player start |  𐄂
 |===
+
+==== S3 Destinations
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| host | The hostname of the s3 bucket to push to |  ✓
+| prefix | The sub directory of the bucket to place playlists and segments into |  𐄂
+| includeAdInsertions | If ad markers are inserted, include them in this publication (default: false) |  𐄂
+|===
+
+
+=== Global Configuration
+
+DRM encryption is available through EZDRM and Axinom DRM.
+For both providers you need to configure authentication to enable Norsk to obtain encryption keys through the provider's servers.
+You may also configure additional settings for Studio to be able to obtain a license for local playback for the encrypted content.
+After setting this global configuration, enabling on an  it is as simple as setting `drmProvider` to `true`.
+
+
+==== Ezdrm Config
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| token | Token for EZDRM |  ✓
+| pX | The last six digits of your Widevine Profile ID |  𐄂
+|===
+
+==== Axinom Config
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| tenantId | Tenant ID from your Axinom DRM account |  ✓
+| managementKey | Management Key from your Axinom DRM account |  ✓
+| comKeyId | Communication Key ID from your Axinom DRM account |  𐄂
+| comKey | Communication Key from your Axinom DRM account |  𐄂
+|===
+
+
+=== Example Configuration
+
+Here is an example of how to configure the `output.autoCmaf` component in a YAML file:
+
+[source, yaml]
+----
+  - type: output.autoCmaf
+    config:
+      displayName: autoCmaf
+      name: default
+      sessionId: true
+      segments:
+        retentionPeriod: 60
+        defaultSegmentCount: 0
+        targetSegmentDuration: 4
+        targetPartDuration: 1
+      s3Destinations: []
+      id: autocmaf
+----

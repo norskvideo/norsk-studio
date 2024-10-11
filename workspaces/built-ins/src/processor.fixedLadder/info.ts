@@ -133,12 +133,13 @@ export default function ({
   function rungEditorForm<Codec>(mode: string): FormEntry<LadderRungDefinition, { width: number, height: number, codec: Codec } | undefined> {
     const codecHint: FormHintSingle<{ width: number, height: number, codec: Codec }, Codec> = {
       type: 'custom',
-      component: CodecEditor as LazyExoticComponent<(p: CustomEditorProps<{ width: number, height: number, codec: Codec }, Codec>) => JSX.Element>
+      component: CodecEditor as LazyExoticComponent<(p: CustomEditorProps<{ width: number, height: number, codec: Codec }, Codec>) => JSX.Element>,
     };
     return {
       help: `Settings to use when encoding using ${mode} mode`,
       hint: {
         type: 'form-item',
+        optional: true,
         view: CodecView,
         form: {
           width: {

@@ -1,0 +1,47 @@
+== {{name}}
+
+The `output.autoCmaf` component is designed to handle the creation of CMAF outputs from multiple video and audio streams. It supports segmenting, publishing to S3 destinations, and managing ad insertions.
+
+==== Features
+
+Some features of this component are:
+
+* Accepts multiple video and audio streams.
+* Configurable segment parameters (duration, retention, etc.).
+* Supports publishing to multiple S3 destinations.
+* Optionally include Ad markers in the published streams.
+
+=== Component Configuration
+{{> optionsTable}}
+
+{{> nestedOptionsTables}}
+
+=== Global Configuration
+
+DRM encryption is available through EZDRM and Axinom DRM.
+For both providers you need to configure authentication to enable Norsk to obtain encryption keys through the provider's servers.
+You may also configure additional settings for Studio to be able to obtain a license for local playback for the encrypted content.
+After setting this global configuration, enabling on an  it is as simple as setting `drmProvider` to `true`.
+
+{{> globalOptionsTable}}
+
+
+=== Example Configuration
+
+Here is an example of how to configure the `output.autoCmaf` component in a YAML file:
+
+[source, yaml]
+----
+  - type: output.autoCmaf
+    config:
+      displayName: autoCmaf
+      name: default
+      sessionId: true
+      segments:
+        retentionPeriod: 60
+        defaultSegmentCount: 0
+        targetSegmentDuration: 4
+        targetPartDuration: 1
+      s3Destinations: []
+      id: autocmaf
+----

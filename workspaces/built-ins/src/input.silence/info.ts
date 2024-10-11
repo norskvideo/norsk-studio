@@ -15,14 +15,14 @@ export default function({ defineComponent, Audio }: Registration) {
     },
     display: (desc) => {
       return {
-        sampleRate: desc.config.sampleRate.toString() + "khz",
+        sampleRate: desc.config.sampleRate.toString() + "Hz",
         channelLayout: desc.config.channelLayout.toString()
       }
     },
     configForm: {
       form: {
         sampleRate: {
-          help: "Samplerate in khz of the generated audio",
+          help: "Samplerate in Hz of the generated audio",
           hint: {
             type: 'select', options: [
               { value: 48000, display: "48000" },

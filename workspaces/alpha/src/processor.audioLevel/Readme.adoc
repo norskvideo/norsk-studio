@@ -1,12 +1,12 @@
 == Audio Levels
 Monitors and adjusts the audio levels of an incoming audio stream, providing real-time visualization and control of audio gain.
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| defaultGain | The default gain for audio dB |  ✓
+| defaultGain | The default gain for audio dB (default: 0) |  𐄂
 |===
 

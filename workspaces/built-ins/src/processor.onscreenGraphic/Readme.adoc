@@ -1,10 +1,10 @@
 == Onscreen Graphic
 Overlay graphics onto a video
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
 | initialGraphic | The initial graphic to render on the video (if any) |  𐄂

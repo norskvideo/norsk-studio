@@ -10,6 +10,7 @@ export default function({
     identifier: 'processor.StreamKeyOverride',
     category: 'processor',
     name: "Stream Key Override",
+    description: "Override stream keys for several streams at once, setting some components of the keys and optionally incrementing stream ID.",
     subscription: {
       accepts: {
         type: 'multi-stream',
@@ -87,14 +88,14 @@ export default function({
           },
         },
         sourceName: {
-          help: "Override Source Name",
+          help: "Override source name",
           hint: {
             type: 'text',
             optional: true,
           }
         },
         programNumber: {
-          help: "Override Program Number",
+          help: "Override program number",
           hint: {
             type: 'numeric',
             optional: true,
@@ -102,7 +103,7 @@ export default function({
           }
         },
         streamId: {
-          help: "Override Stream ID",
+          help: "Override stream ID",
           hint: {
             type: 'numeric',
             optional: true,
@@ -110,7 +111,7 @@ export default function({
           }
         },
         renditionName: {
-          help: "Override Rendition Name",
+          help: "Override rendition name",
           hint: {
             type: 'text',
             optional: true,

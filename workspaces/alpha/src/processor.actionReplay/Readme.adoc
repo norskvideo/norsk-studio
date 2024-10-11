@@ -1,10 +1,10 @@
 == Action Replay
 This component replays media content upon request, managing both audio and video streams.
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
 |===

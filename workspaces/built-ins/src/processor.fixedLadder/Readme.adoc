@@ -1,12 +1,32 @@
 == Encode Ladder
 The Fixed Ladder Encoder is a processor component for encoding a single input video stream into multiple encoded renditions. It creates an encoding ladder, where each &#x60;rung&#x60; represents a different quality level or rendition of the original video, typically varying in resolution and bitrate.
 
-=== Configuration
+=== Features
+* Encodes a single video stream into multiple renditions.
+* Supports both software and hardware-accelerated encoding.
+* Configurable encode settings for each rung (resolution, bitrate, codec settings)
+* Supports multiple codec types: H.264, HEVC(H.265)
+* Hardware acceleration support for AMD MA35D, NVIDIA, Quadra, and Logan.
+
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| rungs | The rungs in this encode ladder |  ✓
+| rungs | The rungs in this encode ladder |  𐄂
+|===
+
+
+==== Rungs
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| name | Unique name of the ladder rung (used in outputs) (default: &quot;default&quot;) |  𐄂
+| software | Settings to use when encoding using software mode |  𐄂
+| quadra | Settings to use when encoding using quadra mode |  𐄂
+| logan | Settings to use when encoding using logan mode |  𐄂
+| nvidia | Settings to use when encoding using nvidia mode |  𐄂
+| ma35d | Settings to use when encoding using ma35d mode |  𐄂
 |===
 

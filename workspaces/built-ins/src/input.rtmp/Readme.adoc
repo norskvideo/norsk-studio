@@ -1,15 +1,15 @@
 == RTMP Ingest
 A component that listens for RTMP input on the address specified.
 
-=== Configuration
+=== Component Configuration
 [cols="2,6,^1",options="header"]
 |===
-|Option | Description | Required
+| Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| port | The port this RTMP input will listen on |  ✓
+| port | The port this RTMP input will listen on (default: 1935) |  𐄂
 | ssl | Optional: SSL |  𐄂
-| appName | Name of the app |  ✓
-| streamNames | List of stream names to assign to the accepted streams |  ✓
+| appName | Name of the app (default: &quot;norsk&quot;) |  𐄂
+| streamNames | List of stream names to assign to the accepted streams (default: [&quot;camera1&quot;]) |  𐄂
 |===
 
