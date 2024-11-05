@@ -152,6 +152,7 @@ export class RtmpInput implements CreatedMediaNode {
 
     if (this.rtmpServer) {
       await this.rtmpServer.close();
+      this.rtmpServer = null;
     }
 
     debuglog("Stream unsubscribed", { streamName, afterState: this.activeStreams });
