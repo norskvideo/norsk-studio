@@ -1,0 +1,177 @@
+openapi: 3.0.0
+info:
+  title: RTMP Input Component
+  version: 1.0.0
+
+paths:
+  /disconnect:
+    post:
+      summary: Disconnect an RTMP stream
+      description: Disconnects an active RTMP stream by stream name
+      x-route-type: instance
+      requestBody:
+        description: The stream to disconnect
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ['streamName']
+              properties:
+                streamName:
+                  type: string
+                  description: The name of the stream to disconnect
+                  example: camera1
+      responses:
+        204:
+          description: The stream was successfully disconnected
+        404:
+          description: The specified stream was not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details
+        500:
+          description: Failed to disconnect the stream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details
+
+  /reconnect:
+    post:
+      summary: Reconnect to an RTMP stream
+      description: Reconnects a previously disconnected RTMP stream
+      x-route-type: instance
+      requestBody:
+        description: The stream to reconnect
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ['streamName']
+              properties:
+                streamName:
+                  type: string
+                  description: The name of the stream to reconnect
+                  example: camera1
+      responses:
+        204:
+          description: The stream was successfully reconnected
+        400:
+          description: Stream is already connected or invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details
+        500:
+          description: Failed to reconnect stream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details
+
+
+
+
+
+# openapi: 3.0.0
+# info:
+#   title: RTMP Input Component
+#   version: 1.0.0
+
+# paths:
+#   /disconnect:
+#     post:
+#       summary: Disconnect an RTMP stream
+#       description: Disconnects an active RTMP stream by stream name
+#       x-route-type: instance
+#       requestBody:
+#         description: The stream to disconnect
+#         content:
+#           application/json:
+#             schema:
+#               $ref: "#/components/schemas/disconnectRequest"
+#       responses:
+#         204:
+#           description: The stream was successfully disconnected
+#         404:
+#           description: The specified stream was not found
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: "#/components/schemas/errorResponse"
+#         500:
+#           description: Failed to disconnect the stream
+#           content:
+#             application/json:
+#               schema:
+#                 $ref: "#/components/schemas/errorResponse"
+#   /reconnect: 
+#     post:
+#       summary: Reconnect to an RTMP stream
+#       description: Reconnects a previously disconnected RTMP stream
+#       x-route-type: instance
+#       requestBody:
+#         description: The stream to reconnect
+#         content:
+#           application/json:
+#             schema:
+#               $ref: "#/components/schemas/reconnectRequest"
+#       responses:
+#         204:
+#           description: The stream was successfully reconnected
+#         400:
+#           description: Stream is already connected or invalid request
+#         500:
+#           description: Failed to reconnect stream
+      
+
+# components:
+#   schemas:
+#     disconnectRequest:
+#       type: object
+#       description: Request to disconnect a stream
+#       required: ['streamName']
+#       properties:
+#         streamName:
+#           type: string
+#           description: The name of the stream to disconnect
+#           example: camera1
+#     errorResponse:
+#       type: object
+#       description: Details of why the request failed
+#       properties:
+#         error:
+#           type: string
+#           description: A description of the error
+#         details:
+#           type: string
+#           description: Additional error details
