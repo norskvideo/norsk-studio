@@ -1,4 +1,4 @@
-import { Norsk, RtmpServerInputSettings as SdkSettings, RtmpServerStreamKeys, MediaNodeState, RtmpServerInputNode, SourceMediaNode } from '@norskvideo/norsk-sdk';
+import { Norsk, RtmpServerInputSettings as SdkSettings, RtmpServerStreamKeys, RtmpServerInputNode, SourceMediaNode } from '@norskvideo/norsk-sdk';
 import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import fs from 'fs/promises';
@@ -36,7 +36,6 @@ export type RtmpInputCommand = {
 export class RtmpInput implements CreatedMediaNode {
   id: string;
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
-  //source?: StudioNodeSubscriptionSource;
 
   norsk: Norsk;
   settings: RtmpInputSettings;
@@ -45,8 +44,7 @@ export class RtmpInput implements CreatedMediaNode {
   rtmpServer: RtmpServerInputNode | null = null;
 
   updates: RuntimeUpdates<RtmpInputState, RtmpInputCommand, RtmpInputEvent>;
-  subscriptions: Map<string, MediaNodeState> = new Map();
-
+  
   static async create(norsk: Norsk, cfg: RtmpInputSettings, updates: RuntimeUpdates<RtmpInputState, RtmpInputCommand, RtmpInputEvent>) {
     const node = new RtmpInput(norsk, cfg, updates);
     await node.initialised;
@@ -140,9 +138,21 @@ export class RtmpInput implements CreatedMediaNode {
           }
         }
       },
+
+      onClose: () => {
+        if (this.rtmpServer) {
+          this.relatedMediaNodes.removeOutput(this.rtmpServer);
+        }
+      },
+
+      onCreate: () => {
+        if (this.rtmpServer) {
+          this.relatedMediaNodes.addOutput(this.rtmpServer);
+        }
+      }
     });
   }
-  async unsubscribeStream(streamName: string) {
+  async disconnectStream(streamName: string) {
     debuglog("Unsubscribing stream", { streamName, beforeState: this.activeStreams });
 
     this.activeStreams = this.activeStreams.filter(s => s !== streamName);
@@ -151,6 +161,7 @@ export class RtmpInput implements CreatedMediaNode {
     });
 
     if (this.rtmpServer) {
+      this.relatedMediaNodes.removeOutput(this.rtmpServer as SourceMediaNode);
       await this.rtmpServer.close();
       this.rtmpServer = null;
     }
@@ -160,25 +171,12 @@ export class RtmpInput implements CreatedMediaNode {
 
   async reconnectStream(streamName: string) {
     debuglog("Reconnecting stream", { streamName, beforeState: this.activeStreams });
-
-    if (!this.rtmpServer) {
-      console.log("Initializing RTMP server for reconnection");
-      await this.initialise();
+    
+    if(this.rtmpServer) {
+      await this.disconnectStream(streamName);
     }
 
-    if (!this.activeStreams.includes(streamName)) {
-      this.activeStreams = [...this.activeStreams, streamName];
-      this.updates.update({
-        connectedSources: [...this.activeStreams]
-      });
-
-      // Add to related nodes
-      if (this.rtmpServer) {
-        console.log("Setting up RTMP server for reconnection")
-        const rtmpOutput = this.rtmpServer as SourceMediaNode;
-        this.relatedMediaNodes.addOutput(rtmpOutput);
-      }
-    }
+    await this.initialise();
 
     debuglog("Stream reconnected", { streamName, afterState: this.activeStreams });
   }
@@ -218,7 +216,7 @@ export default class RtmpInputDefinition implements ServerComponentDefinition<Rt
         await node.reconnectStream(command.streamName);
         break;
       case 'source-disconnected':
-        await node.unsubscribeStream(command.streamName);
+        await node.disconnectStream(command.streamName);
         break;
       default:
         assertUnreachable(commandType);

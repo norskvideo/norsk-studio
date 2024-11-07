@@ -1,7 +1,7 @@
 import { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { RtmpInputCommand, RtmpInputSettings, RtmpInputState } from "./runtime";
 
-function SummaryView({ state, config, sendCommand }: ViewProps<RtmpInputSettings, RtmpInputState, RtmpInputCommand >) {
+function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSettings, RtmpInputState, RtmpInputCommand >) {
   const connectedSources: string[] = [];
   const disconnectedSources: string[] = [];
   
@@ -15,10 +15,7 @@ function SummaryView({ state, config, sendCommand }: ViewProps<RtmpInputSettings
 
   const disconnectStream = async (streamName: string) => {
     try {
-        //const response = await fetch(`${urls.componentUrl}/disconnect`)
-      const response = await fetch(
-        "http://localhost:8000/live/api/rtmp/disconnect",
-        {
+      const response = await fetch(`${urls.componentUrl}/disconnect`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -28,7 +25,7 @@ function SummaryView({ state, config, sendCommand }: ViewProps<RtmpInputSettings
       );
 
       if (!response.ok) {
-        throw new Error("Failed to disconnect stream");
+        console.error("Stream failed to disconnect");
       }
 
       sendCommand({
@@ -38,11 +35,12 @@ function SummaryView({ state, config, sendCommand }: ViewProps<RtmpInputSettings
     } catch (error) {
       console.error("Failed to disconnect stream:", error);
     }
+    console.log("Disconnected to rtmp stream successfully")
   };
 
   const reconnectStream = async (streamName: string) => {
     try {
-      const response = await fetch("http://localhost:8000/live/api/rtmp/reconnect", {
+      const response = await fetch(`${urls.componentUrl}/reconnect`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -51,7 +49,7 @@ function SummaryView({ state, config, sendCommand }: ViewProps<RtmpInputSettings
       });
 
       if (!response.ok) {
-        throw new Error("Failed to reconnect");
+        console.error("Failed to reconnect");
       }
 
       sendCommand({
@@ -61,6 +59,7 @@ function SummaryView({ state, config, sendCommand }: ViewProps<RtmpInputSettings
     } catch (error) {
       console.error("Failed to reconnect to stream", error);
     }
+    console.log("Reconnected to rtmp stream successfully")
   };
 
 
