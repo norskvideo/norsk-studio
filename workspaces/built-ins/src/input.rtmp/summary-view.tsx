@@ -13,6 +13,8 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
     }
   });
 
+  
+
   const disconnectStream = async (streamName: string) => {
     try {
       const response = await fetch(`${urls.componentUrl}/disconnect`, {
@@ -35,7 +37,6 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
     } catch (error) {
       console.error("Failed to disconnect stream:", error);
     }
-    console.log("Disconnected to rtmp stream successfully")
   };
 
   const reconnectStream = async (streamName: string) => {
@@ -59,9 +60,9 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
     } catch (error) {
       console.error("Failed to reconnect to stream", error);
     }
-    console.log("Reconnected to rtmp stream successfully")
   };
 
+ 
 
   return (
     <div className="dark:text-white text-black mb-3 w-60">
