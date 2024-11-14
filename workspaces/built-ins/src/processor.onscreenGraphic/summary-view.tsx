@@ -42,7 +42,7 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConf
     setUploadStatus({ success: false, message: null });
   };
 
-  const uploadFile = async () => {
+  const uploadFileHandle = async () => {
     if (!fileToUpload) return;
 
     try {
@@ -78,12 +78,17 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConf
     setTimeout(() => setUploadStatus({ success: false, message: null }), 5000);
   };
 
-  const deleteBug = async () => {
+  const uploadFile = () => {
+    void uploadFileHandle();
+  }
+
+  const deleteBugHandle = async () => {
     if (!graphicToDelete) return;
 
     try {
-      // This is a hack until I figure out how to get openAPI to generate path parameters
-      // we can use with Swagger UI
+      // DELETE doesn't require a body. This is a hack until I figure out 
+      // how to get openAPI to generate path parameters we can use with Swagger UI
+      console.log(`${urls.componentUrl}`);
       const response = await fetch(`${urls.componentUrl}/graphic`, {
         method: "DELETE",
         headers: {
@@ -91,11 +96,6 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConf
         },
         body: JSON.stringify({ filename: graphicToDelete }),
       });
-
-      // const response = await fetch(`${urls.componentUrl}/graphics/${filename}`, {
-      //   method: "DELETE",
-      // });
-
       if (response.ok) {
         setUploadStatus({
           success: true,
@@ -126,6 +126,10 @@ function SummaryView({ state, sendCommand, urls }: ViewProps<OnscreenGraphicConf
 
     setTimeout(() => setUploadStatus({ success: false, message: null }), 3000);
   };
+
+  const deleteBug = () => {
+    void deleteBugHandle();
+  }
 
   const buttonClass = "mt-2 mb-5 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800";
   const deleteButtonClass = "mt-2 text-white w-full justify-center bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-red-700 dark:hover:bg-red-800 dark:focus:ring-red-900";

@@ -73,20 +73,26 @@ describe("WHEP Output", () => {
 
     page = await browser.newPage();
 
-    await new Promise<void>((r) => {
-      async function doIt() {
-        await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
-        // Video only appears if SDP and stuff negotiate properly so..
-        await page?.waitForSelector('video', { timeout: 100.0 })
-          .catch(() => {
+    await new Promise<void>((resolve) => {
+      const doIt = () => {
+        void (async () => {
+          try {
+            await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+            const video = await page?.waitForSelector('video', { timeout: 100.0 });
+            if (video) {
+              expect(video).exist;
+              resolve();
+            } else {
+              setTimeout(doIt, 100.0);
+            }
+          } catch {
             setTimeout(doIt, 100.0);
-          }).then((v) => {
-            expect(v).exist;
-            r();
-          });
-      }
-      void doIt();
-    })
+          }
+        })();
+      };
+    
+      doIt();
+    });
   })
 
   it("Without a source", async () => {
@@ -100,20 +106,40 @@ describe("WHEP Output", () => {
 
     page = await browser.newPage();
 
-    await new Promise<void>((r) => {
-      async function doIt() {
-        await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
-        // Video only appears if SDP and stuff negotiate properly so..
-        await page?.waitForSelector('video', { timeout: 1000.0 })
-          .catch(() => {
+    // await new Promise<void>((r) => {
+    //   async function doIt() {
+    //     await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+    //     // Video only appears if SDP and stuff negotiate properly so..
+    //     await page?.waitForSelector('video', { timeout: 1000.0 })
+    //       .catch(() => {
 
-          }).then((v) => {
-            expect(v).not.exist;
-            r();
-          });
-      }
-      void doIt();
-    })
+    //       }).then((v) => {
+    //         expect(v).not.exist;
+    //         r();
+    //       });
+    //   }
+    //   void doIt();
+    // })
+    await new Promise<void>((resolve) => {
+      const doIt = () => {
+        void (async () => {
+          try {
+            await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+            const videoElement = await page?.waitForSelector('video', { timeout: 100.0 });
+            if (videoElement) {
+              expect(videoElement).exist;
+              resolve();
+            } else {
+              setTimeout(doIt, 100.0);
+            }
+          } catch (error) {
+            setTimeout(doIt, 100.0);
+          }
+        })();
+      };
+    
+      doIt();
+    });
   })
 
   it("With a changing source", async () => {
@@ -134,20 +160,40 @@ describe("WHEP Output", () => {
 
     page = await browser.newPage();
 
-    await new Promise<void>((r) => {
-      async function doIt() {
-        await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
-        // Video only appears if SDP and stuff negotiate properly so..
-        await page?.waitForSelector('video', { timeout: 100.0 })
-          .catch(() => {
+    // await new Promise<void>((r) => {
+    //   async function doIt() {
+    //     await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+    //     // Video only appears if SDP and stuff negotiate properly so..
+    //     await page?.waitForSelector('video', { timeout: 100.0 })
+    //       .catch(() => {
+    //         setTimeout(doIt, 100.0);
+    //       }).then((v) => {
+    //         expect(v).exist;
+    //         r();
+    //       });
+    //   }
+    //   void doIt();
+    // })
+    await new Promise<void>((resolve) => {
+      const doIt = () => {
+        void (async () => {
+          try {
+            await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+            const videoElement = await page?.waitForSelector('video', { timeout: 100.0 });
+            if (videoElement) {
+              expect(videoElement).exist;
+              resolve();
+            } else {
+              setTimeout(doIt, 100.0);
+            }
+          } catch (error) {
             setTimeout(doIt, 100.0);
-          }).then((v) => {
-            expect(v).exist;
-            r();
-          });
-      }
-      void doIt();
-    })
+          }
+        })();
+      };
+    
+      doIt();
+    });
   })
 });
 

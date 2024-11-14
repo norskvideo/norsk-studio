@@ -11,7 +11,13 @@ module.exports = {
         "varsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
       }
-    ]
+    ],
+    "@typescript-eslint/no-misused-promises": [
+    "error",
+    {
+      "checksVoidReturn": true
+    }
+  ],
   },
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],

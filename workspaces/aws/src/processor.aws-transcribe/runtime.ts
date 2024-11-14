@@ -20,48 +20,55 @@ export default class AwsTranscribeDefinition implements ServerComponentDefinitio
   }
 
   routes() {
-    const router = express.Router()
-    router.get("/languages", async (_req, res) => {
-      const transcribe: LanguageInfo[] = [
-        { name: "Chinese, Simplified", code: "zh-CN" },
-        { name: "English, Australian", code: "en-AU" },
-        { name: "English, British", code: "en-GB" },
-        { name: "English, US", code: "en-US" },
-        { name: "French", code: "fr-FR" },
-        { name: "French, Canadian", code: "fr-CA" },
-        { name: "German", code: "de-DE" },
-        { name: "Hindi, Indian", code: "hi-IN" },
-        { name: "Italian", code: "it-IT" },
-        { name: "Japanese", code: "ja-JP" },
-        { name: "Korean", code: "ko-KR" },
-        { name: "Portuguese, Brazilian", code: "pt-BR" },
-        { name: "Spanish, US", code: "es-US" },
-        { name: "Thai", code: "th-TH" },
-      ];
-      let translate: LanguageInfo[] = [
-        { name: "English", code: "en" },
-        { name: "Chinese (Simplified)", code: "zh" },
-        { name: "French", code: "fr" },
-        { name: "German", code: "de" },
-        { name: "Hindi", code: "hi" },
-        { name: "Spanish", code: "es" },
-        { name: "Japanese", code: "ja" }
-      ];
+    const router = express.Router();
 
-      try {
-        const client = new TranslateClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
-        const res = await client.send(new ListLanguagesCommand());
-        if (res.Languages) {
-          translate = res.Languages?.map((l) => ({ name: l.LanguageName || "Unknown", code: l.LanguageCode || "unk" }));
+    router.get("/languages", ((_, res) => {
+      void (async () => {
+        const transcribe: LanguageInfo[] = [
+          { name: "Chinese, Simplified", code: "zh-CN" },
+          { name: "English, Australian", code: "en-AU" },
+          { name: "English, British", code: "en-GB" },
+          { name: "English, US", code: "en-US" },
+          { name: "French", code: "fr-FR" },
+          { name: "French, Canadian", code: "fr-CA" },
+          { name: "German", code: "de-DE" },
+          { name: "Hindi, Indian", code: "hi-IN" },
+          { name: "Italian", code: "it-IT" },
+          { name: "Japanese", code: "ja-JP" },
+          { name: "Korean", code: "ko-KR" },
+          { name: "Portuguese, Brazilian", code: "pt-BR" },
+          { name: "Spanish, US", code: "es-US" },
+          { name: "Thai", code: "th-TH" },
+        ];
+        let translate: LanguageInfo[] = [
+          { name: "English", code: "en" },
+          { name: "Chinese (Simplified)", code: "zh" },
+          { name: "French", code: "fr" },
+          { name: "German", code: "de" },
+          { name: "Hindi", code: "hi" },
+          { name: "Spanish", code: "es" },
+          { name: "Japanese", code: "ja" }
+        ];
+
+        try {
+          const client = new TranslateClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
+          const response = await client.send(new ListLanguagesCommand());
+          if (response.Languages) {
+            translate = response.Languages?.map((l) => ({ 
+              name: l.LanguageName || "Unknown", 
+              code: l.LanguageCode || "unk" 
+            }));
+          }
+        } catch (e) {
+          warninglog("Error fetching AWS translate languages, proceeding with builtin", e);
         }
-      } catch (e) {
-        warninglog("Error fetching AWS translate languages, proceeding with builtin", e);
-      }
 
-      res.send(JSON.stringify({ transcribe, translate }));
-    })
+        res.send(JSON.stringify({ transcribe, translate }));
+      })();
+    }));
+
     return router;
-  }
+}
 }
 
 class AwsTranscribeNode

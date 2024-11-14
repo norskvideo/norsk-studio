@@ -13,23 +13,24 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
     }
   });
 
+  const handleDisconnectStream = (streamName: string): void => {
+    void disconnectStream(streamName);
+  };
   
-
   const disconnectStream = async (streamName: string) => {
     try {
       const response = await fetch(`${urls.componentUrl}/disconnect`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ streamName }),
-        }
-      );
-
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ streamName }),
+      });
+  
       if (!response.ok) {
         console.error("Stream failed to disconnect");
       }
-
+  
       sendCommand({
         type: "source-disconnected",
         streamName
@@ -37,6 +38,10 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
     } catch (error) {
       console.error("Failed to disconnect stream:", error);
     }
+  };
+
+  const handleReconnectStream = (streamName: string) => {
+    void reconnectStream(streamName);
   };
 
   const reconnectStream = async (streamName: string) => {
@@ -60,9 +65,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
     } catch (error) {
       console.error("Failed to reconnect to stream", error);
     }
-  };
-
- 
+  }; 
 
   return (
     <div className="dark:text-white text-black mb-3 w-60">
@@ -73,7 +76,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
             <li key={streamName} className="flex items-center justify-between">
               <span className="text-green-300">{streamName}</span>
               <button
-                onClick={async () => await disconnectStream(streamName)}
+                onClick={ () => handleDisconnectStream(streamName)}
                 className="ml-2 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
               >
                 Disconnect
@@ -90,7 +93,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
             <li key={streamName} className="flex items-center justify-between">
               <span className="text-orange-300">{streamName}</span>
               <button
-                onClick={async () => await reconnectStream(streamName)}
+                onClick={ () => handleReconnectStream(streamName)}
                 className="ml-2 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded"
               >
                 Reconnect

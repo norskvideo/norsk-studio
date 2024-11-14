@@ -73,7 +73,7 @@ class LatencyStatsOutput implements CreatedMediaNode {
 
     this.sourceTimestamps = await this.norsk.debug.streamTimestampReport({
       id: `${this.id}-${this.cfg.startNodeId}-timestamps`,
-      onTimestamp: async (_k, t) => {
+      onTimestamp: (_k, t) => {
         this.latestSourceTimestamp = t;
         this.tryRegisterLatency();
       }
@@ -87,7 +87,7 @@ class LatencyStatsOutput implements CreatedMediaNode {
     )
     this.sinkTimestamps = await this.norsk.debug.streamTimestampReport({
       id: `${this.id}-${this.cfg.endNodeId}-timestamps`,
-      onTimestamp: async (_k, t) => {
+      onTimestamp: (_k, t) => {
         this.latestSinkTimestamp = t;
         this.tryRegisterLatency();
       }

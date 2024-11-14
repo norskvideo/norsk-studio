@@ -23,41 +23,48 @@ export default class MediaConnectSourceDefinition implements ServerComponentDefi
   }
 
   routes() {
-    const router = express.Router()
-    router.get("/flows", async (_req, res) => {
-      let flows: ListedFlow[] = [];
+    const router = express.Router();
 
-      try {
-        const client = new MediaConnectClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
-        const response = await client.send(new ListFlowsCommand({ MaxResults: 100 }));
-        flows = response.Flows ?? [];
-        client.destroy();
-      } catch (e) {
-        handleAwsException(e, res);
-        return;
-      }
-      res.send(JSON.stringify(flows));
-    })
-    router.get("/flows/:arn", async (req, res) => {
-      let flow: Flow | undefined = undefined;
+    router.get("/flows", ((_req, res) => {
+      void (async () => {
+        let flows: ListedFlow[] = [];
 
-      try {
-        const client = new MediaConnectClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
-        const response = await client.send(new DescribeFlowCommand({ FlowArn: req.params.arn }));
-        flow = response.Flow;
-        client.destroy();
-      } catch (e) {
-        handleAwsException(e, res);
-        return;
-      }
-      if (!flow) {
-        res.status(404).send("Flow not found?");
-        return;
-      }
-      res.send(JSON.stringify(flow));
-    })
+        try {
+          const client = new MediaConnectClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
+          const response = await client.send(new ListFlowsCommand({ MaxResults: 100 }));
+          flows = response.Flows ?? [];
+          client.destroy();
+        } catch (e) {
+          handleAwsException(e, res);
+          return;
+        }
+        res.send(JSON.stringify(flows));
+      })();
+    }));
+
+    router.get("/flows/:arn", ((req, res) => {
+      void (async () => {
+        let flow: Flow | undefined = undefined;
+
+        try {
+          const client = new MediaConnectClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
+          const response = await client.send(new DescribeFlowCommand({ FlowArn: req.params.arn }));
+          flow = response.Flow;
+          client.destroy();
+        } catch (e) {
+          handleAwsException(e, res);
+          return;
+        }
+        if (!flow) {
+          res.status(404).send("Flow not found?");
+          return;
+        }
+        res.send(JSON.stringify(flow));
+      })();
+    }));
+
     return router;
-  }
+}
 }
 
 // 1999 called and asked for its Java back

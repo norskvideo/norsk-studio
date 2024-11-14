@@ -79,30 +79,38 @@ describe("Auto CMAF Output", () => {
   }
 
   async function awaitCompleteManifest(url: string, expectedStreams: number) {
-    return new Promise<types.MasterPlaylist>((r) => {
-      const i = setInterval(async () => {
-        const request = await fetch(url);
-
-        if (request.ok) {
-          const hls = await request.text();
-          const parsed = HLS.parse(hls);
-
-          if (parsed.isMasterPlaylist) {
-
-            const master = parsed as types.MasterPlaylist;
-            const current = master.variants.reduce((acc, v) => {
-              acc.add(v.uri);
-              v.audio.forEach((a) => { if (a.uri) acc.add(a.uri) });
-              return acc;
-            }, new Set())
-            if (current.size === expectedStreams) {
-              clearInterval(i);
-              r(master);
+    return new Promise<types.MasterPlaylist>((resolve) => {
+      const checkManifest = async () => {
+        try {
+          const request = await fetch(url);
+  
+          if (request.ok) {
+            const hls = await request.text();
+            const parsed = HLS.parse(hls);
+  
+            if (parsed.isMasterPlaylist) {
+              const master = parsed as types.MasterPlaylist;
+              const current = master.variants.reduce((acc, v) => {
+                acc.add(v.uri);
+                v.audio.forEach((a) => { if (a.uri) acc.add(a.uri) });
+                return acc;
+              }, new Set<string>());
+  
+              if (current.size === expectedStreams) {
+                clearInterval(intervalId);
+                resolve(master);
+              }
             }
           }
+        } catch (error) {
+          console.error("Error checking manifest:", error);
         }
-      }, 10.0)
-    })
+      };
+  
+      const intervalId = setInterval(() => {
+        void checkManifest();
+      }, 10.0);
+    });
   }
 
   describe("A single video and audio stream", () => {

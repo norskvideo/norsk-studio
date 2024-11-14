@@ -62,7 +62,7 @@ class TimestampOutput extends CustomSinkNode {
     this.setup({ sink: node })
   }
 
-  async onTimestamp(key: StreamKey, timestamp: Interval) {
+  onTimestamp(key: StreamKey, timestamp: Interval) {
     this.updates.raiseEvent({
       type: 'new-timestamp',
       key: `${key.programNumber}-${key.sourceName}-${key.streamId}-${key.renditionName}`,

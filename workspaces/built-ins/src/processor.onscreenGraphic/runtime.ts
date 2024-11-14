@@ -120,18 +120,23 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
       }
     });
 
-    const fileFilter = async function (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+    const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+      void checkFileExists(file, cb);
+    };
+    
+    const checkFileExists = async (file: Express.Multer.File, cb: multer.FileFilterCallback) => {
       try {
         const existingGraphics = await getGraphics();
         if (existingGraphics.includes(file.originalname)) {
-          return cb(new Error('A graphic with this name already exists'));
+          cb(new Error('A graphic with this name already exists'));
         } else {
           cb(null, true);
         }
       } catch (error) {
         cb(error as Error);
       }
-    }
+    };
+    
     const upload = multer({ storage, fileFilter });
     const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
     const root = YAML.parse(types.toString());

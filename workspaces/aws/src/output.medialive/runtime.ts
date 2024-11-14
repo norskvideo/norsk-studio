@@ -42,41 +42,46 @@ export default class MediaConnectSourceDefinition implements ServerComponentDefi
   }
 
   routes() {
-    const router = express.Router()
-    router.get("/channels", async (_req, res) => {
-      let channels: ChannelSummary[] = [];
+    const router = express.Router();
 
-      try {
-        const client = new MediaLiveClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
-        const response = await client.send(new ListChannelsCommand({ MaxResults: 100 }));
-        channels = response.Channels ?? [];
-        client.destroy();
-      } catch (e) {
-        handleAwsException(e, res);
-        return;
-      }
-      res.send(JSON.stringify(channels));
-    })
+    router.get("/channels", ((_, res) => {
+      void (async () => {
+        let channels: ChannelSummary[] = [];
 
-    router.get('/inputs/:id', async (req, res) => {
-      let input: DescribeInputCommandOutput | undefined = undefined;
-      try {
-        const client = new MediaLiveClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
-        input = await client.send(new DescribeInputCommand({ InputId: req.params.id }));
-        client.destroy();
-      } catch (e) {
-        handleAwsException(e, res);
-        return;
-      }
-      if (!input) {
-        res.status(404).send("Input not found?");
-        return;
-      }
-      res.send(JSON.stringify(input));
-    })
+        try {
+          const client = new MediaLiveClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
+          const response = await client.send(new ListChannelsCommand({ MaxResults: 100 }));
+          channels = response.Channels ?? [];
+          client.destroy();
+        } catch (e) {
+          handleAwsException(e, res);
+          return;
+        }
+        res.send(JSON.stringify(channels));
+      })();
+    }));
+
+    router.get('/inputs/:id', ((req, res) => {
+      void (async () => {
+        let input: DescribeInputCommandOutput | undefined = undefined;
+        try {
+          const client = new MediaLiveClient({ region: process.env.AWS_REGION ?? "eu-west-2" });
+          input = await client.send(new DescribeInputCommand({ InputId: req.params.id }));
+          client.destroy();
+        } catch (e) {
+          handleAwsException(e, res);
+          return;
+        }
+        if (!input) {
+          res.status(404).send("Input not found?");
+          return;
+        }
+        res.send(JSON.stringify(input));
+      })();
+    }));
 
     return router;
-  }
+}
 }
 
 // 1999 called and asked for its Java back

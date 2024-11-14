@@ -375,11 +375,12 @@ export class SourceSwitch extends CustomAutoDuplexNode {
       let prev = 0.0;
       let lastDiff = 0.0;
       const debug = await this.norsk.debug.streamTimestampReport({
-        onTimestamp: async (_, t) => {
+        onTimestamp: (_, t) => {
           const now = Number((t.n * 100n) / t.d) / 100;
           const diff = now - prev;
-          if (Math.abs(lastDiff - diff) > 0.01)
+          if (Math.abs(lastDiff - diff) > 0.01) {
             debuglog('ABNORMAL AUDIO GAP DETECTED', { gap: now - prev, lastGap: lastDiff });
+          }
           prev = now;
           lastDiff = diff;
         }
@@ -394,7 +395,7 @@ export class SourceSwitch extends CustomAutoDuplexNode {
       let prev = 0.0;
       let lastDiff = 0.0;
       const debug = await this.norsk.debug.streamTimestampReport({
-        onTimestamp: async (_, t) => {
+        onTimestamp: (_, t) => {
           const now = Number((t.n * 100n) / t.d) / 100;
           const diff = now - prev;
           if (Math.abs(lastDiff - diff) > 0.01)
