@@ -1,6 +1,8 @@
 == {{name}}
 {{description}}
 
+This is useful for renaming streams before they go to outputs, or for gathering multiple streams together for processors and outputs that expect a single stream or a single program, like `output.autoCmaf`.
+
 === Component Configuration
 {{> optionsTable}}
 
@@ -14,7 +16,7 @@ Each mode overrides the stream key of streams individually.
 
 For each stream key component specified in config, it will override that component of the existing stream key directly.
 
-If all components of the stream key are specified in config, it can only accept one stream, as stream keys need to be unique.
+If all components of the stream key are specified in config, it can only accept one stream, because stream keys need to be unique.
 
 ==== 'by-media-type'
 
