@@ -1,0 +1,99 @@
+openapi: 3.0.0
+info:
+  title: SRT Listener Input Component
+  version: 1.0.0
+
+paths:
+  /disconnect:
+    post:
+      summary: Disconnect an SRT stream
+      description: Disconnects an active SRT stream by stream id
+      x-route-type: instance
+      requestBody:
+        description: The stream to disconnect
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ['streamId']
+              properties:
+                streamId:
+                  type: string
+                  description: The ID of the stream to disconnect
+                  example: camera1
+      responses:
+        204:
+          description: The stream was successfully disconnected
+        404:
+          description: The specified stream was not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details
+        500:
+          description: Failed to disconnect the stream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details
+
+  /reconnect:
+    post:
+      summary: Reconnect to an RTMP stream
+      description: Reconnects a previously disconnected RTMP stream
+      x-route-type: instance
+      requestBody:
+        description: The stream to reconnect
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ['streamId']
+              properties:
+                streamId:
+                  type: string
+                  description: The Id of the stream to reconnect
+                  example: camera1
+      responses:
+        204:
+          description: The stream was successfully reconnected
+        400:
+          description: Stream is already connected or invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details
+        500:
+          description: Failed to reconnect stream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details

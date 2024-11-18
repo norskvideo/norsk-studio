@@ -7,11 +7,14 @@ import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { TraceSink, assertNodeOutputsAudioFrames, assertNodeOutputsVideoFrames, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import { SrtInputEvent, SrtInputSettings, SrtInputState } from "../input.srt-listener/runtime";
-
 import SrtInfo from "../input.srt-listener/info";
 import { BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { expect } from "chai";
+import { AddressInfo } from 'net';
+import { Server } from 'http';
+import fetch from "node-fetch";
+import express from 'express';
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
 import { _videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 
@@ -556,6 +559,137 @@ describe("SRT Listener Input", () => {
       })
     });
   });
+
+  describe("SRT Input API", () => {
+    impl("with basic stream management", {
+      id: 'srt',
+      displayName: 'srt',
+      port: 65403,
+      host: '0.0.0.0',
+      sourceNames: 'permissive',
+      streamIds: ['stream1'],
+      socketOptions: {}
+    }, (testDocument, _cfg) => {
+      let norsk: Norsk | undefined = undefined;
+      let app: express.Application;
+      let server: Server;
+      let port: number;
+  
+      beforeEach(async () => {
+        norsk = await Norsk.connect({ onShutdown: () => { } });
+        app = express();
+        app.use(express.json());
+        server = app.listen(0);
+        port = (server.address() as AddressInfo).port;
+      });
+  
+      afterEach(async () => {
+        await norsk?.close();
+        server?.close();
+      });
+  
+      describe("http api", () => {
+        it("disconnect/reconnect cycle via HTTP API", async () => {
+          const compiled = await testDocument();
+          const result = await go(norsk!, compiled, app);
+          const srtNode = result.components['srt'];
+          const sink = new TraceSink(norsk as Norsk, "sink");
+          await sink.initialised;
+  
+          const av = await _videoAndAudio(norsk!, "source");
+          let srt = await norsk!.output.srt({
+            id: "av-srt1",
+            mode: "caller",
+            host: "127.0.0.1",
+            port: 65403,
+            streamId: 'stream1'
+          });
+          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
+  
+          await waitForCondition(() => sink.streamCount() === 2);
+          expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.include('stream1');
+
+          const disconnectResponse = await fetch(`http://localhost:${port}/${srtNode.id}/disconnect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamId: 'stream1' })
+          });
+          expect(disconnectResponse.status).to.equal(204);
+  
+          await waitForCondition(() => sink.streamCount() === 0);
+          expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.not.include('stream1');
+
+          const reconnectResponse = await fetch(`http://localhost:${port}/${srtNode.id}/reconnect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamId: 'stream1' })
+          });
+          expect(reconnectResponse.status).to.equal(204);
+  
+          srt = await norsk!.output.srt({
+            id: "av-srt2",
+            mode: "caller",
+            host: "127.0.0.1",
+            port: 65403,
+            streamId: 'stream1'
+          });
+          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
+  
+          await waitForCondition(() => sink.streamCount() === 2);
+          expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.include('stream1');
+        });
+  
+        it("handles invalid API requests appropriately", async () => {
+          const compiled = await testDocument();
+          const result = await go(norsk!, compiled, app);
+
+          const missingIdResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disconnect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          expect(missingIdResponse.status).to.equal(400);
+  
+          const nonExistentResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disconnect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamId: 'stream1' })
+          });
+          expect(nonExistentResponse.status).to.equal(404);
+        });
+  
+        it("prevents reconnecting already connected stream", async () => {
+          const compiled = await testDocument();
+          const result = await go(norsk!, compiled, app);
+          const sink = new TraceSink(norsk as Norsk, "sink");
+          await sink.initialised;
+  
+          const av = await _videoAndAudio(norsk!, "source");
+          const srt = await norsk!.output.srt({
+            id: "av-srt1",
+            mode: "caller",
+            host: "127.0.0.1",
+            port: 65403,
+            streamId: 'stream1'
+          });
+          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
+  
+          await waitForCondition(() => sink.streamCount() === 2);
+  
+          const reconnectResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/reconnect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamId: 'stream1' })
+          });
+          expect(reconnectResponse.status).to.equal(400);
+          expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.include('stream1');
+        });
+      });
+    });
+  });
+
+
+
 });
 
 
