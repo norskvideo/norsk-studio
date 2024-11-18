@@ -38,7 +38,7 @@ export class RtmpInput implements CreatedMediaNode {
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
 
   norsk: Norsk;
-  settings: RtmpInputSettings;
+  cfg: RtmpInputSettings;
   activeStreams: string[] = [];
   initialised: Promise<void>;
   rtmpServer: RtmpServerInputNode | null = null;
@@ -51,9 +51,9 @@ export class RtmpInput implements CreatedMediaNode {
     return node;
   }
 
-  constructor(norsk: Norsk, settings: RtmpInputSettings, updates: RuntimeUpdates<RtmpInputState, RtmpInputCommand, RtmpInputEvent>) {
-    this.settings = settings;
-    this.id = settings.id;
+  constructor(norsk: Norsk, cfg: RtmpInputSettings, updates: RuntimeUpdates<RtmpInputState, RtmpInputCommand, RtmpInputEvent>) {
+    this.cfg = cfg;
+    this.id = cfg.id;
     this.norsk = norsk;
     this.updates = updates;
     this.initialised = this.initialise();
@@ -61,14 +61,14 @@ export class RtmpInput implements CreatedMediaNode {
 
   async initialise(): Promise<void> {
     this.rtmpServer = await this.norsk.input.rtmpServer({
-      port: this.settings.port,
-      ssl: this.settings.ssl,
+      port: this.cfg.port,
+      ssl: this.cfg.ssl,
       sslOptions: {
         certFile: process.env.SSL_CERT_FILE,
         keyFile: process.env.SSL_KEY_FILE,
       },
       onConnection: (connectionId: string, app: string, url: string) => {
-        if (app === this.settings.appName) {
+        if (app === this.cfg.appName) {
           debuglog("Accepted connection with app name", { app, connectionId, url });
           return { accept: true };
         } else {
@@ -80,7 +80,7 @@ export class RtmpInput implements CreatedMediaNode {
       onStream: (cid: string, app: string, url: string, streamId: number, publishingName: string) => {
         debuglog("Stream request received", { publishingName, activeStreams: this.activeStreams });
 
-        if (!this.settings.streamNames.includes(publishingName)) {
+        if (!this.cfg.streamNames.includes(publishingName)) {
           debuglog("Rejecting unknown stream name", { publishingName });
           return {
             accept: false,
@@ -111,11 +111,11 @@ export class RtmpInput implements CreatedMediaNode {
         return {
           accept: true,
           videoStreamKey: {
-            renditionName: this.settings.appName + "-default",
+            renditionName: this.cfg.appName + "-default",
             sourceName: publishingName,
           },
           audioStreamKey: {
-            renditionName: this.settings.appName + "-default",
+            renditionName: this.cfg.appName + "-default",
             sourceName: publishingName,
           },
         };
