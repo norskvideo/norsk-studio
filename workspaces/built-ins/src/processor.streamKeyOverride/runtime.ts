@@ -10,6 +10,7 @@ export type StreamKeyOverrideConfig = {
   displayName: string,
 
   mode: "simple" | "by-media-type" | "in-order",
+  output: "merged" | "individually-selectable",
 
   sourceName?: string,
   programNumber?: number,
@@ -223,7 +224,11 @@ export class StreamKeyOverride implements CreatedMediaNode, SubscribeDestination
   // This replaces the "fixed-list" `selector` in info.ts, since it requires
   // knowing the mapping of stream keys at runtime (and their association to
   // particular subscriptions).
-  selectOutputs(selectionKeys: string[]) {
+  selectOutputs(selectionKeys: string[]): StreamKey[] {
+    if (this.cfg.output === 'merged') {
+      if (!selectionKeys.length) return [];
+      return this.mapping.map(m => m.to);
+    }
     return this.currentSources.flatMap(source => {
       const sourceNode = source.sourceDescription;
       const produces = sourceNode.info.subscription.produces;

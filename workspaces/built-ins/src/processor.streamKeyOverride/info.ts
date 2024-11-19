@@ -19,19 +19,28 @@ export default function({
       produces: {
         type: "fixed-list",
         possibleMedia: All,
-        keys: (_cfg, subs) => subs.flatMap(sub => {
-          const sourceNode = sub.document.components[sub.source];
-          if (!sourceNode) return [];
-          const produces = sourceNode.info.subscription.produces;
-          if (produces?.type === "fixed-list") {
-            return produces
-              .keys(sourceNode.config, sourceNode.subscriptions)
-              // Prefix the keys and display names with a stable identifier
-              .map(sel => ({ ...sel, key: `${sourceNode.id}-${sel.key}`, display: `${sourceNode.config.displayName}: ${sel.display}` }));
-          } else {
-            return [{ key: `${sourceNode.id}`, display: `${sourceNode.config.displayName}`, media: produces ? produces.media : All }];
+        keys: (cfg, subs) => {
+          const outputs = subs.flatMap(sub => {
+            const sourceNode = sub.document.components[sub.source];
+            if (!sourceNode) return [];
+            const produces = sourceNode.info.subscription.produces;
+            if (produces?.type === "fixed-list") {
+              return produces
+                .keys(sourceNode.config, sourceNode.subscriptions)
+                // Prefix the keys and display names with a stable identifier
+                .map(sel => ({ ...sel, key: `${sourceNode.id}-${sel.key}`, display: `${sourceNode.config.displayName}: ${sel.display}` }));
+            } else {
+              return [{ key: `${sourceNode.id}`, display: `${sourceNode.config.displayName}`, media: produces ? produces.media : All }];
+            }
+          });
+          if (cfg.output === 'merged') {
+            const media = Array.from(new Set(
+              outputs.flatMap(x => x.media)
+            ));
+            return [{ key: `merged`, display: "Merged", media }];
           }
-        }),
+          return outputs;
+        },
         selector: () => {
           console.error("Use selectOutputs from process.streamKeyOverride/runtime.ts, not selector from info.ts");
           return [];
@@ -41,6 +50,7 @@ export default function({
     display: ({ config }) => {
       const disp: Record<string, string> = {};
       disp.mode = config.mode || "simple";
+      disp.output = config.output || "individually-selectable";
       if (config.sourceName) {
         disp.sourceName = config.sourceName;
       }
@@ -64,6 +74,9 @@ export default function({
       if (config.mode === "by-media-type" && config.streamId === undefined) {
         ctx.addError("You must specify the starting streamId for a by-media-type stream key override");
       }
+      if (config.output === "merged" && !config.sourceName) {
+        ctx.addError("You must specify a sourceName for a single merged output");
+      }
     },
     configForm: {
       form: {
@@ -84,6 +97,23 @@ export default function({
               {
                 display: "Increment stream ID per program in order of subscription",
                 value: "in-order",
+              },
+            ],
+          },
+        },
+        output: {
+          help: "Output individual streams or a single merged stream",
+          hint: {
+            type: 'select',
+            defaultValue: "individually-selectable",
+            options: [
+              {
+                display: "Individual inputs can be selected in the output",
+                value: "individually-selectable",
+              },
+              {
+                display: "The outputs are merged into a single stream",
+                value: "merged",
               },
             ],
           },

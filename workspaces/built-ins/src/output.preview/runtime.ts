@@ -104,7 +104,7 @@ export class PreviewOutput extends CustomSinkNode {
     if (videoSource && videoSource.length > 0) {
       if (!this.encoder) {
         debuglog("Finding preview encode for preview node", this.id);
-        this.encoder = await this.shared.previewEncode(videoSource[0], this.cfg.__global.hardware)
+        this.encoder = await this.shared.previewEncode(videoSource[0], this.cfg.__global.hardware);
         this.registerInput(this.encoder);
       }
     } else {
@@ -144,12 +144,12 @@ export class PreviewOutput extends CustomSinkNode {
       ...webRtcSettings(this.cfg.__global.iceServers)
     };
 
-    // In theory this can work for audio only or video only workflows
-    if (!this.whep) {
-      this.whep = await this.norsk.output.whep(whepCfg);
-    }
-
     if (subscriptions.length > 0) {
+      // In theory this can work for audio only or video only workflows
+      if (!this.whep) {
+        this.whep = await this.norsk.output.whep(whepCfg);
+      }
+
       // And then whep gets encoded + original audio
       this.whep?.subscribe(subscriptions, (ctx) => {
         return ctx.streams.length == subscriptions.length
