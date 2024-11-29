@@ -122,18 +122,24 @@ paths:
         404:
           description: Component not found
 
-
 components:
   schemas:
     position:
-      type: string
-      description: Where the graphic is to be displayed
-      example: "topright"
-      enum:
-        - topleft
-        - topright
-        - bottomleft
-        - bottomright
+      type: object
+      properties:
+        x:
+          type: number
+          description: X coordinate position
+          minimum: 0
+          maximum: 1920
+        y:
+          type: number
+          description: Y coordinate position
+          minimum: 0
+          maximum: 1080
+      required:
+        - x
+        - y
     graphic:
       type: string
       description: The name of the image file
@@ -159,4 +165,42 @@ components:
         details:
           type: string
           description: The unacceptable data
+
+
+# components:
+#   schemas:
+#     position:
+#       type: string
+#       description: Where the graphic is to be displayed
+#       example: "topright"
+#       enum:
+#         - topleft
+#         - topright
+#         - bottomleft
+#         - bottomright
+#     graphic:
+#       type: string
+#       description: The name of the image file
+#       example: Norsk.png
+#     config:
+#       type: object
+#       description: The configuration for the onscreen graphic
+#       properties:
+#         graphic:
+#           $ref: "#/components/schemas/graphic"
+#         position:
+#           $ref: "#/components/schemas/position"
+#     emptyObject:
+#       type: object
+#       example: {}
+#     errorResponse:
+#       type: object
+#       description: Details of why the request failed
+#       properties:
+#         error:
+#           type: string
+#           description: A description of the error
+#         details:
+#           type: string
+#           description: The unacceptable data
 

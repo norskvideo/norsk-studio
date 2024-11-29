@@ -286,12 +286,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /**
-         * @description Where the graphic is to be displayed
-         * @example topright
-         * @enum {string}
-         */
-        position: "topleft" | "topright" | "bottomleft" | "bottomright";
+        position: {
+            /** @description X coordinate position */
+            x: number;
+            /** @description Y coordinate position */
+            y: number;
+        };
         /**
          * @description The name of the image file
          * @example Norsk.png

@@ -41,6 +41,13 @@ const videoOptsTwo = {
   frameRate: { frames: 25, seconds: 1 }
 }
 
+const POSITIONS = {
+  BOTTOM_LEFT: { x: 5, y: 1075 },
+  TOP_LEFT: { x: 5, y: 5 },
+  TOP_RIGHT: { x: 1915, y: 5 },
+  BOTTOM_RIGHT: { x: 1915, y: 1075 }
+} as const;
+
 function apiUrl(id: string, port: number): string {
   return `http://127.0.0.1:${port}/${id}/active-graphic`
 }
@@ -143,7 +150,7 @@ describe("Onscreen Graphic", () => {
   it("Onscreen graphic with initial configured image", async () => {
     const compiled = await testDocument({
       initialGraphic: "test.png",
-      initialPosition: "bottomleft"
+      initialPosition: POSITIONS.BOTTOM_LEFT
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
@@ -167,12 +174,15 @@ describe("Onscreen Graphic", () => {
     await Promise.all([
       assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
       waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.file == "test.png"),
-      waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.position == "bottomleft")
+      waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => 
+        latestState().activeGraphic?.position?.x === POSITIONS.BOTTOM_LEFT.x && 
+        latestState().activeGraphic?.position?.y === POSITIONS.BOTTOM_LEFT.y
+      )
     ])
   })
+
   it("Onscreen graphic with no configured image, configured during run", async () => {
-    const compiled = await testDocument({
-    });
+    const compiled = await testDocument({});
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
     const graphic = result.components["graphic"] as OnscreenGraphic;
@@ -188,7 +198,7 @@ describe("Onscreen Graphic", () => {
       })
     ])
 
-    await graphic.setupGraphic("test.png", "bottomleft")
+    await graphic.setupGraphic("test.png", POSITIONS.BOTTOM_LEFT)
 
     function latestState() {
       return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
@@ -197,14 +207,17 @@ describe("Onscreen Graphic", () => {
     await Promise.all([
       assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
       waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.file == "test.png"),
-      waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.position == "bottomleft")
+      waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => 
+        latestState().activeGraphic?.position?.x === POSITIONS.BOTTOM_LEFT.x && 
+        latestState().activeGraphic?.position?.y === POSITIONS.BOTTOM_LEFT.y
+      )
     ])
   })
 
   it("Onscreen graphic with configured image, re-configured during run", async () => {
     const compiled = await testDocument({
       initialGraphic: "test.png",
-      initialPosition: "bottomleft"
+      initialPosition: POSITIONS.BOTTOM_LEFT
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
@@ -221,7 +234,7 @@ describe("Onscreen Graphic", () => {
       })
     ])
 
-    await graphic.setupGraphic("test2.png", "bottomleft")
+    await graphic.setupGraphic("test2.png", POSITIONS.BOTTOM_LEFT)
 
     function latestState() {
       return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
@@ -230,14 +243,17 @@ describe("Onscreen Graphic", () => {
     await Promise.all([
       assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
       waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => latestState().activeGraphic?.file == "test2.png"),
-      waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => latestState().activeGraphic?.position == "bottomleft")
+      waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => 
+        latestState().activeGraphic?.position?.x === POSITIONS.BOTTOM_LEFT.x && 
+        latestState().activeGraphic?.position?.y === POSITIONS.BOTTOM_LEFT.y
+      )
     ])
   })
 
   it("Onscreen graphic with configured image, re-configured during run, source reset", async () => {
     const compiled = await testDocument({
       initialGraphic: "test.png",
-      initialPosition: "bottomleft"
+      initialPosition: POSITIONS.BOTTOM_LEFT
     });
     norsk = await Norsk.connect({ onShutdown: () => { } });
     const result = await go(norsk, compiled);
@@ -259,13 +275,11 @@ describe("Onscreen Graphic", () => {
       })
     ])
 
-
     function latestState() {
       return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
     }
 
-
-    await graphic.setupGraphic("test2.png", "bottomleft")
+    await graphic.setupGraphic("test2.png", POSITIONS.BOTTOM_LEFT)
     await waitForCondition(() => latestState().activeGraphic?.file == "test2.png");
     await waitForCondition(() => sink.streamCount() == 1, 10000.0);
     await sourceOne.close();
@@ -281,17 +295,18 @@ describe("Onscreen Graphic", () => {
       })
     ])
 
-    // Browser overlay outputs the same as it gets in, only with extra browser overlay
     await Promise.all([
       await waitForAssert(() => sink.streamCount() == 1, () => sink.streamCount() == 1, 10000, 500),
       assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOptsTwo),
       waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => latestState().activeGraphic?.file == "test2.png"),
-      waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => latestState().activeGraphic?.position == "bottomleft")
+      waitForAssert(() => latestState().activeGraphic?.file == "test2.png", () => 
+        latestState().activeGraphic?.position?.x === POSITIONS.BOTTOM_LEFT.x && 
+        latestState().activeGraphic?.position?.y === POSITIONS.BOTTOM_LEFT.y
+      )
     ])
   })
 
   describe("http api", () => {
-
     let port = 0;
     let result: RunResult = undefined!;
     let listener: Server = undefined!;
@@ -310,8 +325,6 @@ describe("Onscreen Graphic", () => {
           r();
         });
       });
-      // const address = listener.address() as AddressInfo;
-      // port = address.port;
       graphic = result.components["graphic"] as OnscreenGraphic;
       const sink = new TraceSink(norsk as Norsk, "sink");
       await sink.initialised;
@@ -338,9 +351,12 @@ describe("Onscreen Graphic", () => {
     it("Setting active graphic via the http api", async () => {
       const httpResult = await fetch(apiUrl(graphic.id, port), {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           graphic: 'test.png',
-          position: 'bottomleft'
+          position: POSITIONS.BOTTOM_LEFT
         })
       });
 
@@ -353,12 +369,15 @@ describe("Onscreen Graphic", () => {
       await Promise.all([
         assertNodeOutputsVideoFrames(norsk, result, "graphic", videoOpts),
         waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.file == "test.png"),
-        waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => latestState().activeGraphic?.position == "bottomleft")
+        waitForAssert(() => latestState().activeGraphic?.file == "test.png", () => 
+          latestState().activeGraphic?.position?.x === POSITIONS.BOTTOM_LEFT.x && 
+          latestState().activeGraphic?.position?.y === POSITIONS.BOTTOM_LEFT.y
+        )
       ])
     })
 
     it("Clearing active graphic via empty post to the http api", async () => {
-      await graphic.setupGraphic("test.png", "bottomleft")
+      await graphic.setupGraphic("test.png", POSITIONS.BOTTOM_LEFT)
 
       function latestState() {
         return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
@@ -366,8 +385,10 @@ describe("Onscreen Graphic", () => {
 
       const httpResult = await fetch(apiUrl(graphic.id, port), {
         method: 'POST',
-        body: JSON.stringify({
-        })
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
       });
 
       expect(httpResult.status).equal(204);
@@ -380,14 +401,14 @@ describe("Onscreen Graphic", () => {
     })
 
     it("Clearing active graphic via delete to the http api", async () => {
-      await graphic.setupGraphic("test.png", "bottomleft")
+      await graphic.setupGraphic("test.png", POSITIONS.BOTTOM_LEFT)
 
       function latestState() {
         return result.runtimeState.latest["graphic"] as OnscreenGraphicState;
       }
 
       const httpResult = await fetch(apiUrl(graphic.id, port), {
-        method: 'delete'
+        method: 'DELETE'
       });
 
       expect(httpResult.status).equal(204);

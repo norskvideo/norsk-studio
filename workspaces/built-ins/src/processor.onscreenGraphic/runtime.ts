@@ -18,7 +18,7 @@ import { OpenAPIV3 } from 'openapi-types';
 export type OnscreenGraphicPosition = components['schemas']['position'];
 export type OnscreenGraphicFile = components['schemas']['graphic'];
 export type OnscreenGraphicApiConfig = components['schemas']['config'];
-const onscreenGraphicPositions: OnscreenGraphicPosition[] = ['topleft', 'topright', 'bottomleft', 'bottomright'];
+//const onscreenGraphicPositions: OnscreenGraphicPosition[] = [];
 
 export type OnscreenGraphicConfig = {
   __global: {
@@ -36,6 +36,7 @@ export type OnscreenGraphicState = {
     file?: OnscreenGraphicFile,
     position?: OnscreenGraphicPosition
   },
+  graphic?: OnscreenGraphic
 }
 
 export type OnscreenGraphicCommand = {
@@ -213,17 +214,26 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
           }
         }),
       },
+
       {
         ...post<paths>('/active-graphic', paths),
         handler: ({ runtime }) => (async (req, res) => {
           if ((req.body.graphic || req.body.position)) { // Allow empty requests to act as a delete
-            if (!onscreenGraphicPositions.includes(req.body.position)) {
-              res.status(400).json({
-                error: "Bad position",
-                details: req.body.position
-              });
-              return;
+            if (req.body.position) {
+              const position = req.body.position;
+              if (!position.x || !position.y || 
+                  typeof position.x !== 'number' || 
+                  typeof position.y !== 'number' ||
+                  position.x < 0 || position.x > 1920 ||
+                  position.y < 0 || position.y > 1080) {
+                res.status(400).json({
+                  error: "Bad position",
+                  details: `Position must be an object with x and y coordinates between 0-1920 and 0-1080 respectively`
+                });
+                return;
+              }
             }
+      
             const images = await getGraphics();
             if (!images.includes(req.body.graphic)) {
               res.status(400).json({
@@ -233,6 +243,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
               return;
             }
           }
+      
           runtime.updates.sendCommand({
             type: 'change-graphic',
             file: req.body.graphic,
@@ -377,7 +388,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
           this.composeNode?.updateConfig({
             parts: [
               this.videoPart(),
-              this.imagePart(this.position ?? 'topleft')
+              this.imagePart(this.position ?? { x: 5, y: 5 })
             ]
           })
         } else {
@@ -454,10 +465,12 @@ export class OnscreenGraphic implements CreatedMediaNode {
           sourceRect: { x: 0, y: 0, width: metadata.width, height: metadata.height },
 
           // And do a per pixel blit of the image 'as is', with an offset of 5 pixels
-          destRect: (position == 'topleft' ? { x: 5, y: 5, width: imageWidth, height: imageHeight } :
-            position == 'topright' ? { x: videoWidth - imageWidth - 5, y: 5, width: imageWidth, height: imageHeight } :
-              position == 'bottomleft' ? { x: 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight } :
-                { x: videoWidth - imageWidth - 5, y: videoHeight - imageHeight - 5, width: imageWidth, height: imageHeight })
+          destRect: { 
+            x: position.x,
+            y: position.y,
+            width: imageWidth, 
+            height: imageHeight 
+          }
         }
       },
       opacity: 1.0,
