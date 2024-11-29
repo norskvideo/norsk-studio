@@ -63,19 +63,19 @@ function coreInfo<T>(path: keyof T, op: OpenAPIV3.OperationObject) {
     responses: op.responses,
   }
 }
-function get<T>(path: keyof T, paths: Transmuted<T>)  {
+function get<T>(path: keyof T, paths: Transmuted<T>) {
   return {
     ...coreInfo(path, paths[path]['get']!),
     method: 'GET' as const,
   }
 }
-function post<T>(path: keyof T, paths: Transmuted<T>)  {
+function post<T>(path: keyof T, paths: Transmuted<T>) {
   return {
     ...coreInfo(path, paths[path]['post']!),
     method: 'POST' as const,
   }
 }
-function delete_<T>(path: keyof T, paths: Transmuted<T>)  {
+function delete_<T>(path: keyof T, paths: Transmuted<T>) {
   return {
     ...coreInfo(path, paths[path]['delete']!),
     method: 'DELETE' as const,
@@ -124,7 +124,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
     const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
       void checkFileExists(file, cb);
     };
-    
+
     const checkFileExists = async (file: Express.Multer.File, cb: multer.FileFilterCallback) => {
       try {
         const existingGraphics = await getGraphics();
@@ -137,7 +137,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         cb(error as Error);
       }
     };
-    
+
     const upload = multer({ storage, fileFilter });
     const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
     const root = YAML.parse(types.toString());
@@ -221,11 +221,11 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
           if ((req.body.graphic || req.body.position)) { // Allow empty requests to act as a delete
             if (req.body.position) {
               const position = req.body.position;
-              if (!position.x || !position.y || 
-                  typeof position.x !== 'number' || 
-                  typeof position.y !== 'number' ||
-                  position.x < 0 || position.x > 1920 ||
-                  position.y < 0 || position.y > 1080) {
+              if (!position.x || !position.y ||
+                typeof position.x !== 'number' ||
+                typeof position.y !== 'number' ||
+                position.x < 0 || position.x > 1920 ||
+                position.y < 0 || position.y > 1080) {
                 res.status(400).json({
                   error: "Bad position",
                   details: `Position must be an object with x and y coordinates between 0-1920 and 0-1080 respectively`
@@ -233,7 +233,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
                 return;
               }
             }
-      
+
             const images = await getGraphics();
             if (!images.includes(req.body.graphic)) {
               res.status(400).json({
@@ -243,7 +243,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
               return;
             }
           }
-      
+
           runtime.updates.sendCommand({
             type: 'change-graphic',
             file: req.body.graphic,
@@ -441,6 +441,14 @@ export class OnscreenGraphic implements CreatedMediaNode {
     } else {
       debuglog("Changing graphic position", { id: this.id, graphic, position })
       this.position = position;
+      if (this.composeNode) {
+        this.composeNode.updateConfig({
+          parts: [
+            this.videoPart(),
+            this.imagePart(position ?? { x: 5, y: 5 })
+          ]
+        });
+      }
       await this.contexts.schedule();
     }
     this.updates.raiseEvent({ type: 'graphic-changed', file: graphic, position })
@@ -465,11 +473,11 @@ export class OnscreenGraphic implements CreatedMediaNode {
           sourceRect: { x: 0, y: 0, width: metadata.width, height: metadata.height },
 
           // And do a per pixel blit of the image 'as is', with an offset of 5 pixels
-          destRect: { 
+          destRect: {
             x: position.x,
             y: position.y,
-            width: imageWidth, 
-            height: imageHeight 
+            width: imageWidth,
+            height: imageHeight
           }
         }
       },
