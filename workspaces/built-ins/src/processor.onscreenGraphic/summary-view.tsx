@@ -310,7 +310,11 @@ const PositionSelector = ({
   videoWidth,
   videoHeight,
 }: PositionSelectorProps) => {
-  const [position, setPosition] = useState(initialPosition);
+  const [position, setPosition] = useState<OnscreenGraphicPosition>(() => ({
+    x: initialPosition?.x ?? videoWidth / 2,
+    y: initialPosition?.y ?? videoHeight / 2,
+  }));
+  //const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [positionUnit, setPositionUnit] = useState<PositionUnit>("px");
