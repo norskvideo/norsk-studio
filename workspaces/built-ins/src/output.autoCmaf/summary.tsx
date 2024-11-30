@@ -38,6 +38,9 @@ function InlineView({ state, config }: { state: CmafOutputState, config: AutoCma
       });
       hls.loadSource(url);
       hls.attachMedia(previewVideo.current);
+      return () => {
+        hls.destroy();
+      };
     } else if (previewVideo.current.canPlayType('application/vnd.apple.mpegurl')) {
       previewVideo.current.src = url;
     }
