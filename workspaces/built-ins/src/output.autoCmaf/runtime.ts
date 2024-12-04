@@ -155,7 +155,7 @@ export class AutoCmaf extends CustomSinkNode {
     })
     // For testing only
     // although I don't think there are side effects?
-    // this.advertDestinations.push('local');
+    this.advertDestinations.push('local');
     this.initialised = this.initialise();
   }
 
@@ -268,6 +268,9 @@ export class AutoCmaf extends CustomSinkNode {
             id: `${this.id}-${streamKeyString}-video`,
             ...videoCryptoSettings,
           });
+          video.onPlaylistAddition = (_, p) => p;
+          video.onPlaylistAddition = undefined;
+          
           subscribes.push(new Promise((resolve, _reject) => {
             video.subscribe([{
               source: stream.source,
@@ -299,6 +302,8 @@ export class AutoCmaf extends CustomSinkNode {
             id: `${this.id}-${streamKeyString}-audio`,
             ...audioCryptoSettings,
           });
+          audio.onPlaylistAddition = (_, p) => p;
+          audio.onPlaylistAddition = undefined;
           subscribes.push(new Promise((resolve, _reject) => {
             audio.subscribe([{
               source: stream.source,

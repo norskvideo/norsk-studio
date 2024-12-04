@@ -172,6 +172,7 @@ class MonetiseOutput extends CustomAutoDuplexNode {
   override subscribe(sources: StudioNodeSubscriptionSource[], _opts?: SubscriptionOpts | undefined): void {
     if (!this.whep) return;
     this.delayed?.subscribe(sources.flatMap((s) => s.selectAV()))
+    this.ancillary?.subscribe(sources.flatMap((s) => s.selectAV()))
     void this.setupPreview(sources);
   }
 

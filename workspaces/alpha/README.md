@@ -1,8 +1,7 @@
 ALPHA
 ===
 
-
-This is the bome of components that *should not be used in production*.
+This is the home of components that *should not be used in production*.
 
 They are either non-operational or here to serve as a good starting point into making a real version of whatever the component does in its happy path.
 
