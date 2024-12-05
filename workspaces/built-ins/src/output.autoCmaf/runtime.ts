@@ -1,7 +1,7 @@
 import { AdMarker, AutoProcessorMediaNode, CmafDestinationSettings, CmafMultiVariantOutputNode, Norsk, Scte35InsertCommand, SourceMediaNode, StreamKey, StreamMetadata, selectExactKey, selectPlaylist, streamKeysAreEqual } from '@norskvideo/norsk-sdk';
 
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
-import { CreatedMediaNode, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, InstanceRouteInfo, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { ReportBuilder } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { debuglog, infolog } from '@norskvideo/norsk-studio/lib/server/logging';
@@ -10,6 +10,13 @@ import { CryptoDetails } from '../shared/drm/cpix';
 import { ezdrmInit } from '../shared/drm/ezdrm';
 import { axinomInit } from '../shared/drm/axinom';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
+
+import { OpenAPIV3 } from 'openapi-types';
+import fs from 'fs/promises';
+import { resolveRefs } from 'json-refs';
+import path from 'path';
+import YAML from 'yaml';
+import { paths } from './types';
 
 
 export type AutoCmafS3Destination = {
@@ -44,16 +51,39 @@ export type AutoCmafSegment = {
 export type CmafOutputState = {
   url?: string,
   drmToken?: string,
+  enabled: boolean,
 };
 
-
 export type CmafOutputEvent = {
-  type: 'url-published',
+  type: 'url-published' | 'output-enabled' | 'output-disabled',
   url: string,
   drmToken?: string,
 };
 
-export type CmafOutputCommand = object;
+export type CmafOutputCommand = {
+  type: 'enable-output' | 'disable-output',
+}
+
+type Transmuted<T> = {
+  [Key in keyof T]: OpenAPIV3.PathItemObject;
+};
+function coreInfo<T>(path: keyof T, op: OpenAPIV3.OperationObject) {
+  return {
+    url: path,
+    summary: op.summary,
+    description: op.description,
+    requestBody: op.requestBody,
+    responses: op.responses,
+  }
+}
+
+function post<T>(path: keyof T, paths: Transmuted<T>) {
+  return {
+    ...coreInfo(path, paths[path]['post']!),
+    method: 'POST' as const,
+  }
+}
+
 
 export default class AutoCmafDefinition implements ServerComponentDefinition<AutoCmafConfig, AutoCmaf, CmafOutputState, CmafOutputCommand, CmafOutputEvent> {
   async create(norsk: Norsk, cfg: AutoCmafConfig, cb: OnCreated<AutoCmaf>, { updates, report }: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
@@ -65,8 +95,85 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
       updates.raiseEvent({ type: 'url-published', url: mv.url, drmToken: node.crypto?.token });
     }
   }
-}
 
+  async handleCommand(node: AutoCmaf, command: CmafOutputCommand) {
+    switch (command.type) {
+      case 'enable-output':
+        await node.enableOutput();
+        break;
+      case 'disable-output':
+        await node.disableOutput();
+        break;
+      default:
+        assertUnreachable(command.type);
+    }
+  }
+
+  async instanceRoutes(): Promise<InstanceRouteInfo<AutoCmafConfig, AutoCmaf, CmafOutputState, CmafOutputCommand, CmafOutputEvent>[]> {
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'));
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+    const paths = resolved.paths as Transmuted<paths>;
+
+    return [
+      {
+        ...post<paths>('/enable', paths),
+        handler: ({ runtime }) => async (_req, res) => {
+          try {
+            const state = runtime.updates.latest();
+            if (state.enabled) {
+              return res.status(400).json({ error: 'Output is already enabled' });
+            }
+
+            runtime.updates.update({ ...state, enabled: true });
+
+            runtime.updates.sendCommand({
+              type: 'enable-output'
+            });
+            
+            runtime.updates.raiseEvent({
+              type: 'output-enabled',
+              url: state.url ?? '',
+            });
+            
+            res.sendStatus(204);
+          } catch (error) {
+            console.error('Error in enable handler:', error);
+            res.status(500).json({ error: 'Failed to enable output' });
+          }
+        }
+      },
+      {
+        ...post<paths>('/disable', paths),
+        handler: ({ runtime }) => async (_req, res) => {
+          try {
+            const state = runtime.updates.latest();
+            if (!state.enabled) {
+              return res.status(400).json({ error: 'Output is already disabled' });
+            }
+
+            runtime.updates.update({ ...state, enabled: false });
+
+            runtime.updates.sendCommand({
+              type: 'disable-output'
+            });
+           
+            runtime.updates.raiseEvent({
+              type: 'output-disabled',
+              url: state.url ?? '',
+            });
+
+            res.sendStatus(204);
+          } catch (error) {
+            console.error('Error in disable handler:', error);
+            res.status(500).json({ error: 'Failed to disable output' });
+          }
+        }
+      }
+    ];
+  }
+
+}
 
 export class AutoCmaf extends CustomSinkNode {
   norsk: Norsk;
@@ -93,6 +200,8 @@ export class AutoCmaf extends CustomSinkNode {
 
   advertDestinations: string[] = [];
   report: ReportBuilder;
+  enabled: boolean = true;
+  nodeCounter: number = 0;
 
   static async create(norsk: Norsk, cfg: AutoCmafConfig, report: ReportBuilder) {
     const node = new AutoCmaf(cfg, norsk, report);
@@ -159,7 +268,7 @@ export class AutoCmaf extends CustomSinkNode {
     this.initialised = this.initialise();
   }
 
-  async initialise() {
+  async initialise(): Promise<void> {
     if (this.cfg.drmProvider) {
       if (this.cfg.drmProvider === 'ezdrm') {
         this.crypto = await ezdrmInit(this.cfg.__global?.ezdrmConfig);
@@ -176,7 +285,8 @@ export class AutoCmaf extends CustomSinkNode {
       mpdAdditions: "",
     } : {};
     const mv = await this.norsk.output.cmafMultiVariant({
-      id: `${this.cfg.id}-multivariant`,
+      id: this.incrementNodeId(`${this.cfg.id}-multivariant`),
+      //id: `${this.cfg.id}-multivariant`,
       playlistName: this.cfg.name,
       destinations: this.destinations,
       ...mvCryptoSettings,
@@ -185,11 +295,38 @@ export class AutoCmaf extends CustomSinkNode {
     this.mv = mv;
   }
 
+  incrementNodeId(id: string): string {
+    this.nodeCounter++;
+    return `${id}-${this.nodeCounter}`;
+  }
+
+  async enableOutput() {
+    if (!this.enabled) {
+      this.enabled = true;
+      await this.handleContext();
+      debuglog("Output enabled" , { id: this.id });
+    }
+  }
+
+  async disableOutput() {
+    if (this.enabled) {
+      this.enabled = false;
+      for (const media of this.currentMedia) {
+        await media.node.close();
+      }
+      this.currentMedia = [];
+      debuglog("output disabled", { id: this.id });
+    }
+  }
 
   // Can now guarantee this is only going to be ran once at a time
   // but work will be queued up and merged so it gets called the least amount of times
   // a pile of work below where we create pending state so we don't overlap can be removed
   async handleContext() {
+    if (!this.enabled) {
+      debuglog("Skipping context handling - output disabled", { id: this.id });
+      return;
+    }
     // This is where I get to create my nodes based on all the active sources?
     // but also by using our selectors to do that..
     const streams: {
@@ -199,7 +336,7 @@ export class AutoCmaf extends CustomSinkNode {
       // Need this to know what sort of CMAF to spin up
       metadata: StreamMetadata
 
-      // Need this to know where the *real* subscription wlll go
+      // Need this to know where the *real* subscription will go
       source: SourceMediaNode
     }[] = [];
 
@@ -241,7 +378,8 @@ export class AutoCmaf extends CustomSinkNode {
         }
         this.currentMultiVariants.push(newMv);
         const mv = await this.norsk.output.cmafMultiVariant({
-          id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
+          id: this.incrementNodeId(`${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`),
+          //id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
           playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
           destinations: this.destinations
         });
@@ -265,7 +403,8 @@ export class AutoCmaf extends CustomSinkNode {
             segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
             partDurationSeconds: this.cfg.segments.targetPartDuration,
             destinations: this.destinations,
-            id: `${this.id}-${streamKeyString}-video`,
+            id: this.incrementNodeId(`${this.id}-${streamKeyString}-video`),
+            //id: `${this.id}-${streamKeyString}-video`,
             ...videoCryptoSettings,
           });
           video.onPlaylistAddition = (_, p) => p;
@@ -299,7 +438,8 @@ export class AutoCmaf extends CustomSinkNode {
             segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
             partDurationSeconds: this.cfg.segments.targetPartDuration,
             destinations: this.destinations,
-            id: `${this.id}-${streamKeyString}-audio`,
+            id: this.incrementNodeId(`${this.id}-${streamKeyString}-video`),
+            //id: `${this.id}-${streamKeyString}-audio`,
             ...audioCryptoSettings,
           });
           audio.onPlaylistAddition = (_, p) => p;
@@ -327,7 +467,7 @@ export class AutoCmaf extends CustomSinkNode {
           const subtitle = await this.norsk.output.cmafWebVtt({
             segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
             destinations: this.destinations,
-            id: `${this.id}-${streamKeyString}-webvtt`
+            id: this.incrementNodeId(`${this.id}-${streamKeyString}-webvtt`),
           });
           subtitle.subscribe([{
             source: stream.source,

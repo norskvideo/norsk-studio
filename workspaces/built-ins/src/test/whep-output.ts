@@ -6,7 +6,7 @@ import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { expect } from "chai";
-import { WhepOutputSettings } from "../output.whep/runtime";
+import { WhepOutputCommand, WhepOutputEvent, WhepOutputSettings, WhepOutputState } from "../output.whep/runtime";
 import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import puppeteer, { Browser, Page } from 'puppeteer';
 import WhepInfo from "../output.whep/info";
@@ -28,7 +28,7 @@ describe("WHEP Output", () => {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
-        new YamlNodeBuilder<WhepOutputSettings>
+        new YamlNodeBuilder<WhepOutputSettings, WhepOutputState, WhepOutputCommand, WhepOutputEvent>
           ('whep',
             WhepInfo(RegistrationConsts),
             {}

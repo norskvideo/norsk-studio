@@ -1,0 +1,28 @@
+openapi: 3.0.0
+info:
+  title: AutoCmaf Output Component
+  version: 1.0.0
+
+paths:
+  /enable:
+    post:
+      summary: Enable CMAF output
+      description: Enables output of CMAF streams if currently disabled
+      responses:
+        204:
+          description: Output successfully enabled
+        400:
+          description: Output is already enabled
+        500:
+          description: Server error while enabling output
+  /disable:
+    post:
+      summary: Disable CMAF output
+      description: Disables output of CMAF streams if currently enabled
+      responses:
+        204:
+          description: Output successfully disabled
+        400:
+          description: Output is already disabled
+        500:
+          description: Server error while disabling output

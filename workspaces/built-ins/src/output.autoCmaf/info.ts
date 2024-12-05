@@ -16,7 +16,7 @@ export default function(R: Registration) {
     All,
     validation: { Z, Hostname },
   } = R;
-  const SummaryView = React.lazy(async () => import('./summary'));
+  //const SummaryView = React.lazy(async () => import('./summary-view'));
   const FullscreenView = React.lazy(async () => import('./fullscreen'));
 
   const SegmentConfiguration = React.lazy(async () => {
@@ -89,7 +89,9 @@ export default function(R: Registration) {
       };
     },
     runtime: {
-      initialState: () => ({}),
+      initialState: () => ({
+        enabled: true,
+      }),
       handleEvent(ev, state) {
         const evType = ev.type;
         switch (evType) {
@@ -97,12 +99,18 @@ export default function(R: Registration) {
             state.url = ev.url;
             state.drmToken = ev.drmToken;
             break;
+          case 'output-enabled':
+            state.enabled = true;
+            break;
+          case 'output-disabled':
+            state.enabled = false;
+            break;
           default:
             assertUnreachable(evType)
         }
         return { ...state };
       },
-      summary: SummaryView,
+      //summary: SummaryView,
       fullscreen: FullscreenView
     },
     configForm: {
