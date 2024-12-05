@@ -50,6 +50,7 @@ export class SrtInput implements CreatedMediaNode {
   srtServer: SrtInputNode | null = null;
 
   updates: RuntimeUpdates<SrtInputState, SrtInputCommand, SrtInputEvent>;
+  nodeCounter: number = 0;
   
   static async create(norsk: Norsk, cfg: SrtInputSettings, updates: RuntimeUpdates<SrtInputState, SrtInputCommand, SrtInputEvent>) {
     const node = new SrtInput(norsk, cfg, updates);
@@ -69,6 +70,10 @@ export class SrtInput implements CreatedMediaNode {
     this.srtServer = await this.norsk.input.srt({
       mode: 'listener',
       sourceName: 'unused',
+      id: this.incrementNodeId(`${this.cfg.id}-srt-listener`),
+      port: this.cfg.port,
+      host: this.cfg.host,
+      passphrase: this.cfg.passphrase,
 
       onConnectionStatusChange: (status, sourceName) => {
         switch (status) {
@@ -146,7 +151,7 @@ export class SrtInput implements CreatedMediaNode {
         }
       },
 
-      ...this.cfg,
+     //  ...this.cfg,
     })
   }
 
@@ -167,8 +172,10 @@ export class SrtInput implements CreatedMediaNode {
 
     await this.initialise();
   }
-
-
+  incrementNodeId(id: string): string {
+    this.nodeCounter++;
+    return `${id}-${this.nodeCounter}`;
+  }
 }
 
 type Transmuted<T> = {

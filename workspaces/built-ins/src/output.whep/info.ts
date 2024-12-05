@@ -1,7 +1,8 @@
-import type { WhepOutputSettings } from "./runtime";
+import type { WhepOutputCommand, WhepOutputEvent, WhepOutputSettings, WhepOutputState } from "./runtime";
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 
 import { GlobalIceServers } from '@norskvideo/norsk-studio/lib/shared/config'
+import { assertUnreachable } from "@norskvideo/norsk-studio/lib/shared/util";
 
 export default function(R: Registration) {
   const {
@@ -9,7 +10,7 @@ export default function(R: Registration) {
     Av,
     validation: { JitterBuffer },
   } = R;
-  return defineComponent<WhepOutputSettings>({
+  return defineComponent<WhepOutputSettings, WhepOutputState, WhepOutputCommand, WhepOutputEvent>({
     identifier: 'output.whep',
     category: 'output',
     name: "WHEP Egest",
@@ -26,6 +27,25 @@ export default function(R: Registration) {
       },
     },
     display: (_desc) => { return {}; },
+    runtime: {
+      initialState: () => ({
+        enabled: true,
+      }),
+      handleEvent(ev, state) {
+        const evType = ev.type;
+        switch (evType) {
+          case 'output-enabled':
+            state.enabled = true;
+            break;
+          case 'output-disabled':
+            state.enabled = false;
+            break;
+          default:
+            assertUnreachable(evType)
+        }
+        return { ...state };
+      },
+    },
     configForm: {
       global: {
         iceServers: GlobalIceServers(R)

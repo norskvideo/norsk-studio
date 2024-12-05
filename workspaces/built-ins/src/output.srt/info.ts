@@ -1,7 +1,8 @@
-import type { SrtOutputSettings } from "./runtime";
+import type { SrtOutputCommand, SrtOutputEvent, SrtOutputSettings, SrtOutputState } from "./runtime";
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import React from "react";
 import srtSocketOptions from '../shared/srt-socket-options';
+import { assertUnreachable } from "@norskvideo/norsk-studio/lib/shared/util";
 
 export default function(registration: Registration) {
   const {
@@ -15,7 +16,7 @@ export default function(registration: Registration) {
     return { default: views.SocketConfiguration }
   });
 
-  return defineComponent<SrtOutputSettings>({
+  return defineComponent<SrtOutputSettings, SrtOutputState, SrtOutputCommand, SrtOutputEvent>({
     identifier: 'output.srt',
     category: 'output',
     name: "SRT Egest",
@@ -35,6 +36,25 @@ export default function(registration: Registration) {
         mode: desc.config.mode,
         bufferDelayMs: desc.config.bufferDelayMs?.toString() ?? 'none'
       }
+    },
+    runtime: {
+      initialState: () => ({
+        enabled: true,
+      }),
+      handleEvent(ev, state) {
+        const evType = ev.type;
+        switch (evType) {
+          case 'output-enabled':
+            state.enabled = true;
+            break;
+          case 'output-disabled':
+            state.enabled = false;
+            break;
+          default:
+            assertUnreachable(evType)
+        }
+        return { ...state };
+      },
     },
     configForm: {
       form: {

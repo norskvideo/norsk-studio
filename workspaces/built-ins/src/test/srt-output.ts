@@ -6,7 +6,7 @@ import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { expect } from "chai";
-import { SrtOutputSettings } from "../output.srt/runtime";
+import { SrtOutputCommand, SrtOutputEvent, SrtOutputSettings, SrtOutputState } from "../output.srt/runtime";
 import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import SrtInfo from "../output.srt/info";
 import { Av, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
@@ -28,7 +28,7 @@ describe("SRT Output", () => {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
-        new YamlNodeBuilder<SrtOutputSettings>
+        new YamlNodeBuilder<SrtOutputSettings, SrtOutputState, SrtOutputCommand, SrtOutputEvent>
           ('srt',
             SrtInfo(RegistrationConsts),
             {
