@@ -26,6 +26,7 @@ import { OpenAPIV3 } from 'openapi-types';
 
 export type SourceSwitchConfig = {
   id: MediaNodeId,
+  enablePreviews: boolean,
   displayName: string,
   resolution: { width: number, height: number },
   frameRate: { frames: number, seconds: number },
@@ -312,6 +313,7 @@ export class SourceSwitch extends CustomAutoDuplexNode {
   pendingSource: InternalSource = this.activeSource;
   availableSources: SourceSwitchSource[] = [];
   lastSmoothSwitchContext: Map<string, StreamMetadata[]> = new Map();
+  streamsOnline: Set<string> = new Set();
   whepOutputs: Map<string, { whep: WhepOutputNode, encoder?: SourceMediaNode }> = new Map();
   encodePreview?: SourceMediaNode;
   whepPreview?: WhepOutputNode;
@@ -355,21 +357,23 @@ export class SourceSwitch extends CustomAutoDuplexNode {
       hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ['quadra', 'nvidia'])
     });
 
-    this.encodePreview = await this.shared.previewEncode({ source: smooth, sourceSelector: selectVideo }, this.cfg.__global.hardware)
+    if (this.cfg.enablePreviews) {
+      this.encodePreview = await this.shared.previewEncode({ source: smooth, sourceSelector: selectVideo }, this.cfg.__global.hardware)
 
-    this.whepPreview = await this.norsk.output.whep({
-      id: `${this.cfg.id}-preview`,
-      ...webRtcSettings(this.cfg.__global.iceServers),
-    });
+      this.whepPreview = await this.norsk.output.whep({
+        id: `${this.cfg.id}-preview`,
+        ...webRtcSettings(this.cfg.__global.iceServers),
+      });
 
-    this.whepPreview?.subscribe([{
-      source: this.encodePreview,
-      sourceSelector: selectVideo
-    },
-    {
-      source: smooth,
-      sourceSelector: selectAudio
-    }], requireAV);
+      this.whepPreview?.subscribe([{
+        source: this.encodePreview,
+        sourceSelector: selectVideo
+      },
+      {
+        source: smooth,
+        sourceSelector: selectAudio
+      }], requireAV);
+    }
 
     {
       let prev = 0.0;
@@ -516,14 +520,18 @@ export class SourceSwitch extends CustomAutoDuplexNode {
 
       const pin = sourceSwitchSourceToPin(existing);
       if (!this.sourceIsAvailable(existing) || allStreams.get(pin)?.length == 0) {
+        if (this.streamsOnline.has(pin)) {
+          debuglog("Source offline", { id: this.id, source: existing });
+          this.streamsOnline.delete(pin);
+          this.cfg?.onSourceOffline(existing);
+        }
+
         const player = this.whepOutputs.get(pin);
         if (player) {
-          debuglog("Source offline", { id: this.id, source: existing });
           this.whepOutputs.delete(pin);
           await player.whep.close();
           // return it?
           // await player.encoder.close();
-          this.cfg?.onSourceOffline(existing);
         }
       }
     }
@@ -533,19 +541,15 @@ export class SourceSwitch extends CustomAutoDuplexNode {
       if (current.id == this.activeCompose?.id) continue;
 
       const pin = sourceSwitchSourceToPin(current);
-      if (!this.whepOutputs.get(pin) && allStreams.get(pin)?.length == 2) {
+
+      if (!this.streamsOnline.has(pin) && allStreams.get(pin)?.length == 2) {
         debuglog("Source online", { id: this.id, source: current });
-
-        const whep = await this.norsk.output.whep({
-          id: `${this.id}-whep-${pin}`,
-          ...webRtcSettings(this.cfg.__global.iceServers),
-        })
-
+        
         const streams = allStreams.get(pin);
         const video = streams?.find((f) => f.message.case == "video");
 
         if (video && video.message.case == "video") {
-          this.whepOutputs.set(pin, { whep });
+          this.streamsOnline.add(pin);
           this.cfg?.onSourceOnline({
             resolution: {
               width: video.message.value.width,
@@ -555,10 +559,17 @@ export class SourceSwitch extends CustomAutoDuplexNode {
             wentLiveAt: new Date().valueOf(),
             ...current
           });
-          this.cfg?.onPlayerOnline({ source: current, url: whep.endpointUrl });
-        }
 
-      }
+          if (this.cfg.enablePreviews && !this.whepOutputs.get(pin)) {
+            const whep = await this.norsk.output.whep({
+              id: `${this.id}-whep-${pin}`,
+              ...webRtcSettings(this.cfg.__global.iceServers),
+            })
+            this.whepOutputs.set(pin, { whep });
+            this.cfg?.onPlayerOnline({ source: current, url: whep.endpointUrl });
+          }
+        }
+      } 
     }
     void this.setupPreviewPlayers();
   }
@@ -769,6 +780,9 @@ export class SourceSwitch extends CustomAutoDuplexNode {
   }
 
   async setupPreviewPlayers() {
+    if (!this.cfg.enablePreviews) {
+      return;
+    }
     // And the preview players
     for (const [active, player] of this.whepOutputs) {
       const [id, key] = pinToSourceAndKey(active);

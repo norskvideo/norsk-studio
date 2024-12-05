@@ -27,6 +27,7 @@ async function testRuntime() {
 describe("Multi camera select", () => {
   const config = {
     id: 'ss',
+    enablePreviews: true,
     displayName: "sss",
     resolution: {
       width: 1920,

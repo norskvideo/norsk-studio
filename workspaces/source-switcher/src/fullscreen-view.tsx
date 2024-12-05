@@ -11,7 +11,6 @@ type CreatedClient = {
 
 const DEFAULT_OVERLAY_WIDTH = 100;
 
-
 class MyWhepClient extends WhepClient {
   started: Promise<MediaStream>;
   resolveStartedPromise?: (value: MediaStream | PromiseLike<MediaStream>) => void;
@@ -141,6 +140,13 @@ type State = {
 }
 
 function FullScreenView(multiCamera: { state: SourceSwitchState, config: SourceSwitchConfig, sendCommand: (cmd: SourceSwitchCommand) => void }) {
+  if (!multiCamera.config.enablePreviews) {
+  return <div id="camera-control-container" className="bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-full gap-4 2xl:mx-40 md:mx-6">
+      Previews are not enabled, so full screen view is unavailable
+    </div>
+  </div>;
+  }
   const [state, setState] = useState<State>({ createdClient: [], livePreviewSource: undefined, overlays: [] });
   const overlayRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const refLivePreviewVideo = useRef<HTMLVideoElement>(null)

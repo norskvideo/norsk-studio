@@ -55,7 +55,7 @@ export default function(R: Registration) {
         activeOverlays: [],
         availableSources: [],
         knownSources: [],
-        players: []
+        players: [],
       }),
       handleEvent: (ev, state) => {
         const evType = ev.type;
@@ -98,6 +98,10 @@ export default function(R: Registration) {
         hardware: HardwareSelection()
       },
       form: {
+        enablePreviews: {
+          help: "Are previews auomatically created for all inputs and output", 
+          hint: { type: 'boolean', defaultValue: false }
+        },
         resolution: {
           help: "All video will be normalised to this resolution", hint: { type: 'select', options: Resolutions, defaultValue: { width: 1920, height: 1080 } }
         },

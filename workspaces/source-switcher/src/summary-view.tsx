@@ -55,12 +55,13 @@ function SummaryView({ state, config, sendCommand }: { state: SourceSwitchState,
       )}
     </ul>
 
-    <h2>Controls</h2>
-
-    <h4>{previewSource ? previewSource.key ?? previewSource.id : "Preview"}</h4>
-
-    { /* Player here that by default shows output */}
-    <div id={`${config.id}-preview`}></div>
+    {config.enablePreviews ?
+      <>
+        <h4>{previewSource ? previewSource.key ?? previewSource.id : "Preview"}</h4>
+        <div id={`${config.id}-preview`}></div>
+      </>
+    : null
+    }
 
     { /* Dropdown here, ... for not doing anything on select, change the preview player to that output */}
     { /* Sidenote: re-using CSS from Norsk Studio itself, should we? if so, best practises? */}
