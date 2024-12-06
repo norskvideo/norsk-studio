@@ -40,9 +40,12 @@ export default function ({
       }),
       handleEvent: (ev, state) => {
         const evType = ev.type;
+        console.log(evType);
         switch (evType) {
           case "graphic-changed":
             return { ...state, activeGraphic: { file: ev.file, position: ev.position } };
+          case "video-changed":
+            return { ...state, currentVideo: ev.currentVideo };
           default:
             assertUnreachable(evType)
         }

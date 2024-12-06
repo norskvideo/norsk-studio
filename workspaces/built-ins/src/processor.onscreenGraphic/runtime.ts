@@ -36,7 +36,7 @@ export type OnscreenGraphicState = {
     file?: OnscreenGraphicFile,
     position?: OnscreenGraphicPosition
   },
-  graphic?: OnscreenGraphic
+  currentVideo?: { width: number, height: number },
 }
 
 export type OnscreenGraphicCommand = {
@@ -49,6 +49,9 @@ export type OnscreenGraphicEvent = {
   type: 'graphic-changed',
   file?: OnscreenGraphicFile,
   position?: OnscreenGraphicPosition
+} | {
+  type: 'video-changed',
+  currentVideo?: { width: number, height: number },
 }
 
 type Transmuted<T> = {
@@ -279,7 +282,8 @@ export class OnscreenGraphic implements CreatedMediaNode {
   composeNode?: VideoComposeNode<"video" | "graphic">;
   imageSource?: FileImageInputNode;
   oldImageSource?: FileImageInputNode;
-  activeImage: "a" | "b" = "a";
+  activeImage: number = 0;
+  composeId: number = 0;
   initialised: Promise<void>;
   updates: RuntimeUpdates<OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>;
   currentVideo?: VideoStreamMetadata;
@@ -308,6 +312,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
       this.composeNode = undefined;
       this.currentVideo = undefined;
       this.doSubs();
+      this.updates.raiseEvent({ type: 'video-changed', currentVideo: undefined });
       return;
     } else {
       const nextVideo = video.message.value;
@@ -320,6 +325,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
         }
       }
       this.currentVideo = nextVideo;
+      this.updates.raiseEvent({ type: 'video-changed', currentVideo: this.currentVideo });
 
       // If we haven't got a compose node, then spin one up
       // with the resolution/etc of the incoming stream
@@ -333,7 +339,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
           onClose: () => {
             this.relatedMediaNodes.removeOutput(thisCompose);
           },
-          id: `${this.id}-compose`,
+          id: `${this.id}-compose-${this.composeId++}`,
           referenceStream: 'video',
           hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ["nvidia", "quadra"]),
           missingStreamBehaviour: 'drop_part',
@@ -428,9 +434,9 @@ export class OnscreenGraphic implements CreatedMediaNode {
       await this.contexts.schedule();
       return;
     } else if (graphic !== this.graphic) {
-      debuglog("Changing graphic", { id: this.id, graphic, position })
+      debuglog("Changing graphic", { id: this.id, graphic, position, fileName: path.join(graphicsDir(), graphic) });
       this.graphic = graphic;
-      this.activeImage = this.activeImage == "a" ? "b" : "a";
+      this.activeImage = this.activeImage + 1;
       this.oldImageSource = this.imageSource;
       this.imageSource = await this.norsk.input.fileImage({
         id: `${this.id}-${this.activeImage}`,

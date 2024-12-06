@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect, useState, useCallback } from "react";
+import React, { ChangeEvent, useEffect, useState, useCallback, useRef } from "react";
 import type {
   OnscreenGraphicState,
   OnscreenGraphicConfig,
@@ -149,8 +149,9 @@ function SummaryView({
     void deleteBugHandle();
   };
 
-  const videoWidth = state.graphic?.currentVideo?.width ?? 960;
-  const videoHeight = state.graphic?.currentVideo?.height ?? 400;
+  console.log({ state }, state.currentVideo);
+  const videoWidth = state.currentVideo?.width ?? 960;
+  const videoHeight = state.currentVideo?.height ?? 400;
 
   const buttonClass =
     "mt-2 mb-5 text-white w-full justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800";
@@ -316,10 +317,9 @@ const PositionSelector = ({
   }));
   //const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0, cx: 0, cy: 0 });
   const [positionUnit, setPositionUnit] = useState<PositionUnit>("px");
-
-  const HANDLE_SIZE = 24;
+  const previewAreaRef = useRef<HTMLDivElement>(null);
 
   const toPercentage = (value: number, total: number) => (value / total) * 100;
   const toPixels = (percentage: number, total: number) =>
@@ -328,18 +328,21 @@ const PositionSelector = ({
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     setIsDragging(true);
     setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
+      x: position.x,
+      y: position.y,
+      cx: e.clientX,
+      cy: e.clientY,
     });
   };
 
   const handleMouseMove = (e: { clientX: number; clientY: number }) => {
     if (!isDragging) return;
 
-    const x = e.clientX - dragStart.x;
-    const y = e.clientY - dragStart.y;
+    const boundingBox = previewAreaRef.current?.getBoundingClientRect() ?? { width: 0, height: 0 };
+    const x = (e.clientX - dragStart.cx)*(videoWidth / boundingBox.width) + dragStart.x;
+    const y = (e.clientY - dragStart.cy)*(videoHeight / boundingBox.height) + dragStart.y;
 
-    const handleOffset = HANDLE_SIZE / 2;
+    const handleOffset = 0; // HANDLE_SIZE / 2;
     const newX = Math.min(
       Math.max(-handleOffset, x),
       videoWidth + handleOffset
@@ -390,7 +393,8 @@ const PositionSelector = ({
       </div>
       <div
         className="relative bg-gray-200 dark:bg-gray-700 rounded-lg"
-        style={{ width: "100%", height: "200px" }}
+        style={{ width: "100%", height: "200px", userSelect: "none" }}
+        ref={previewAreaRef}
       >
         <div className="absolute inset-0 flex items-center justify-center text-gray-500 dark:text-gray-400">
           Video Preview Area
