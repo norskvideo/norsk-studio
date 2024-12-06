@@ -6,7 +6,7 @@ import type Registration from "@norskvideo/norsk-studio/lib/extension/registrati
 export default function({
   defineComponent,
   Video,
-  validation: { SourceName },
+  validation: { SourceName, unique },
   common: { Resolutions, FrameRates } }: Registration) {
   return defineComponent<VideoTestcardGeneratorSettings>({
     identifier: 'input.videoTestCard',
@@ -29,9 +29,18 @@ export default function({
     },
     configForm: {
       form: {
-        resolution: { help: "The resolution of the test card stream", hint: { type: 'select', options: Resolutions, defaultValue: { width: 1280, height: 720 } } },
-        frameRate: { help: "The frame rate of the test card stream", hint: { type: 'select', options: FrameRates, defaultValue: { frames: 25, seconds: 1 } } },
-        sourceName: { help: "Source name to use for this test card stream", hint: { type: 'text', validation: SourceName, defaultValue: "video" } },
+        resolution: {
+          help: "The resolution of the test card stream",
+          hint: { type: 'select', options: Resolutions, defaultValue: { width: 1280, height: 720 } }
+        },
+        frameRate: {
+          help: "The frame rate of the test card stream",
+          hint: { type: 'select', options: FrameRates, defaultValue: { frames: 25, seconds: 1 } }
+        },
+        sourceName: {
+          help: "Source name to use for this test card stream",
+          hint: { type: 'text', validation: SourceName, defaultValue: "video", global: unique('sourceName') }
+        },
         pattern: {
           help: "The pattern on the test card stream", hint: {
             defaultValue: 'black',

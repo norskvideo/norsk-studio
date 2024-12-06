@@ -69,7 +69,7 @@ export default function({
       const { config, subscriptions } = ctx;
       if ((config.mode || "simple") == "simple" && config.sourceName && config.programNumber !== undefined && config.streamId !== undefined && config.renditionName) {
         if (subscriptions.length > 1)
-          ctx.addError("A fully specified stream key override must only subscribe to one stream");
+          ctx.addError("A fully specified stream key override must only subscribe to one stream, or use a mode other than simple");
       }
       if (config.mode === "by-media-type" && config.streamId === undefined) {
         ctx.addError("You must specify the starting streamId for a by-media-type stream key override");
