@@ -1,0 +1,9 @@
+openapi: 3.0.0
+components:
+  schemas:
+    inject:
+      type: object
+      properties:
+        durationMs:
+          type: 'number'
+          example: 10000

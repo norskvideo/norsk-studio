@@ -1,10 +1,16 @@
 import { AncillaryNode, JitterBufferNode, Norsk, WhepOutputSettings as SdkSettings, SourceMediaNode, StreamMetadataOverrideNode, WhepOutputNode, requireAV, selectAV, selectAncillary, selectVideo } from '@norskvideo/norsk-sdk';
 
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { InstanceRouteInfo, OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomAutoDuplexNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
 import { webRtcSettings } from '@norskvideo/norsk-studio-built-ins/lib/shared/webrtcSettings'
+import path from 'path';
+import fs from 'fs/promises';
+import YAML from 'yaml';
+import { resolveRefs } from 'json-refs';
+import { OpenAPIV3 } from 'openapi-types';
+import { components } from './types';
 
 export type MonetiseOutputSettings = {
   id: string;
@@ -39,7 +45,10 @@ export type MonetiseOutputCommand = {
   durationMs: number
 };
 
-export default class WhepOutputDefinition implements ServerComponentDefinition<MonetiseOutputSettings, MonetiseOutput, MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent> {
+// HTTP API
+export type MonetiseHttpInject = components['schemas']['inject'];
+
+export default class MonetiseDefinition implements ServerComponentDefinition<MonetiseOutputSettings, MonetiseOutput, MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent> {
   async create(norsk: Norsk, cfg: MonetiseOutputSettings, cb: OnCreated<MonetiseOutput>, runtime: StudioRuntime<MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent>) {
     const node = new MonetiseOutput(norsk, runtime, cfg);
     await node.initialised;
@@ -55,7 +64,52 @@ export default class WhepOutputDefinition implements ServerComponentDefinition<M
       default:
         assertUnreachable(t);
     }
+  }
 
+  async instanceRoutes(): Promise<InstanceRouteInfo<MonetiseOutputSettings, MonetiseOutput, MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent>[]> {
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+
+    return [
+      {
+        url: '/inject',
+        method: 'POST',
+        handler: ({runtime: {updates}}) => ((req, res) => {
+          
+          const inject: Partial<MonetiseHttpInject> = req.body;
+
+          if (inject.durationMs === undefined ) {
+            res.status(400).send();
+          }
+          else {
+            updates.sendCommand({
+              type: 'inject-advert',
+              durationMs: inject.durationMs,
+            })
+
+            res.status(204).send();
+          }
+        }),
+        requestBody: {
+          description: "The details of the inject marker",
+          content: {
+            "application/json": {
+              schema: resolved.components!.schemas!['inject']
+            },
+          }
+        },
+        responses: {
+          '200': {
+            description: "The injection was requested successfully, and will be applied in due course"
+          },
+          '400': {
+            description: "There was a problem with the request"
+          }
+        }
+      }
+      
+    ];
   }
 }
 

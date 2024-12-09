@@ -12,7 +12,7 @@ export default function(R: Registration) {
 
   return defineComponent<MonetiseOutputSettings, MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent>({
     identifier: 'processor.monetise',
-    category: 'output',
+    category: 'processor',
     name: "Monetise",
     description: "Allows for the monetization of video and audio streams by incorporating ads and handling their lifecycle within the output stream.",
     subscription: {

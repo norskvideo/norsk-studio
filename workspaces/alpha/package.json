@@ -4,10 +4,12 @@
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",
-    "build": "npx studio-wrap-infos src/ && npx npm-run-all build:* && rm -rf build",
+    "types": "npx openapi-typescript src/processor.monetise/types.yaml -o src/processor.monetise/types.ts",
+    "build": "npm run types && npx studio-wrap-infos src/ && npx npm-run-all build:* && rm -rf build",
     "build:server": "npx tsc",
     "build:client": "npx tsc -p tsconfig-client.json && npx studio-bundle build/info.js client/info.js",
     "build:copy-css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
+    "build:types": "rsync --mkpath -v -r --include '*/' --include 'types.yaml' --exclude '*' src/ lib/",
     "build:tailwind": "npx tailwindcss -i src/shared/tailwind.css -o client/style.css",
     "build:eslint": "npx eslint src",
     "test": "LOG_LEVEL=error mocha  --no-parallel --jobs=0 --timeout 120000 --recursive lib/test"
