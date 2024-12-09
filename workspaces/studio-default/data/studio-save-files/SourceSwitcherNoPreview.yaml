@@ -20,7 +20,7 @@ components:
     config:
       displayName: SRT Cameras
       port: 5001
-      ip: 0.0.0.0
+      host: 0.0.0.0
       passphrase: ""
       socketOptions: {}
       sourceNames: strict

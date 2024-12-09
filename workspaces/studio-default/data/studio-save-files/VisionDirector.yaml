@@ -34,7 +34,7 @@ components:
   - type: input.srt-listener
     config:
       port: 5001
-      ip: 0.0.0.0
+      host: 0.0.0.0
       passphrase: ""
       sourceNames: strict
       streamIds:

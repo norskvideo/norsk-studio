@@ -102,7 +102,7 @@ async function getGraphics() {
   return images;
 }
 
-function resolveGraphicPosition(
+function resolveNamedPosition(
   position: OnscreenGraphicPosition,
   videoWidth: number,
   videoHeight: number,
@@ -110,7 +110,6 @@ function resolveGraphicPosition(
   imageHeight: number
 ): { x: number, y: number } {
   if (position.type === 'named') {
-    console.log
     switch (position.position) {
       case 'topleft':
         return { x: 0, y: 0 };
@@ -492,7 +491,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
         const imageWidth = Math.min(videoWidth - 100, metadata.width);
         const imageHeight = Math.min(videoHeight - 100, metadata.height);
 
-        const resolvedPos = resolveGraphicPosition(
+        const resolvedPos = resolveNamedPosition(
           position,
           videoWidth,
           videoHeight,

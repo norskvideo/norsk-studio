@@ -8,7 +8,7 @@ __layout:
   - id: whep-0
     x: 1440
     y: 176
-  - id: onscreengraphic
+  - id: onscreen_graphic
     x: 896
     y: 208
 __globalConfig: {}
@@ -39,7 +39,7 @@ components:
       bufferDelayMs: 500
       id: whep-0
     subscriptions:
-      - source: onscreengraphic
+      - source: onscreen_graphic
         streams:
           type: take-first-stream
           select:
@@ -53,8 +53,10 @@ components:
     config:
       displayName: Onscreen Graphic
       initialGraphic: Norsk.png
-      initialPosition: topleft
-      id: onscreengraphic
+      initialPosition:
+        type: named
+        position: bottomleft
+      id: onscreen_graphic
     subscriptions:
       - source: videotestcard-0
         streams:
