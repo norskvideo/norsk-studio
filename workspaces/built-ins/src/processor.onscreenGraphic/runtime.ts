@@ -15,10 +15,11 @@ import { resolveRefs } from 'json-refs';
 import YAML from 'yaml';
 import { OpenAPIV3 } from 'openapi-types';
 
-export type OnscreenGraphicPosition = components['schemas']['position'];
+export type OnscreenGraphicPosition = CoordinatePosition | NamedPosition;
+export type CoordinatePosition = components['schemas']['coordinatePosition'];
+export type NamedPosition = components['schemas']['namedPosition'];
 export type OnscreenGraphicFile = components['schemas']['graphic'];
 export type OnscreenGraphicApiConfig = components['schemas']['config'];
-//const onscreenGraphicPositions: OnscreenGraphicPosition[] = [];
 
 export type OnscreenGraphicConfig = {
   __global: {
@@ -57,6 +58,7 @@ export type OnscreenGraphicEvent = {
 type Transmuted<T> = {
   [Key in keyof T]: OpenAPIV3.PathItemObject;
 };
+
 function coreInfo<T>(path: keyof T, op: OpenAPIV3.OperationObject) {
   return {
     url: path,
@@ -66,18 +68,21 @@ function coreInfo<T>(path: keyof T, op: OpenAPIV3.OperationObject) {
     responses: op.responses,
   }
 }
+
 function get<T>(path: keyof T, paths: Transmuted<T>) {
   return {
     ...coreInfo(path, paths[path]['get']!),
     method: 'GET' as const,
   }
 }
+
 function post<T>(path: keyof T, paths: Transmuted<T>) {
   return {
     ...coreInfo(path, paths[path]['post']!),
     method: 'POST' as const,
   }
 }
+
 function delete_<T>(path: keyof T, paths: Transmuted<T>) {
   return {
     ...coreInfo(path, paths[path]['delete']!),
@@ -85,7 +90,6 @@ function delete_<T>(path: keyof T, paths: Transmuted<T>) {
   }
 }
 
-// Use the top level working dir and put a graphics folder inside it
 function graphicsDir() {
   return path.join(Config.server.workingDir(), process.env.ONSCREENGRAPHIC_DIRECTORY ?? "graphics");
 }
@@ -96,6 +100,30 @@ async function getGraphics() {
     return f.endsWith(".png") || f.endsWith(".jpg");
   })
   return images;
+}
+
+function resolveGraphicPosition(
+  position: OnscreenGraphicPosition,
+  videoWidth: number,
+  videoHeight: number,
+  imageWidth: number,
+  imageHeight: number
+): { x: number, y: number } {
+  if (position.type === 'named') {
+    console.log
+    switch (position.position) {
+      case 'topleft':
+        return { x: 0, y: 0 };
+      case 'topright':
+        return { x: videoWidth - imageWidth, y: 0 };
+      case 'bottomleft':
+        return {x: 0, y: videoHeight - imageHeight};
+      case 'bottomright':
+        return { x: videoWidth - imageWidth, y: videoHeight - imageHeight };
+    }
+  }
+  console.log("position: ", position);
+  return { x: position.x, y: position.y };
 }
 
 export default class OnscreenGraphicDefinition implements ServerComponentDefinition<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent> {
@@ -112,7 +140,6 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         break;
       default:
         assertUnreachable(commandType);
-
     }
   }
 
@@ -192,7 +219,6 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
         }),
       }
     ]
-
   }
 
   async instanceRoutes(): Promise<InstanceRouteInfo<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>[]> {
@@ -217,21 +243,35 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
           }
         }),
       },
-
       {
         ...post<paths>('/active-graphic', paths),
         handler: ({ runtime }) => (async (req, res) => {
-          if ((req.body.graphic || req.body.position)) { // Allow empty requests to act as a delete
+          if ((req.body.graphic || req.body.position)) {
             if (req.body.position) {
               const position = req.body.position;
-              if (!position.x || !position.y ||
-                typeof position.x !== 'number' ||
-                typeof position.y !== 'number' ||
-                position.x < 0 || position.x > 1920 ||
-                position.y < 0 || position.y > 1080) {
+
+              // Validate position based on type
+              if (position.type === 'coordinate') {
+                if (typeof position.x !== 'number' || typeof position.y !== 'number' ||
+                  position.x < 0 || position.y < 0) {
+                  res.status(400).json({
+                    error: "Bad position",
+                    details: "Coordinate position must have non-negative x and y values"
+                  });
+                  return;
+                }
+              } else if (position.type === 'named') {
+                if (!['topleft', 'topright', 'bottomleft', 'bottomright'].includes(position.position)) {
+                  res.status(400).json({
+                    error: "Bad position",
+                    details: "Named position must be one of: topleft, topright, bottomleft, bottomright"
+                  });
+                  return;
+                }
+              } else {
                 res.status(400).json({
                   error: "Bad position",
-                  details: `Position must be an object with x and y coordinates between 0-1920 and 0-1080 respectively`
+                  details: "Position must specify either type 'coordinate' or 'named'"
                 });
                 return;
               }
@@ -271,13 +311,11 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
 export class OnscreenGraphic implements CreatedMediaNode {
   id: string;
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
-
   contexts: ContextPromiseControl = new ContextPromiseControl(this.handleContext.bind(this));
   norsk: Norsk;
   cfg: OnscreenGraphicConfig;
   graphic?: string;
   position?: OnscreenGraphicPosition;
-
   videoSource?: StudioNodeSubscriptionSource;
   composeNode?: VideoComposeNode<"video" | "graphic">;
   imageSource?: FileImageInputNode;
@@ -302,12 +340,9 @@ export class OnscreenGraphic implements CreatedMediaNode {
     this.initialised = this.initialise();
   }
 
-
   async handleContext() {
     const video = this.videoSource?.latestStreams()[0]?.metadata;
     if (!video || !this.videoSource || video.message.case !== 'video') {
-      // may as well just shut everything down
-      // cos we can't do anything without the video
       await this.composeNode?.close();
       this.composeNode = undefined;
       this.currentVideo = undefined;
@@ -327,8 +362,6 @@ export class OnscreenGraphic implements CreatedMediaNode {
       this.currentVideo = nextVideo;
       this.updates.raiseEvent({ type: 'video-changed', currentVideo: this.currentVideo });
 
-      // If we haven't got a compose node, then spin one up
-      // with the resolution/etc of the incoming stream
       if (!this.composeNode) {
         debuglog("Creating compose node for onscreen graphic", { id: this.id, width: nextVideo.width, height: nextVideo.height });
         const thisCompose = this.composeNode = await this.norsk.processor.transform.videoCompose<'video' | 'graphic'>({
@@ -339,6 +372,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
           onClose: () => {
             this.relatedMediaNodes.removeOutput(thisCompose);
           },
+
           id: `${this.id}-compose-${this.composeId++}`,
           referenceStream: 'video',
           hardwareAcceleration: contractHardwareAcceleration(this.cfg.__global.hardware, ["nvidia", "quadra"]),
@@ -354,24 +388,12 @@ export class OnscreenGraphic implements CreatedMediaNode {
         this.doSubs();
       }
 
-      // What we want to do here is
-      // If there is *only* an imageSource, then go ahead and use it, parts and all
-      // If there are both old and new sources, then use the old source and subscribe to it if the new source hasn't got a stream yet
-      // If there are are streams from both sources
-      // remove the subscription entirely
-      // close the old node and swap them
-      // then re-do this whole thing
-
-      // Re-configure the compose node based on what we have, or don't have
-      // prefering the new image source if it exists
       if (this.imageSource || this.oldImageSource) {
         const newImageStream = this.imageSource?.outputStreams[0];
         const oldImageStream = this.oldImageSource?.outputStreams[0];
         if (newImageStream && oldImageStream) {
-          // Clear the subs
           this.doSubs();
 
-          // Reset the compose node to have no overlay
           this.composeNode?.updateConfig({
             parts: [
               this.videoPart(),
@@ -394,7 +416,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
           this.composeNode?.updateConfig({
             parts: [
               this.videoPart(),
-              this.imagePart(this.position ?? { x: 5, y: 5 })
+              this.imagePart(this.position ?? { type: 'coordinate', x: 5, y: 5 })
             ]
           })
         } else {
@@ -451,7 +473,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
         this.composeNode.updateConfig({
           parts: [
             this.videoPart(),
-            this.imagePart(position ?? { x: 5, y: 5 })
+            this.imagePart(position ?? { type: 'coordinate', x: 5, y: 5 })
           ]
         });
       }
@@ -461,10 +483,6 @@ export class OnscreenGraphic implements CreatedMediaNode {
   }
 
   imagePart(position: OnscreenGraphicPosition): ComposePart<"graphic"> {
-    // // We shouldn't need this, pending work on Compose
-    // imageWidth = Math.min(videoWidth - 100, imageWidth);
-    // imageHeight = Math.min(videoHeight - 100, imageHeight);
-
     const foo: ComposePart<"graphic"> = {
       id: "graphic",
       zIndex: 1,
@@ -474,18 +492,22 @@ export class OnscreenGraphic implements CreatedMediaNode {
         const imageWidth = Math.min(videoWidth - 100, metadata.width);
         const imageHeight = Math.min(videoHeight - 100, metadata.height);
 
+        const resolvedPos = resolveGraphicPosition(
+          position,
+          videoWidth,
+          videoHeight,
+          imageWidth,
+          imageHeight
+        );
         return {
-          // Take the whole image
           sourceRect: { x: 0, y: 0, width: metadata.width, height: metadata.height },
-
-          // And do a per pixel blit of the image 'as is', with an offset of 5 pixels
           destRect: {
-            x: position.x,
-            y: position.y,
+            x: resolvedPos.x,
+            y: resolvedPos.y,
             width: imageWidth,
             height: imageHeight
           }
-        }
+        };
       },
       opacity: 1.0,
       pin: "graphic"

@@ -18,8 +18,11 @@ function SummaryView({
 >) {
   const [graphic, setGraphic] = useState(state.activeGraphic?.file);
   const [position, setPosition] = useState(
-    state.activeGraphic?.position ?? { x: 35, y: 20 }
+    state.activeGraphic?.position ?? { type: 'named' as const, position: 'topright' as const }
   );
+  // const [position, setPosition] = useState(
+  //   state.activeGraphic?.position ?? { type: 'coordinate' as const, x: 0, y: 0 }
+  // );
   const [graphics, setGraphics] = useState<string[]>([]);
   const [fileToUpload, setFileToUpload] = useState<File | undefined>(undefined);
   const [showFileInput, setShowFileInput] = useState(false);
@@ -306,16 +309,31 @@ type PositionSelectorProps = {
 };
 
 const PositionSelector = ({
-  initialPosition = { x: 100, y: 100 },
+  //initialPosition = { type: 'coordinate', x: 100, y: 100},
+  initialPosition = { type: 'named', position: 'topright'},
+  //initialPosition = { x: 100, y: 100 },
   onChange,
   videoWidth,
   videoHeight,
 }: PositionSelectorProps) => {
-  const [position, setPosition] = useState<OnscreenGraphicPosition>(() => ({
-    x: initialPosition?.x ?? videoWidth / 2,
-    y: initialPosition?.y ?? videoHeight / 2,
-  }));
-  //const [position, setPosition] = useState(initialPosition);
+  // const [positionType, setPositionType] = useState<'named' | 'coordinate'>(
+  //   initialPosition?.type ?? 'coordinate'
+  // );
+  // const [position, setPosition] = useState<OnscreenGraphicPosition>(() => {
+  //   if (!initialPosition) {
+  //     return {
+  //       type: 'coordinate',
+  //       x: videoWidth / 2,
+  //       y: videoHeight / 2
+  //     };
+  //   }
+  //   return initialPosition;
+  // });
+  // const [position, setPosition] = useState<OnscreenGraphicPosition>(() => ({
+  //   x: initialPosition?.x ?? videoWidth / 2,
+  //   y: initialPosition?.y ?? videoHeight / 2,
+  // }));
+  const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, cx: 0, cy: 0 });
   const [positionUnit, setPositionUnit] = useState<PositionUnit>("px");
@@ -326,13 +344,28 @@ const PositionSelector = ({
     (percentage * total) / 100;
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    //if (position.type !== 'coordinate') return;
+    if (!position.type || position.type !== 'coordinate') {
+      // If no position is set or it's not a coordinate type, initialize both coordinates
+      setPosition({
+        type: 'coordinate',
+        x: e.clientX - e.currentTarget.getBoundingClientRect().left,
+        y: e.clientY - e.currentTarget.getBoundingClientRect().top
+      });
+    }
     setIsDragging(true);
     setDragStart({
-      x: position.x,
-      y: position.y,
+      x: position.type === 'coordinate' ? position.x : 0,
+      y: position.type === 'coordinate' ? position.y : 0,
       cx: e.clientX,
-      cy: e.clientY,
+      cy: e.clientY
     });
+    // setDragStart({
+    //   x: position.x,
+    //   y: position.y,
+    //   cx: e.clientX,
+    //   cy: e.clientY,
+    // });
   };
 
   const handleMouseMove = (e: { clientX: number; clientY: number }) => {
@@ -352,8 +385,14 @@ const PositionSelector = ({
       videoHeight + handleOffset
     );
 
-    setPosition({ x: newX, y: newY });
-    onChange?.({ x: newX, y: newY });
+    const newPosition = {
+      type: 'coordinate' as const,
+      x: newX,
+      y: newY
+    };
+
+    setPosition(newPosition);
+    onChange?.(newPosition);
   };
 
   const handleMouseUp = () => {
@@ -371,112 +410,171 @@ const PositionSelector = ({
     };
   }, [isDragging]);
 
-  const displayX =
-    positionUnit === "%" ? toPercentage(position.x, videoWidth) : position.x;
-  const displayY =
-    positionUnit === "%" ? toPercentage(position.y, videoHeight) : position.y;
-
   return (
     <div className="relative w-full max-w-lg mx-auto mt-4 mb-8">
       <div className="mb-4 flex items-center gap-2">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Position Unit:
+          Position Type:
         </label>
         <select
-          value={positionUnit}
-          onChange={(e) => setPositionUnit(e.target.value as PositionUnit)}
+          value={position.type}
+          onChange={(e) => {
+            const newType = e.target.value as 'named' | 'coordinate';
+            if (newType === 'named') {
+              setPosition({ type: 'named', position: 'topright' });
+            } else {
+              setPosition({
+                type: 'coordinate',
+                x: videoWidth / 2,
+                y: videoHeight / 2
+              });
+            }
+          }}
           className="node-editor-select-input"
         >
-          <option value="px">Pixels</option>
-          <option value="%">Percentage</option>
+          <option value="coordinate">Custom Position</option>
+          <option value="named">Preset Position</option>
         </select>
       </div>
-      <div
-        className="relative bg-gray-200 dark:bg-gray-700 rounded-lg"
-        style={{ width: "100%", height: "200px", userSelect: "none" }}
-        ref={previewAreaRef}
-      >
-        <div className="absolute inset-0 flex items-center justify-center text-gray-500 dark:text-gray-400">
-          Video Preview Area
-        </div>
 
-        <div
-          className={`absolute cursor-move p-2 rounded-lg bg-primary-500 bg-opacity-50 hover:bg-opacity-75 transition-colors
-            ${isDragging ? "bg-opacity-75" : ""}`}
-          style={{
-            left: `${(position.x / videoWidth) * 100}%`,
-            top: `${(position.y / videoHeight) * 100}%`,
-            transform: "translate(-50%, -50%)",
-          }}
-          onMouseDown={handleMouseDown}
-        >
-          <svg
-            className="w-6 h-6 text-white"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
+      {position.type === 'named' ? (
+        <div className="mb-4">
+          <select
+            value={position.position}
+            onChange={(e) => {
+              setPosition({
+                type: 'named',
+                position: e.target.value as "topleft" | "topright" | "bottomleft" | "bottomright"
+              });
+            }}
+            className="w-full node-editor-select-input"
           >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 6v12m-6-6h12m-6-6 1.5 1.5M12 6l-1.5 1.5m1.5 10.5L10.5 16.5M12 18l1.5-1.5M6 12l1.5-1.5M7.5 13.5 6 12m12 0-1.5-1.5M16.5 13.5 18 12"
-            />
-          </svg>
+            <option value="topleft">Top Left</option>
+            <option value="topright">Top Right</option>
+            <option value="bottomleft">Bottom Left</option>
+            <option value="bottomright">Bottom Right</option>
+          </select>
         </div>
-      </div>
-      <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 text-center">
-        Position:{" "}
-        {positionUnit === "%"
-          ? `${displayX.toFixed(1)}%, ${displayY.toFixed(1)}%`
-          : `${Math.round(displayX)}px, ${Math.round(displayY)}px`}
-      </div>
-      <div className="mt-2 flex gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            X Position {positionUnit}
-          </label>
-          <input
-            type="number"
-            step={positionUnit === "%" ? "0.1" : "1"}
-            value={
-              positionUnit === "%" ? displayX.toFixed(1) : Math.round(displayX)
-            }
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              const newX =
-                positionUnit === "%" ? toPixels(value, videoWidth) : value;
-              setPosition((prev) => ({ ...prev, x: newX }));
-              onChange?.({ ...position, x: newX });
-            }}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Y Position {positionUnit}
-          </label>
-          <input
-            type="number"
-            step={positionUnit === "%" ? "0.1" : "1"}
-            value={
-              positionUnit === "%" ? displayY.toFixed(1) : Math.round(displayY)
-            }
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              const newY =
-                positionUnit === "%" ? toPixels(value, videoHeight) : value;
-              setPosition((prev) => ({ ...prev, y: newY }));
-              onChange?.({ ...position, y: newY });
-            }}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
-          />
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="mb-4 flex items-center gap-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Position Unit:
+            </label>
+            <select
+              value={positionUnit}
+              onChange={(e) => setPositionUnit(e.target.value as PositionUnit)}
+              className="node-editor-select-input"
+            >
+              <option value="px">Pixels</option>
+              <option value="%">Percentage</option>
+            </select>
+          </div>
+
+          <div
+            className="relative bg-gray-200 dark:bg-gray-700 rounded-lg"
+            style={{ width: "100%", height: "200px", userSelect: "none" }}
+            ref={previewAreaRef}
+          >
+            <div className="absolute inset-0 flex items-center justify-center text-gray-500 dark:text-gray-400">
+              Video Preview Area
+            </div>
+
+            <div
+              className={`absolute cursor-move p-2 rounded-lg bg-primary-500 bg-opacity-50 hover:bg-opacity-75 transition-colors
+                ${isDragging ? "bg-opacity-75" : ""}`}
+              style={{
+                left: `${(position.x / videoWidth) * 100}%`,
+                top: `${(position.y / videoHeight) * 100}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+              onMouseDown={handleMouseDown}
+            >
+              <svg
+                className="w-6 h-6 text-white"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6v12m-6-6h12m-6-6 1.5 1.5M12 6l-1.5 1.5m1.5 10.5L10.5 16.5M12 18l1.5-1.5M6 12l1.5-1.5M7.5 13.5 6 12m12 0-1.5-1.5M16.5 13.5 18 12"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 text-center">
+            Position:{" "}
+            {positionUnit === "%"
+              ? `${toPercentage(position.x, videoWidth).toFixed(1)}%, ${toPercentage(position.y, videoHeight).toFixed(1)}%`
+              : `${Math.round(position.x)}px, ${Math.round(position.y)}px`}
+          </div>
+
+          <div className="mt-2 flex gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                X Position {positionUnit}
+              </label>
+              <input
+                type="number"
+                step={positionUnit === "%" ? "0.1" : "1"}
+                value={
+                  positionUnit === "%" 
+                    ? toPercentage(position.x, videoWidth).toFixed(1) 
+                    : Math.round(position.x)
+                }
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  const newX = positionUnit === "%" 
+                    ? toPixels(value, videoWidth) 
+                    : value;
+                  setPosition({
+                    type: 'coordinate',
+                    x: newX,
+                    y: position.y
+                  });
+                }}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Y Position {positionUnit}
+              </label>
+              <input
+                type="number"
+                step={positionUnit === "%" ? "0.1" : "1"}
+                value={
+                  positionUnit === "%" 
+                    ? toPercentage(position.y, videoHeight).toFixed(1) 
+                    : Math.round(position.y)
+                }
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  const newY = positionUnit === "%" 
+                    ? toPixels(value, videoHeight) 
+                    : value;
+                  setPosition({
+                    type: 'coordinate',
+                    x: position.x,
+                    y: newY
+                  });
+                }}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
-  );
+);
+
+
 };
 
 export default SummaryView;

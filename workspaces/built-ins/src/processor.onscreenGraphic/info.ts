@@ -70,10 +70,10 @@ export default function ({
             type: 'select',
             optional: true,
             options: [
-              { value: 'topleft', display: 'Top Left' },
-              { value: 'topright', display: 'Top Right' },
-              { value: 'bottomleft', display: 'Bottom Left' },
-              { value: 'bottomright', display: 'Bottom Right' }
+              { value: '{"type":"named","position":"topleft"}', display: 'Top Left' },
+              { value: '{"type":"named","position":"topright"}', display: 'Top Right' },
+              { value: '{"type":"named","position":"bottomleft"}', display: 'Bottom Left' },
+              { value: '{"type":"named","position":"bottomright"}', display: 'Bottom Right' }
             ]
           }
         }
