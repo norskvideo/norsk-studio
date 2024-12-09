@@ -11,9 +11,9 @@ export default function(R: Registration) {
   const SummaryView = React.lazy(async () => import('./summary'));
 
   return defineComponent<MonetiseOutputSettings, MonetiseOutputState, MonetiseOutputCommand, MonetiseOutputEvent>({
-    identifier: 'processor.monetise',
+    identifier: 'processor.scte35inject',
     category: 'processor',
-    name: "Monetise",
+    name: "SCTE35 Inject",
     description: "Allows for the monetization of video and audio streams by incorporating ads and handling their lifecycle within the output stream.",
     subscription: {
       accepts: {
