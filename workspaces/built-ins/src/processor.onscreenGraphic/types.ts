@@ -286,17 +286,29 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        position: {
-            /** @description X coordinate position */
-            x: number;
-            /** @description Y coordinate position */
-            y: number;
-        };
         /**
          * @description The name of the image file
          * @example Norsk.png
          */
         graphic: string;
+        coordinatePosition: {
+            /** @enum {string} */
+            type: "coordinate";
+            /** @description X coordinate position */
+            x: number;
+            /** @description Y coordinate position */
+            y: number;
+        };
+        namedPosition: {
+            /** @enum {string} */
+            type: "named";
+            /**
+             * @description Named position for the graphic
+             * @enum {string}
+             */
+            position: "topleft" | "topright" | "bottomleft" | "bottomright";
+        };
+        position: components["schemas"]["coordinatePosition"] | components["schemas"]["namedPosition"];
         /** @description The configuration for the onscreen graphic */
         config: {
             graphic?: components["schemas"]["graphic"];
