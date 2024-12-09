@@ -234,8 +234,8 @@ class MonetiseOutput extends CustomAutoDuplexNode {
     const videoSource = sources.find((s) => s.streams.select.includes("video"));
     const audioSource = sources.find((s) => s.streams.select.includes("audio"));
 
-    if (!videoSource) return;
-    if (!audioSource) return;
+    if (!videoSource || videoSource.selectVideo().length == 0) return;
+    if (!audioSource || audioSource.selectAudio().length == 0) return;
 
     this.encoder = await this.shared.previewEncode(videoSource.selectVideo()[0], this.cfg.__global.hardware);
     this.whep?.subscribe(
