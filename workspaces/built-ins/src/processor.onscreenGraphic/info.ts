@@ -40,12 +40,13 @@ export default function ({
       }),
       handleEvent: (ev, state) => {
         const evType = ev.type;
-        console.log(evType);
         switch (evType) {
           case "graphic-changed":
             return { ...state, activeGraphic: { file: ev.file, position: ev.position } };
           case "video-changed":
             return { ...state, currentVideo: ev.currentVideo };
+          case "graphic-loaded":
+            return { ...state, currentGraphic: ev.currentGraphic };
           default:
             assertUnreachable(evType)
         }
@@ -73,7 +74,8 @@ export default function ({
               { value: { type: "named", position: "topleft" }, display: 'Top Left' },
               { value: { type: "named", position: "topright" }, display: 'Top Right' },
               { value: { type: "named", position: "bottomleft" }, display: 'Bottom Left' },
-              { value: { type: "named", position: "bottomright" }, display: 'Bottom Right' }
+              { value: { type: "named", position: "bottomright" }, display: 'Bottom Right' },
+              { value: { type: "named", position: "center" }, display: 'Centered' }
             ]
           }
         }

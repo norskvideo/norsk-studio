@@ -294,9 +294,17 @@ export interface components {
         coordinatePosition: {
             /** @enum {string} */
             type: "coordinate";
-            /** @description X coordinate position */
+            /** @description X coordinate position (pixels) */
             x: number;
-            /** @description Y coordinate position */
+            /** @description Y coordinate position (pixels) */
+            y: number;
+        };
+        percentagePosition: {
+            /** @enum {string} */
+            type: "percentage";
+            /** @description X coordinate percentage */
+            x: number;
+            /** @description Y coordinate percentage */
             y: number;
         };
         namedPosition: {
@@ -306,7 +314,7 @@ export interface components {
              * @description Named position for the graphic
              * @enum {string}
              */
-            position: "topleft" | "topright" | "bottomleft" | "bottomright";
+            position: "topleft" | "topright" | "bottomleft" | "bottomright" | "center";
         };
         position: components["schemas"]["coordinatePosition"] | components["schemas"]["namedPosition"];
         /** @description The configuration for the onscreen graphic */

@@ -15,8 +15,9 @@ import { resolveRefs } from 'json-refs';
 import YAML from 'yaml';
 import { OpenAPIV3 } from 'openapi-types';
 
-export type OnscreenGraphicPosition = CoordinatePosition | NamedPosition;
+export type OnscreenGraphicPosition = CoordinatePosition | PercentagePosition | NamedPosition;
 export type CoordinatePosition = components['schemas']['coordinatePosition'];
+export type PercentagePosition = components['schemas']['percentagePosition'];
 export type NamedPosition = components['schemas']['namedPosition'];
 export type OnscreenGraphicFile = components['schemas']['graphic'];
 export type OnscreenGraphicApiConfig = components['schemas']['config'];
@@ -38,6 +39,7 @@ export type OnscreenGraphicState = {
     position?: OnscreenGraphicPosition
   },
   currentVideo?: { width: number, height: number },
+  currentGraphic?: { width: number, height: number },
 }
 
 export type OnscreenGraphicCommand = {
@@ -53,6 +55,9 @@ export type OnscreenGraphicEvent = {
 } | {
   type: 'video-changed',
   currentVideo?: { width: number, height: number },
+} | {
+  type: 'graphic-loaded',
+  currentGraphic?: { width: number, height: number },
 }
 
 type Transmuted<T> = {
@@ -94,12 +99,35 @@ function graphicsDir() {
   return path.join(Config.server.workingDir(), process.env.ONSCREENGRAPHIC_DIRECTORY ?? "graphics");
 }
 
+// From the `image` crate
+const extensions = [
+  "jpg", "jpeg", "jfif",
+  "png", "apng",
+  "gif",
+  "webp",
+  "tif", "tiff",
+  "tga",
+  "dds",
+  "bmp",
+  "ico",
+  "hdr",
+  "exr",
+  "pbm", "pam", "ppm", "pgm",
+  "ff",
+  "qoi",
+  "pcx",
+];
+
 async function getGraphics() {
   const files = await fs.readdir(graphicsDir());
   const images = files.filter((f) => {
-    return f.endsWith(".png") || f.endsWith(".jpg");
+    return extensions.some(extension => f.endsWith("."+extension));
   })
   return images;
+}
+
+function clamp(min: number, num: number, max: number): number {
+  return num < min ? min : num > max ? max : num;
 }
 
 function resolveNamedPosition(
@@ -109,20 +137,30 @@ function resolveNamedPosition(
   imageWidth: number,
   imageHeight: number
 ): { x: number, y: number } {
-  if (position.type === 'named') {
+  const maxX = videoWidth - imageWidth;
+  const maxY = videoHeight - imageHeight;
+  if (position.type === 'coordinate') {
+    return { x: clamp(0, position.x, maxX), y: clamp(0, position.y, maxY) };
+  } else if (position.type === 'percentage') {
+    return { x: maxX*clamp(0, position.x, 100)/100, y: maxY*clamp(0, position.y, 100)/100 };
+  } else if (position.type === 'named') {
     switch (position.position) {
       case 'topleft':
         return { x: 0, y: 0 };
       case 'topright':
-        return { x: videoWidth - imageWidth, y: 0 };
+        return { x: maxX, y: 0 };
       case 'bottomleft':
-        return {x: 0, y: videoHeight - imageHeight};
+        return {x: 0, y: maxY };
       case 'bottomright':
-        return { x: videoWidth - imageWidth, y: videoHeight - imageHeight };
+        return { x: maxX, y: maxY };
+      case 'center':
+        return { x: maxX/2, y: maxY/2 };
+      default:
+        assertUnreachable(position.position);
     }
+  } else {
+    assertUnreachable(position);
   }
-  console.log("position: ", position);
-  return { x: position.x, y: position.y };
 }
 
 export default class OnscreenGraphicDefinition implements ServerComponentDefinition<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent> {
@@ -260,10 +298,10 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
                   return;
                 }
               } else if (position.type === 'named') {
-                if (!['topleft', 'topright', 'bottomleft', 'bottomright'].includes(position.position)) {
+                if (!['topleft', 'topright', 'bottomleft', 'bottomright',  'center'].includes(position.position)) {
                   res.status(400).json({
                     error: "Bad position",
-                    details: "Named position must be one of: topleft, topright, bottomleft, bottomright"
+                    details: "Named position must be one of: topleft, topright, bottomleft, bottomright, center"
                   });
                   return;
                 }
@@ -412,10 +450,13 @@ export class OnscreenGraphic implements CreatedMediaNode {
         }
         const imageStream = newImageStream ?? oldImageStream;
         if (imageStream && imageStream.message.case == 'video') {
+          if (newImageStream) {
+            this.updates.raiseEvent({ type: 'graphic-loaded', currentGraphic: imageStream.message.value });
+          }
           this.composeNode?.updateConfig({
             parts: [
               this.videoPart(),
-              this.imagePart(this.position ?? { type: 'coordinate', x: 5, y: 5 })
+              this.imagePart(this.position ?? { type: 'coordinate', x: 0, y: 0 })
             ]
           })
         } else {
@@ -472,7 +513,7 @@ export class OnscreenGraphic implements CreatedMediaNode {
         this.composeNode.updateConfig({
           parts: [
             this.videoPart(),
-            this.imagePart(position ?? { type: 'coordinate', x: 5, y: 5 })
+            this.imagePart(position ?? { type: 'coordinate', x: 0, y: 0 })
           ]
         });
       }
