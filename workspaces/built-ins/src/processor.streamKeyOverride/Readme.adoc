@@ -10,6 +10,7 @@ This is useful for renaming streams before they go to outputs, or for gathering 
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
 | mode | Multi-stream behavior (default: &quot;simple&quot;) |  𐄂
+| output | Output individual streams or a single merged stream (default: &quot;individually-selectable&quot;) |  𐄂
 | sourceName | Override source name |  𐄂
 | programNumber | Override program number |  𐄂
 | streamId | Override stream ID |  𐄂

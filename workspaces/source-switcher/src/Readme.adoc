@@ -7,6 +7,7 @@ This component manages multiple A&#x2F;V (audio and video) streams from differen
 | Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
+| enablePreviews | Are previews auomatically created for all inputs and output (default: false) |  𐄂
 | resolution | All video will be normalised to this resolution (default: {&quot;width&quot;:1920,&quot;height&quot;:1080}) |  𐄂
 | frameRate | All video will be normalised to this frame rate (default: {&quot;frames&quot;:25,&quot;seconds&quot;:1}) |  𐄂
 | sampleRate | All audio will be normalised to this sample rate (default: 48000) |  𐄂

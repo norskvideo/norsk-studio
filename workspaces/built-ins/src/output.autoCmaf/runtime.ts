@@ -130,12 +130,12 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
             runtime.updates.sendCommand({
               type: 'enable-output'
             });
-            
+
             runtime.updates.raiseEvent({
               type: 'output-enabled',
               url: state.url ?? '',
             });
-            
+
             res.sendStatus(204);
           } catch (error) {
             console.error('Error in enable handler:', error);
@@ -157,7 +157,7 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
             runtime.updates.sendCommand({
               type: 'disable-output'
             });
-           
+
             runtime.updates.raiseEvent({
               type: 'output-disabled',
               url: state.url ?? '',
@@ -409,7 +409,7 @@ export class AutoCmaf extends CustomSinkNode {
           });
           video.onPlaylistAddition = (_, p) => p;
           video.onPlaylistAddition = undefined;
-          
+
           subscribes.push(new Promise((resolve, _reject) => {
             video.subscribe([{
               source: stream.source,
@@ -501,7 +501,7 @@ export class AutoCmaf extends CustomSinkNode {
                     id: adId,
                     scte35: message,
                     startDate: schedule,
-                    durationSeconds: Number(command.breakDuration.duration / BigInt(90000.0))
+                    durationSeconds: Number((command.breakDuration?.duration ?? 0n) / BigInt(90000.0))
                   }, d)
                 }
               }
