@@ -24,7 +24,7 @@ export default function(R: Registration) {
     display: (_desc) => { return {}; },
     runtime: {
       initialState: () => ({
-        timestamps: new Array(200).fill(0),
+        timestamps: [],
       }),
       handleEvent(ev, state) {
         const evType = ev.type;
