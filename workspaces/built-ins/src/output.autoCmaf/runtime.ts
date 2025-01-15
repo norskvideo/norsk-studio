@@ -17,6 +17,10 @@ export type AutoCmafS3Destination = {
   prefix: string,
   includeAdInsertions: boolean
 }
+export type AutoCmafAkamaiDestination = {
+  streamId: string
+  eventName: string
+}
 
 export type AutoCmafConfig = {
   id: string,
@@ -25,6 +29,7 @@ export type AutoCmafConfig = {
   sessionId: boolean,
   segments: AutoCmafSegment,
   s3Destinations: AutoCmafS3Destination[],
+  akamaiDestinations: AutoCmafAkamaiDestination[],
   drmProvider?: 'ezdrm' | 'axinom',
   __global: {
     ezdrmConfig?: EzDrmConfig,
@@ -153,6 +158,38 @@ export class AutoCmaf extends CustomSinkNode {
         this.advertDestinations.push(id)
       }
     })
+
+    cfg.akamaiDestinations.forEach((d, i) => {
+      const id = `akamai-${i}`;
+      this.destinations.push({
+        id: `${id}-primary`,
+        type: "generic",
+        host: process.env.FAKE_AKAMAI ? "localhost" : `p-ep${d.streamId}.i.akamaientrypoint.net`,
+        pathPrefix: `/cmaf/${d.streamId}/${d.eventName}/`,
+        port: process.env.FAKE_AKAMAI ? 8090 : 443,
+        sessionId: this.sessionId,
+        supportsGzip: true,
+        retentionPeriodSeconds: cfg.segments.retentionPeriod,
+        defaultSegmentCount: cfg.segments.defaultSegmentCount, // this might need to be per dest actually
+        holdBackSeconds: (cfg.segments.holdBackSegments ?? 3) * cfg.segments.targetSegmentDuration,
+        partHoldBackSeconds: (cfg.segments.holdBackParts ?? 3) * cfg.segments.targetPartDuration,
+      });
+      this.destinations.push({
+        id: `${id}-backup`,
+        type: "generic",
+        host: process.env.FAKE_AKAMAI ? "localhost" : `b-ep${d.streamId}.i.akamaientrypoint.net`,
+        pathPrefix: `/cmaf/${d.streamId}-b/${d.eventName}/`,
+        port: process.env.FAKE_AKAMAI ? 8090 : 443,
+        sessionId: this.sessionId,
+        supportsGzip: true,
+        retentionPeriodSeconds: cfg.segments.retentionPeriod,
+        defaultSegmentCount: cfg.segments.defaultSegmentCount, // this might need to be per dest actually
+        holdBackSeconds: (cfg.segments.holdBackSegments ?? 3) * cfg.segments.targetSegmentDuration,
+        partHoldBackSeconds: (cfg.segments.holdBackParts ?? 3) * cfg.segments.targetPartDuration,
+      });
+
+    });
+
     // For testing only
     // although I don't think there are side effects?
     // this.advertDestinations.push('local');

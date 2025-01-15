@@ -42,6 +42,7 @@ describe("Auto CMAF Output", () => {
                 targetSegmentDuration: 2,
               },
               s3Destinations: [],
+              akamaiDestinations: []
             }
           ).reify())
       .reify();

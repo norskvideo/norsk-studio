@@ -27,6 +27,11 @@ export default function(R: Registration) {
     const views = await import('./form-views')
     return { default: views.S3Destination }
   });
+  const AkamaiDestination = React.lazy(async () => {
+    const views = await import('./form-views')
+    return { default: views.AkamaiDestination }
+  });
+
 
   return defineComponent<AutoCmafConfig, CmafOutputState, CmafOutputCommand, CmafOutputEvent>({
     identifier: 'output.autoCmaf',
@@ -219,6 +224,33 @@ export default function(R: Registration) {
                   defaultValue: false
                 }
               }
+            }
+          }
+        },
+        akamaiDestinations: {
+          help: "Akamai destinations to publish to",
+          hint: {
+            type: "form-list",
+            defaultValue: [],
+            view: AkamaiDestination,
+            form: {
+              streamId: {
+                help: "The Akamai Stream ID",
+                hint: {
+                  type: "text",
+                  validation: Z.string().min(1, "A stream ID is required")
+                }
+              },
+              eventName: {
+                help: "The event name / current source name",
+                hint: {
+                  type: "text",
+                  validation: Z.string().min(1, "An event name is required")
+                }
+              },
+              // publish backup (bool)
+              // master multivariant name 
+              // non-master multivariant?
             }
           }
         },

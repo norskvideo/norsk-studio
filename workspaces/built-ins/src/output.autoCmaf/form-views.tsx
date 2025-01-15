@@ -1,4 +1,4 @@
-import type { AutoCmafS3Destination, AutoCmafSegment } from "./runtime";
+import type { AutoCmafAkamaiDestination, AutoCmafS3Destination, AutoCmafSegment } from "./runtime";
 
 export function S3Destination(destination: AutoCmafS3Destination) {
   return <div className="grid grid-flow-row-dense grid-cols-3 text-sm">
@@ -10,6 +10,17 @@ export function S3Destination(destination: AutoCmafS3Destination) {
 
     <div className="col-span-1">Include Ads</div>
     <div className="col-span-2">{destination.includeAdInsertions ? 'yes' : 'no'}</div>
+  </div >
+}
+
+export function AkamaiDestination(destination: AutoCmafAkamaiDestination) {
+  return <div className="grid grid-flow-row-dense grid-cols-3 text-sm">
+    <div className="col-span-1">Stream ID</div>
+    <div className="col-span-2">{destination.streamId}</div>
+
+
+    <div className="col-span-1">Event Name</div>
+    <div className="col-span-2">{destination.eventName}</div>
   </div >
 }
 
