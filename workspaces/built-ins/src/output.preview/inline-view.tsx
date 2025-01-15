@@ -2,8 +2,9 @@ import { useEffect } from "react";
 import type { PreviewOutputState, PreviewOutputSettings } from "./runtime";
 
 import { WhepClient } from '@norskvideo/webrtc-client'
+import type { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
-function InlineView({ state, config }: { state: PreviewOutputState, config: PreviewOutputSettings }) {
+function InlineView({ state, config, raise }: ViewProps<PreviewOutputSettings, PreviewOutputState>) {
   const url = state.url;
   const id = config.id;
   useEffect(() => {
@@ -11,6 +12,8 @@ function InlineView({ state, config }: { state: PreviewOutputState, config: Prev
     const client = new WhepClient({ url, container: document.getElementById(`preview-${id}`) ?? undefined });
     void client.start();
   }, [state.url]);
+
+  raise && useEffect(raise, []);
 
   if (!url) return <>...</>
 

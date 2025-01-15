@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { ActionReplayState, ActionReplayConfig, ActionReplayCommand } from "./runtime";
 import Hls from 'hls.js';
+import type { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
 let changingDuration = false;
 
-function InlineView({ state, config, sendCommand }: { state: ActionReplayState, config: ActionReplayConfig, sendCommand: (cmd: ActionReplayCommand) => void }) {
+function SummaryView({ state, config, sendCommand }: ViewProps<ActionReplayConfig, ActionReplayState, ActionReplayCommand>) {
   const url = state.contentPlayerUrl;
   const id = config.id;
-  const previewVideo = useRef<HTMLVideoElement>(null)
+  const previewVideo = useRef<HTMLVideoElement>(null);
 
   const [lastSeek, setLastSeek] = useState<undefined | { time: number, end: number }>(undefined);
   const [playbackDuration, setPlaybackDuration] = useState(10);
@@ -105,4 +106,4 @@ function InlineView({ state, config, sendCommand }: { state: ActionReplayState, 
   }
 }
 
-export default InlineView;
+export default SummaryView;
