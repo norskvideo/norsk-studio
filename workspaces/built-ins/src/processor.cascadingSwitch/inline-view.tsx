@@ -1,8 +1,8 @@
 import type { CascadingSwitchState, CascadingSwitchConfig } from "./runtime";
 
-const activeClasses = "active text-green-300 dark:text-green-300";
-const availableClasses = "available text-green-300 dark:text-green-300";
-const inactiveClasses = "inactive text-orange-300 dark:text-orange-300";
+const activeClasses = "active text-green-500 dark:text-green-300";
+const availableClasses = "available text-green-500 dark:text-green-300";
+const inactiveClasses = "inactive text-orange-500 dark:text-orange-300";
 
 // It would be nice to do this
 // but then we have to fight the server-side build stuff which does actually import this file

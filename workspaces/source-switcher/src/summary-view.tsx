@@ -3,9 +3,9 @@ import type { SourceSwitchState, SourceSwitchConfig, SourceSwitchCommand, Source
 
 import { WhepClient } from '@norskvideo/webrtc-client'
 
-const activeClasses = "active text-green-300 dark:text-green-300";
-const availableClasses = "available text-green-300 dark:text-green-300";
-const inactiveClasses = "inactive text-orange-300 dark:text-orange-300";
+const activeClasses = "active text-green-500 dark:text-green-300";
+const availableClasses = "available text-green-500 dark:text-green-300";
+const inactiveClasses = "inactive text-orange-500 dark:text-orange-300";
 
 var currentClient: WhepClient | undefined = undefined; // eslint-disable-line
 

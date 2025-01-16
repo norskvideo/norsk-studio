@@ -1,8 +1,8 @@
 import type { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
-import type { AudioLevelState, AudioLevelSettings } from "./runtime";
+import type { AudioLevelState, AudioLevelSettings, AudioLevelCommand } from "./runtime";
 import { useEffect } from "react";
 
-function InlineView({ state, raise }: ViewProps<AudioLevelSettings, AudioLevelState>) {
+function InlineView({ state, raise }: ViewProps<AudioLevelSettings, AudioLevelState, AudioLevelCommand>) {
   raise && useEffect(raise, []);
 
   function percentage(levels: { peak: number; rms: number; } | undefined) {
