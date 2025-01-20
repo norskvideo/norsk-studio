@@ -304,7 +304,7 @@ export class AutoCmaf extends CustomSinkNode {
     if (!this.enabled) {
       this.enabled = true;
       await this.handleContext();
-      debuglog("Output enabled" , { id: this.id });
+      debuglog("Output enabled", { id: this.id });
     }
   }
 
