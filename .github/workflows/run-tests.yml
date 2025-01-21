@@ -67,8 +67,8 @@ jobs:
       if: ${{ failure() && inputs.notify_discord && hashFiles('discord.json') == '' }} 
       with:
         webhook-url: ${{ secrets.DISCORD_URL }}
-        username: "Evil Jenkins"
-        avatar-url: "https://i.imgur.com/HzrYPqf.png"
+        username: "Jankings"
+        avatar-url: "https://pones.theponyapi.com/file/ponies/5201928829009920/thumb_small"
         content: ""
         embed-title: "Norsk Studio Defaults Tests Failed"
         embed-color: 15548997

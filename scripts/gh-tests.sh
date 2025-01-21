@@ -12,7 +12,7 @@ cat $PWD/built-ins.json $PWD/vd.json | jq -s \
                      --arg GITHUB_RUN_ID "${GITHUB_RUN_ID:-empty}" \ '{ 
   "content": "",
   "avatar_url": "https://i.imgur.com/HzrYPqf.png",
-  "username": "Evil Jenkins",
+  "username": "Jankings",
   "embeds": [ { "title": ""
               , "color": (if .[0].stats.failures == 0 then 5763719 else 15548997 end)
               , "description": 
