@@ -8,6 +8,7 @@ __layout:
   - id: autocmaf
     x: 1232
     y: 400
+__globalConfig: {}
 components:
   - type: input.srt-listener
     config:
