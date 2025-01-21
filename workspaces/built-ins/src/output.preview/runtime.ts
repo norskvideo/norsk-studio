@@ -71,20 +71,20 @@ export class PreviewOutput extends CustomSinkNode {
   }
 
   async initialise() {
-
+    
     this.audioLevels = await this.norsk.processor.control.audioMeasureLevels({
       id: `${this.cfg.id}-audiolevels`,
       onData: (levels: AudioMeasureLevels) => {
         const total = levels.channelLevels.reduce<{ rms: number, peak: number }>((acc, l) => {
-          acc.peak += l.peak ?? 0;
-          acc.rms += l.rms ?? 0
+          acc.peak += l.peak ?? -90;
+          acc.rms += l.rms ?? -90
           return acc;
-        }, { rms: 0, peak: 0 })
+        }, { rms: -90, peak: -90 })
         this.updates.raiseEvent({
           type: 'audio-levels',
           levels: {
-            peak: levels.channelLevels.length == 0 ? 0 : total.peak / levels.channelLevels.length,
-            rms: levels.channelLevels.length == 0 ? 0 : total.rms / levels.channelLevels.length
+            peak: levels.channelLevels.length == 0 ? -90 : total.peak / levels.channelLevels.length,
+            rms: levels.channelLevels.length == 0 ? -90 : total.rms / levels.channelLevels.length
           }
         })
       }
