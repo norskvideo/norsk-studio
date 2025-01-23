@@ -489,7 +489,7 @@ export class SourceSwitch extends CustomAutoDuplexNode {
       debuglog("Switching to fallback source", { id: this.id });
       this.desiredSource = { pin: 'fallback', primary: { id: 'fallback' }, overlays: [] };
       this.pendingSource = this.desiredSource;
-      this.smooth?.switchSource("fallback")
+      await this.smooth?.switchSource("fallback")
     }
   }
 
@@ -504,7 +504,7 @@ export class SourceSwitch extends CustomAutoDuplexNode {
       const currentAvailable = this.sourceIsAvailable(this.desiredSource.primary) && allStreams.get(this.desiredSource.pin)?.length == 2;
       if (currentAvailable) {
         this.pendingSource = this.desiredSource;
-        this.smooth?.switchSource(this.desiredSource.pin);
+        await this.smooth?.switchSource(this.desiredSource.pin);
       }
     }
     // Switch to fallback if either active/pending stops being available

@@ -145,10 +145,10 @@ export class CascadingSwitch extends CustomAutoDuplexNode {
 
     if (active && this.activeSource != active) {
       this.activeSource = active;
-      this.smooth?.switchSource(active)
+      await this.smooth?.switchSource(active)
     } else if (!active && this.activeSource != 'fallback') {
       this.activeSource = 'fallback';
-      this.smooth?.switchSource("fallback")
+      await this.smooth?.switchSource("fallback")
     }
 
     for (const existing of oldSources) {
