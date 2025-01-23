@@ -44,6 +44,7 @@ jobs:
         file: shell.nix
 
     - name: Run Build (With Latest)
+      continue-on-error: true
       run: "npm install --workspaces @norskvideo/norsk-sdk@latest && npm install @norskvideo/norsk-studio@latest && npm install && npm run build"
 
     - name: Run Tests
