@@ -23,6 +23,9 @@ async function defaultRuntime(): Promise<RuntimeSystem> {
 // All we're really testing here
 // is that we're spinning up the whep node
 // with some valid config and that we haven't made a huge snafu in doing so
+
+// I don't even think these asserts are valid now I'm looking at them
+// other than I guess the page loaded so the output must exist
 describe("WHEP Output", () => {
   async function testDocument() {
     const runtime = await defaultRuntime();
@@ -69,28 +72,27 @@ describe("WHEP Output", () => {
     browser = await puppeteer.launch({
       headless: 'new',
       executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     page = await browser.newPage();
 
-    await new Promise<void>((resolve) => {
-      const doIt = () => {
+    await new Promise<void>((r) => {
+      function doIt() {
         void (async () => {
-          try {
-            await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
-            const video = await page?.waitForSelector('video', { timeout: 100.0 });
-            if (video) {
-              expect(video).exist;
-              resolve();
-            } else {
+          await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+          await page?.waitForSelector('video', { timeout: 100.0 })
+            .catch(() => {
               setTimeout(doIt, 100.0);
-            }
-          } catch {
-            setTimeout(doIt, 100.0);
-          }
+            })
+            .then((v) => {
+              expect(v).exist;
+            })
+            .finally(() => {
+              r();
+            });
         })();
-      };
-    
+      }
       doIt();
     });
   })
@@ -100,46 +102,27 @@ describe("WHEP Output", () => {
     browser = await puppeteer.launch({
       headless: 'new',
       executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     await source.close();
 
     page = await browser.newPage();
 
-    // await new Promise<void>((r) => {
-    //   async function doIt() {
-    //     await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
-    //     // Video only appears if SDP and stuff negotiate properly so..
-    //     await page?.waitForSelector('video', { timeout: 1000.0 })
-    //       .catch(() => {
-
-    //       }).then((v) => {
-    //         expect(v).not.exist;
-    //         r();
-    //       });
-    //   }
-    //   void doIt();
-    // })
-    await new Promise<void>((resolve) => {
-      const doIt = () => {
-        void (async () => {
-          try {
-            await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
-            const videoElement = await page?.waitForSelector('video', { timeout: 100.0 });
-            if (videoElement) {
-              expect(videoElement).exist;
-              resolve();
-            } else {
-              setTimeout(doIt, 100.0);
-            }
-          } catch (error) {
-            setTimeout(doIt, 100.0);
-          }
-        })();
-      };
-    
-      doIt();
-    });
+    await new Promise<void>((r) => {
+      async function doIt() {
+        await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+        // Video only appears if SDP and stuff negotiate properly so..
+        await page?.waitForSelector('video', { timeout: 1000.0 })
+          .catch(() => {
+          }).then((v) => {
+            expect(v).not.exist;
+          }).finally(() => {
+            r();
+          });
+      }
+      void doIt();
+    })
   })
 
   it("With a changing source", async () => {
@@ -147,6 +130,7 @@ describe("WHEP Output", () => {
     browser = await puppeteer.launch({
       headless: 'new',
       executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     await source.close();
@@ -160,40 +144,23 @@ describe("WHEP Output", () => {
 
     page = await browser.newPage();
 
-    // await new Promise<void>((r) => {
-    //   async function doIt() {
-    //     await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
-    //     // Video only appears if SDP and stuff negotiate properly so..
-    //     await page?.waitForSelector('video', { timeout: 100.0 })
-    //       .catch(() => {
-    //         setTimeout(doIt, 100.0);
-    //       }).then((v) => {
-    //         expect(v).exist;
-    //         r();
-    //       });
-    //   }
-    //   void doIt();
-    // })
-    await new Promise<void>((resolve) => {
-      const doIt = () => {
-        void (async () => {
-          try {
-            await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
-            const videoElement = await page?.waitForSelector('video', { timeout: 100.0 });
-            if (videoElement) {
-              expect(videoElement).exist;
-              resolve();
-            } else {
+    await new Promise<void>((r) => {
+      function doIt() {
+        void (async() => {
+          await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+          // Video only appears if SDP and stuff negotiate properly so..
+          await page?.waitForSelector('video', { timeout: 100.0 })
+            .catch(() => {
               setTimeout(doIt, 100.0);
-            }
-          } catch (error) {
-            setTimeout(doIt, 100.0);
-          }
-        })();
-      };
-    
+            }).then((v) => {
+              expect(v).exist;
+            }).finally(() => {
+              r();
+            });
+        } )   
+      }
       doIt();
-    });
+    })
   })
 });
 

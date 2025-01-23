@@ -1,8 +1,8 @@
-import type { WhepOutputCommand, WhepOutputEvent, WhepOutputSettings, WhepOutputState } from "./runtime";
+import { WhepOutputCommand, type WhepOutputEvent, type WhepOutputSettings, type WhepOutputState } from "./runtime";
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 
 import { GlobalIceServers } from '@norskvideo/norsk-studio/lib/shared/config'
-import { assertUnreachable } from "@norskvideo/norsk-studio/lib/shared/util";
+import React from "react";
 
 export default function(R: Registration) {
   const {
@@ -10,6 +10,8 @@ export default function(R: Registration) {
     Av,
     validation: { JitterBuffer },
   } = R;
+  const InlineView = React.lazy(async () => import('./inline-view'));
+  
   return defineComponent<WhepOutputSettings, WhepOutputState, WhepOutputCommand, WhepOutputEvent>({
     identifier: 'output.whep',
     category: 'output',
@@ -27,24 +29,21 @@ export default function(R: Registration) {
       },
     },
     display: (_desc) => { return {}; },
+    css: ["styles.css"],
     runtime: {
-      initialState: () => ({
-        enabled: true,
-      }),
+      initialState: () => ({}),
       handleEvent(ev, state) {
         const evType = ev.type;
         switch (evType) {
-          case 'output-enabled':
-            state.enabled = true;
-            break;
-          case 'output-disabled':
-            state.enabled = false;
+          case 'url-published':
+            state.url = ev.url;
             break;
           default:
             assertUnreachable(evType)
         }
         return { ...state };
       },
+      inline: InlineView
     },
     configForm: {
       global: {
@@ -55,4 +54,8 @@ export default function(R: Registration) {
       }
     }
   });
+}
+
+function assertUnreachable(_: never): never {
+  throw new Error("Didn't expect to get here");
 }
