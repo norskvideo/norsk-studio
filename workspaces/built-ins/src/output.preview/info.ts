@@ -67,6 +67,7 @@ export default function(R: Registration) {
       },
       form: {
         bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
+        skipTranscode: { help: "Skip transcoding for WebRTC-ready streams", hint: {type: 'boolean', defaultValue: false }},
       }
     }
   });

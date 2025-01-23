@@ -13,6 +13,7 @@ export type PreviewOutputSettings = {
   id: string;
   displayName: string,
   bufferDelayMs?: SdkSettings['bufferDelayMs'],
+  skipTranscode?: boolean,
   __global: {
     iceServers: IceServer[],
     hardware?: HardwareAccelerationType,
@@ -54,6 +55,7 @@ export class PreviewOutput extends CustomSinkNode {
   norsk: Norsk;
   updates: RuntimeUpdates<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>;
   shared: StudioShared;
+
 
   cfg: PreviewOutputSettings;
   encoder?: SourceMediaNode;
@@ -100,11 +102,19 @@ export class PreviewOutput extends CustomSinkNode {
     // can probably just have 's.hasMedia("video")'
     const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0)?.selectVideo();
     const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0)?.selectAudio();
-
+   
     if (videoSource && videoSource.length > 0) {
-      if (!this.encoder) {
+      if (!this.encoder && !this.cfg.skipTranscode) {
         debuglog("Finding preview encode for preview node", this.id);
-        this.encoder = await this.shared.previewEncode(videoSource[0], this.cfg.__global.hardware);
+        this.encoder = await this.shared.previewEncode(
+          videoSource[0], 
+          this.cfg.__global.hardware,
+          {
+            width: 320,
+            height: 180,
+            preset: 'ultrafast',
+          }
+        );
         this.registerInput(this.encoder);
       }
     } else {
@@ -120,13 +130,15 @@ export class PreviewOutput extends CustomSinkNode {
 
     const subscriptions: ReceiveFromAddressAuto[] = [];
 
-    if (this.encoder) {
+    if (this.encoder && !this.cfg.skipTranscode) {
       subscriptions.push({
         source: this.encoder,
         sourceSelector: selectVideo
       });
+    } else if (videoSource && videoSource.length > 0) {
+      subscriptions.push(videoSource[0]);
     }
-
+  
     if (audioSource && audioSource.length > 0) {
       subscriptions.push(audioSource[0]);
     }
