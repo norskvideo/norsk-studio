@@ -111,7 +111,7 @@ jobs:
         username: "Jankings"
         avatar-url: "https://pones.theponyapi.com/file/ponies/5201928829009920/thumb_small"
         content: ""
-        embed-title: "Norsk Studio Publish Tests Failed"
+        embed-title: "Norsk Studio (public) Tests Failed"
         embed-color: 15548997
         embed-description: | 
           No Results File Found 
