@@ -1,4 +1,4 @@
-import { Norsk, RtmpServerInputSettings as SdkSettings, RtmpServerStreamKeys, RtmpServerInputNode, SourceMediaNode } from '@norskvideo/norsk-sdk';
+import { Norsk, RtmpServerInputSettings as SdkSettings, RtmpServerStreamKeys, RtmpServerInputNode } from '@norskvideo/norsk-sdk';
 import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import fs from 'fs/promises';
@@ -29,7 +29,7 @@ export type RtmpInputEvent = {
 }
 
 export type RtmpInputCommand = {
-  type: "source-connected" | "source-disconnected",
+  type: "disconnect-source",
   streamName: string,
 }
 
@@ -61,6 +61,7 @@ export class RtmpInput implements CreatedMediaNode {
 
   async initialise(): Promise<void> {
     this.rtmpServer = await this.norsk.input.rtmpServer({
+      id: this.id,
       port: this.cfg.port,
       ssl: this.cfg.ssl,
       sslOptions: {
@@ -103,10 +104,6 @@ export class RtmpInput implements CreatedMediaNode {
           connectedSources: [...this.activeStreams]
         });
 
-        if (this.rtmpServer) {
-          this.relatedMediaNodes.addOutput(this.rtmpServer);
-        }
-
         return {
           accept: true,
           videoStreamKey: {
@@ -137,47 +134,20 @@ export class RtmpInput implements CreatedMediaNode {
           }
         }
       },
-
-      onClose: () => {
-        if (this.rtmpServer) {
-          this.relatedMediaNodes.removeOutput(this.rtmpServer);
-        }
-      },
-
-      onCreate: () => {
-        if (this.rtmpServer) {
-          this.relatedMediaNodes.addOutput(this.rtmpServer);
-        }
+      onCreate: (node) => {
+        this.relatedMediaNodes.addOutput(node);
       }
     });
   }
+
   async disconnectStream(streamName: string) {
     debuglog("Unsubscribing stream", { streamName, beforeState: this.activeStreams });
 
-    this.activeStreams = this.activeStreams.filter(s => s !== streamName);
-    this.updates.update({
-      connectedSources: [...this.activeStreams]
-    });
-
     if (this.rtmpServer) {
-      this.relatedMediaNodes.removeOutput(this.rtmpServer as SourceMediaNode);
-      await this.rtmpServer.close();
-      this.rtmpServer = null;
+      //  TODO: Add this functionality to the Norsk SDK
     }
 
     debuglog("Stream unsubscribed", { streamName, afterState: this.activeStreams });
-  }
-
-  async reconnectStream(streamName: string) {
-    debuglog("Reconnecting stream", { streamName, beforeState: this.activeStreams });
-
-    if (this.rtmpServer) {
-      await this.disconnectStream(streamName);
-    }
-
-    await this.initialise();
-
-    debuglog("Stream reconnected", { streamName, afterState: this.activeStreams });
   }
 }
 
@@ -211,10 +181,7 @@ export default class RtmpInputDefinition implements ServerComponentDefinition<Rt
   async handleCommand(node: RtmpInput, command: RtmpInputCommand) {
     const commandType = command.type;
     switch (commandType) {
-      case 'source-connected':
-        await node.reconnectStream(command.streamName);
-        break;
-      case 'source-disconnected':
+      case 'disconnect-source':
         await node.disconnectStream(command.streamName);
         break;
       default:
@@ -245,7 +212,7 @@ export default class RtmpInputDefinition implements ServerComponentDefinition<Rt
               return res.status(404).json({ error: 'Stream not found or not connected' });
             }
             runtime.updates.sendCommand({
-              type: 'source-disconnected',
+              type: 'disconnect-source',
               streamName
             })
             res.status(204).send();
@@ -255,32 +222,6 @@ export default class RtmpInputDefinition implements ServerComponentDefinition<Rt
           }
         }
       },
-      {
-        ...post<paths>('/reconnect', paths),
-        handler: ({ runtime }) => async (req, res) => {
-          try {
-            const { streamName } = req.body;
-            if (!streamName) {
-              return res.status(400).json({ error: 'Stream name is required' });
-            }
-
-            const state = runtime.updates.latest();
-            console.log("Current state during reconnect:", state);
-            if (state.connectedSources.includes(streamName)) {
-              return res.status(400).json({ error: 'Stream is already connected' });
-            }
-            runtime.updates.sendCommand({
-              type: 'source-connected',
-              streamName
-            })
-
-            res.sendStatus(204);
-          } catch (error) {
-            console.error('Error in reconnect handler:', error);
-            res.status(500).json({ error: 'Failed to reconnect stream' });
-          }
-        }
-      }
     ];
   }
 }

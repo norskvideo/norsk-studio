@@ -608,6 +608,7 @@ describe("SRT Listener Input", () => {
             port: 65403,
             streamId: 'stream1',
             // TODO: Find out why this doesn't raise an event when it gets disconnected 
+
           });
 
           srt.subscribe([{ source: av, sourceSelector: selectAV }]);

@@ -32,40 +32,13 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
       }
   
       sendCommand({
-        type: "source-disconnected",
+        type: "disconnect-source",
         streamName
       });
     } catch (error) {
       console.error("Failed to disconnect stream:", error);
     }
   };
-
-  const handleReconnectStream = (streamName: string) => {
-    void reconnectStream(streamName);
-  };
-
-  const reconnectStream = async (streamName: string) => {
-    try {
-      const response = await fetch(`${urls.componentUrl}/reconnect`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ streamName })
-      });
-
-      if (!response.ok) {
-        console.error("Failed to reconnect");
-      }
-
-      sendCommand({
-        type: "source-connected",
-        streamName,
-      });
-    } catch (error) {
-      console.error("Failed to reconnect to stream", error);
-    }
-  }; 
 
   return (
     <div className="dark:text-white text-black mb-3 w-60">
@@ -92,12 +65,6 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
           {disconnectedSources.map((streamName) => (
             <li key={streamName} className="flex items-center justify-between">
               <span className="text-orange-300">{streamName}</span>
-              <button
-                onClick={ () => handleReconnectStream(streamName)}
-                className="ml-2 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded"
-              >
-                Reconnect
-              </button>
             </li>
           ))}
         </ul>
