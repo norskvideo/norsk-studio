@@ -7,6 +7,15 @@ on:
         required: false
         default: false
         type: boolean
+      update_deps: 
+        required: false
+        default: none
+        type: string
+        # options:
+        #   - none
+        #   - local
+        #   - nightly
+        #   - latest
       run_context:
         required: false
         default: "No context"
@@ -18,7 +27,7 @@ jobs:
 
     steps:
     - name: Checkout the head commit of the branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Write license file
       id: create-json
@@ -28,10 +37,12 @@ jobs:
         json: ${{ secrets.NORSK_LICENSE }}
 
     - name: Run Norsk 
-      uses: gacts/run-and-post-run@v1
-      with:
-        run: "docker run --pull=always --rm --name norsk -d  --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly -p 6791:6791 -p 6790:6790 -p 8080:8080 norskvideo/norsk:nightly --license-file /mnt/license.json"
-        post: docker stop norsk 
+      id: run-norsk
+      run: |
+          NETWORK=$(docker inspect -f '{{range $key, $value := .NetworkSettings.Networks}}{{$key}}{{end}}' `hostname`)
+          NORSK_CONTAINER_ID=$(docker run --pull=always --rm -d --network=$NETWORK --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly norskvideo/norsk:${{ (inputs.update_deps == 'nightly' || inputs.update_deps == 'local') && 'nightly' || 'latest'}} --license-file /mnt/license.json) 
+          echo "NORSK_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $NORSK_CONTAINER_ID)" >> $GITHUB_OUTPUT
+          echo "NORSK_CONTAINER_ID=$NORSK_CONTAINER_ID" >> $GITHUB_OUTPUT
 
     - name: Install Nix
       uses: DeterminateSystems/nix-installer-action@v4
@@ -43,9 +54,34 @@ jobs:
       with:
         file: shell.nix
 
+    - name: Run Build (With Nightly)
+      if: ${{ inputs.update_deps == 'nightly' }}
+      run: |
+          npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
+          npm install --workspaces @norskvideo/norsk-sdk@nightly @norskvideo/norsk-studio@nightly --save || true
+          npm install
+          npm run build
+
     - name: Run Build (With Latest)
-      continue-on-error: true
-      run: "npm install --workspaces @norskvideo/norsk-sdk@latest && npm install @norskvideo/norsk-studio@latest && npm install && npm run build"
+      if: ${{ inputs.update_deps == 'latest' }}
+      run: |
+          npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
+          npm install --workspaces @norskvideo/norsk-sdk@latest @norskvideo/norsk-studio@latest --save || true
+          npm install
+          npm run build
+
+    - name: Run Build (With Local)
+      if: ${{ inputs.update_deps == 'local' }}
+      run: |
+          npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
+          # TODO: Checkout studio-core to _peers and build it, making sure it's on sdk-nightly
+          npm install --workspaces @norskvideo/norsk-sdk@nightly _peers/studio-core --save || true
+          npm install
+          npm run build
+
+    - name: Run Build (With No Update)
+      if: ${{ inputs.update_deps == 'none' }}
+      run: npm install && npm run build
 
     - name: Run Tests
       env: 
@@ -55,6 +91,10 @@ jobs:
         GITHUB_RUN_ID: ${{ github.run_id }}
       run: "./scripts/gh-tests.sh"
       timeout-minutes: 40
+
+    - name: Stop Norsk 
+      if: always()
+      run: docker stop ${{ steps.run-norsk.outputs.NORSK_CONTAINER_ID }} 
 
     - name: Discord Webhook Action
       uses: tsickert/discord-webhook@v5.3.0
@@ -71,7 +111,7 @@ jobs:
         username: "Jankings"
         avatar-url: "https://pones.theponyapi.com/file/ponies/5201928829009920/thumb_small"
         content: ""
-        embed-title: "Norsk Studio Defaults Tests Failed"
+        embed-title: "Norsk Studio Publich Tests Failed"
         embed-color: 15548997
         embed-description: | 
           No Results File Found 
