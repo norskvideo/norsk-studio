@@ -44,7 +44,7 @@ export class RtmpInput implements CreatedMediaNode {
   rtmpServer: RtmpServerInputNode | null = null;
 
   updates: RuntimeUpdates<RtmpInputState, RtmpInputCommand, RtmpInputEvent>;
-  
+
   static async create(norsk: Norsk, cfg: RtmpInputSettings, updates: RuntimeUpdates<RtmpInputState, RtmpInputCommand, RtmpInputEvent>) {
     const node = new RtmpInput(norsk, cfg, updates);
     await node.initialised;
@@ -104,8 +104,7 @@ export class RtmpInput implements CreatedMediaNode {
         });
 
         if (this.rtmpServer) {
-          const rtmpOutput = this.rtmpServer as SourceMediaNode;
-          this.relatedMediaNodes.addOutput(rtmpOutput);
+          this.relatedMediaNodes.addOutput(this.rtmpServer);
         }
 
         return {
@@ -171,8 +170,8 @@ export class RtmpInput implements CreatedMediaNode {
 
   async reconnectStream(streamName: string) {
     debuglog("Reconnecting stream", { streamName, beforeState: this.activeStreams });
-    
-    if(this.rtmpServer) {
+
+    if (this.rtmpServer) {
       await this.disconnectStream(streamName);
     }
 

@@ -35,7 +35,7 @@ export type SrtInputEvent = {
 { type: "source-disconnected", streamId: string }
 
 export type SrtInputCommand = {
-  type: "source-connected" | "source-disconnected",
+  type: "disconnect-source",
   streamId: string,
 }
 
@@ -51,7 +51,7 @@ export class SrtInput implements CreatedMediaNode {
 
   updates: RuntimeUpdates<SrtInputState, SrtInputCommand, SrtInputEvent>;
   nodeCounter: number = 0;
-  
+
   static async create(norsk: Norsk, cfg: SrtInputSettings, updates: RuntimeUpdates<SrtInputState, SrtInputCommand, SrtInputEvent>) {
     const node = new SrtInput(norsk, cfg, updates);
     await node.initialised;
@@ -70,7 +70,7 @@ export class SrtInput implements CreatedMediaNode {
     this.srtServer = await this.norsk.input.srt({
       mode: 'listener',
       sourceName: 'unused',
-      id: this.incrementNodeId(`${this.cfg.id}-srt-listener`),
+      id: `${this.cfg.id}-srt-listener`,
       port: this.cfg.port,
       host: this.cfg.host,
       passphrase: this.cfg.passphrase,
@@ -93,9 +93,6 @@ export class SrtInput implements CreatedMediaNode {
           if (this.cfg.streamIds.includes(streamId) && !this.activeStreams.has(streamId)) {
             debuglog("Accepting SRT connection", { streamId, remoteHost });
             this.activeStreams.set(streamId, index);
-            if (this.srtServer) {
-              this.relatedMediaNodes.addOutput(this.srtServer);
-            }
             this.updates.raiseEvent({ type: "source-connected", streamId });
             return {
               accept: true,
@@ -110,9 +107,6 @@ export class SrtInput implements CreatedMediaNode {
             };
           }
           debuglog("Accepting SRT connection", { streamName, remoteHost });
-          if (this.srtServer) {
-            this.relatedMediaNodes.addOutput(this.srtServer);
-          }
           this.updates.raiseEvent({ type: "source-connected", streamId: streamName });
           this.activeStreams.set(streamName, index);
           return {
@@ -120,12 +114,15 @@ export class SrtInput implements CreatedMediaNode {
             sourceName: streamName
           };
         } else {
+          if (this.activeStreams.has(streamId)) {
+            debuglog("Rejecting SRT connection because streamId already is connected", { streamId, remoteHost });
+            return {
+              accept: false,
+            };
+          }
           if (this.cfg.streamIds.includes(streamId)) {
             debuglog("Accepting SRT connection", { streamId, remoteHost });
             this.activeStreams.set(streamId, index);
-            if (this.srtServer) {
-              this.relatedMediaNodes.addOutput(this.srtServer);
-            }
             return {
               accept: true,
               sourceName: streamId
@@ -135,46 +132,26 @@ export class SrtInput implements CreatedMediaNode {
           return {
             accept: false
           };
-
         }
       },
 
       onClose: () => {
-        if (this.srtServer) {
-          this.relatedMediaNodes.removeOutput(this.srtServer);
-        }
       },
 
-      onCreate: () => {
-        if (this.srtServer) {
-          this.relatedMediaNodes.addOutput(this.srtServer);
-        }
-      },
-
-     //  ...this.cfg,
+      onCreate: (node) => {
+        this.relatedMediaNodes.addOutput(node);
+      }
+      //  ...this.cfg,
     })
   }
 
   async disconnectStream(streamId: string) {
-    if(this.srtServer) {
-      this.activeStreams.delete(streamId);
-      this.updates.update({
-        connectedStreams: Array.from(this.activeStreams.keys())
-      });
-      await this.srtServer.close();
-      this.srtServer = null;
-    }
-  }
-  async reconnectStream(streamId: string) {
     if (this.srtServer) {
-      await this.disconnectStream(streamId);
+      const index = this.activeStreams.get(streamId);
+      if (index !== undefined) {
+        this.srtServer.closeStream(index);
+      }
     }
-
-    await this.initialise();
-  }
-  incrementNodeId(id: string): string {
-    this.nodeCounter++;
-    return `${id}-${this.nodeCounter}`;
   }
 }
 
@@ -199,7 +176,7 @@ function post<T>(path: keyof T, paths: Transmuted<T>) {
 }
 
 export default class SrtInputDefinition implements ServerComponentDefinition<SrtInputSettings, SrtInput, SrtInputState, SrtInputCommand> {
-  async create(norsk: Norsk, cfg: SrtInputSettings, cb: OnCreated<SrtInput>, runtime : StudioRuntime<SrtInputState, SrtInputCommand, SrtInputEvent>) {
+  async create(norsk: Norsk, cfg: SrtInputSettings, cb: OnCreated<SrtInput>, runtime: StudioRuntime<SrtInputState, SrtInputCommand, SrtInputEvent>) {
     const node = await SrtInput.create(norsk, cfg, runtime.updates);
     cb(node);
   }
@@ -207,10 +184,7 @@ export default class SrtInputDefinition implements ServerComponentDefinition<Srt
   async handleCommand(node: SrtInput, command: SrtInputCommand) {
     const commandType = command.type;
     switch (commandType) {
-      case 'source-connected':
-        await node.reconnectStream(command.streamId);
-        break;
-      case 'source-disconnected':
+      case 'disconnect-source':
         await node.disconnectStream(command.streamId);
         break;
       default:
@@ -241,39 +215,13 @@ export default class SrtInputDefinition implements ServerComponentDefinition<Srt
               return res.status(404).json({ error: 'Stream not found or not connected' });
             }
             runtime.updates.sendCommand({
-              type: 'source-disconnected',
+              type: 'disconnect-source',
               streamId
             })
             res.status(204).send();
           } catch (error) {
             console.error('Error in disconnect handler:', error);
             res.status(500).json({ error: 'Failed to disconnect stream' });
-          }
-        }
-      },
-      {
-        ...post<paths>('/reconnect', paths),
-        handler: ({ runtime }) => async (req, res) => {
-          try {
-            const { streamId } = req.body;
-            if (!streamId) {
-              return res.status(400).json({ error: 'Stream name is required' });
-            }
-
-            const state = runtime.updates.latest();
-            console.log("Current state during reconnect:", state);
-            if (state.connectedStreams.includes(streamId)) {
-              return res.status(400).json({ error: 'Stream is already connected' });
-            }
-            runtime.updates.sendCommand({
-              type: 'source-connected',
-              streamId
-            })
-
-            res.sendStatus(204);
-          } catch (error) {
-            console.error('Error in reconnect handler:', error);
-            res.status(500).json({ error: 'Failed to reconnect stream' });
           }
         }
       }
