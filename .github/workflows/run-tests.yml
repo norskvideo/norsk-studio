@@ -128,13 +128,13 @@ jobs:
       if: always()
       run: tar cvzf ./logs.tgz ./logs
 
-    - name: Upload VD report to GitHub
+    - name: Upload SS report to GitHub
       if: always()
       uses: actions/upload-artifact@master
       with:
         retention-days: 3
-        name: vd.json
-        path: ./vd.json
+        name: ss.json
+        path: ./ss.json
 
     - name: Upload Built-in report to GitHub
       if: always()
@@ -152,13 +152,13 @@ jobs:
         name: built-ins.log
         path: workspaces/built-ins/logs/debug.log
 
-    - name: Upload VD logs to GitHub
+    - name: Upload SS logs to GitHub
       if: always()
       uses: actions/upload-artifact@master
       with:
         retention-days: 3
-        name: vd.log
-        path: workspaces/vision-director/logs/debug.log
+        name: ss.log
+        path: workspaces/source-switcher/logs/debug.log
 
     - name: Upload docker logs to GitHub
       if: always()
