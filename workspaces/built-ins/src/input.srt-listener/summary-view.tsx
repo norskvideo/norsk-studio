@@ -5,9 +5,9 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
   const connectedSources: string[] = [];
   const disconnectedSources: string[] = [];
 
-  const disconnectStream = async (streamId: string) => {
+  const resetStream = async (streamId: string) => {
     try {
-      const response = await fetch(`${urls.componentUrl}/disconnect`, {
+      const response = await fetch(`${urls.nodeUrl}/disconnect`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -21,7 +21,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
       }
 
       sendCommand({
-        type: "disconnect-source",
+        type: "reset-source",
         streamId
       });
     } catch (error) {
@@ -29,11 +29,68 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
     }
   };
 
-  const handleDisconnectStream = (streamId: string): void => {
-    void disconnectStream(streamId);
+  const disableStream = async (streamId: string) => {
+    try {
+      const response = await fetch(`${urls.nodeUrl}/disable`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ streamId }),
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to disable stream");
+      }
+
+      sendCommand({
+        type: "reset-source",
+        streamId
+      });
+    } catch (error) {
+      console.error("Failed to disable stream:", error);
+    }
+  };
+
+  const enableStream = async (streamId: string) => {
+    try {
+      const response = await fetch(`${urls.nodeUrl}/enable`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ streamId }),
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to enable stream");
+      }
+
+      sendCommand({
+        type: "reset-source",
+        streamId
+      });
+    } catch (error) {
+      console.error("Failed to enable stream:", error);
+    }
+  };
+
+  const handleResetStream = (streamId: string): void => {
+    void resetStream(streamId);
+  };
+
+  const handleDisableStream = (streamId: string): void => {
+    void disableStream(streamId);
+  };
+
+  const handleEnableStream = (streamId: string): void => {
+    void enableStream(streamId);
   };
 
   config.streamIds.forEach((streamId) => {
+    console.log(config.streamIds, state);
     if (state.connectedStreams.includes(streamId)) {
       connectedSources.push(streamId)
     } else {
@@ -47,12 +104,17 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
         {connectedSources.map((streamId) => {
           return <li key={streamId} className="text-green-300">{streamId}
              <button
-                onClick={() => handleDisconnectStream(streamId)}
+                onClick={() => handleResetStream(streamId)}
                 className="ml-2 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
               >
-                Disconnect
+                Reset
               </button>
-          
+             <button
+                onClick={() => handleDisableStream(streamId)}
+                className="ml-2 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
+              >
+                Disable
+              </button>
           </li>
         })}
       </ul>
@@ -62,6 +124,22 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
       <ul>
         {disconnectedSources.map((streamId) => {
           return <li key={streamId} className="text-orange-300">{streamId}
+            { state.disabledStreams.includes(streamId) ?
+             <button
+                onClick={() => handleEnableStream(streamId)}
+                className="ml-2 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+              >
+                Enable
+              </button>
+              :
+             <button
+                onClick={() => handleDisableStream(streamId)}
+                className="ml-2 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
+              >
+                Disable
+              </button>
+             }
+
           </li>
         })}
       </ul>

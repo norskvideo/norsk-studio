@@ -1,0 +1,2 @@
+- Automate types.yml -> types.ts
+- nodeUrl vs componentUrl (should be instance vs static or similar)

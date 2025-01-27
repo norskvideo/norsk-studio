@@ -121,7 +121,7 @@ const extensions = [
 async function getGraphics() {
   const files = await fs.readdir(graphicsDir());
   const images = files.filter((f) => {
-    return extensions.some(extension => f.endsWith("."+extension));
+    return extensions.some(extension => f.endsWith("." + extension));
   })
   return images;
 }
@@ -142,7 +142,7 @@ function resolveNamedPosition(
   if (position.type === 'coordinate') {
     return { x: clamp(0, position.x, maxX), y: clamp(0, position.y, maxY) };
   } else if (position.type === 'percentage') {
-    return { x: maxX*clamp(0, position.x, 100)/100, y: maxY*clamp(0, position.y, 100)/100 };
+    return { x: maxX * clamp(0, position.x, 100) / 100, y: maxY * clamp(0, position.y, 100) / 100 };
   } else if (position.type === 'named') {
     switch (position.position) {
       case 'topleft':
@@ -150,11 +150,11 @@ function resolveNamedPosition(
       case 'topright':
         return { x: maxX, y: 0 };
       case 'bottomleft':
-        return {x: 0, y: maxY };
+        return { x: 0, y: maxY };
       case 'bottomright':
         return { x: maxX, y: maxY };
       case 'center':
-        return { x: maxX/2, y: maxY/2 };
+        return { x: maxX / 2, y: maxY / 2 };
       default:
         assertUnreachable(position.position);
     }
@@ -183,7 +183,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
   async staticRoutes(): Promise<StaticRouteInfo[]> {
     const storage = multer.diskStorage({
       destination: graphicsDir(),
-      filename: function (_req, file, cb) {
+      filename: function(_req, file, cb) {
         cb(null, path.basename(file.originalname));
       }
     });
@@ -298,7 +298,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
                   return;
                 }
               } else if (position.type === 'named') {
-                if (!['topleft', 'topright', 'bottomleft', 'bottomright',  'center'].includes(position.position)) {
+                if (!['topleft', 'topright', 'bottomleft', 'bottomright', 'center'].includes(position.position)) {
                   res.status(400).json({
                     error: "Bad position",
                     details: "Named position must be one of: topleft, topright, bottomleft, bottomright, center"

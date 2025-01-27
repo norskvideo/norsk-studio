@@ -1,14 +1,14 @@
 import { Norsk, SrtInputSettings as SdkSettings, SrtInputNode } from '@norskvideo/norsk-sdk';
 import { SocketOptions } from '../shared/srt-types';
 import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { debuglog, errorlog, infolog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { OpenAPIV3 } from 'openapi-types';
 import fs from 'fs/promises';
 import { resolveRefs } from 'json-refs';
 import path from 'path';
 import YAML from 'yaml';
-import { paths } from './openApi';
+import { paths } from './types';
 
 export type SrtInputSettings = Pick<SdkSettings
   , 'port'
@@ -26,16 +26,24 @@ export type SrtInputSettings = Pick<SdkSettings
   };
 
 export type SrtInputState = {
-  connectedStreams: string[]
+  connectedStreams: string[],
+  disabledStreams: string[]
 }
 
 export type SrtInputEvent = {
   type: "source-connected", streamId: string
-} |
-{ type: "source-disconnected", streamId: string }
+} | { type: "source-disconnected", streamId: string }
+  | { type: "source-enabled", streamId: string }
+  | { type: "source-disabled", streamId: string }
 
 export type SrtInputCommand = {
-  type: "disconnect-source",
+  type: "disable-source",
+  streamId: string,
+} | {
+  type: "enable-source",
+  streamId: string,
+} | {
+  type: "reset-source",
   streamId: string,
 }
 
@@ -45,7 +53,10 @@ export class SrtInput implements CreatedMediaNode {
 
   norsk: Norsk;
   cfg: SrtInputSettings;
+
   activeStreams = new Map<string, number>();
+  disabledStreams = new Set<string>();
+
   initialised: Promise<void>;
   srtServer: SrtInputNode | null = null;
 
@@ -89,6 +100,12 @@ export class SrtInput implements CreatedMediaNode {
         }
       },
       onConnection: (streamId, index, remoteHost) => {
+        if (this.disabledStreams.has(streamId)) {
+          debuglog("Rejecting connection as stream is presently disabled", { count: index, remoteHost });
+          return {
+            accept: false
+          };
+        }
         if (this.cfg.sourceNames == 'permissive') {
           if (this.cfg.streamIds.includes(streamId) && !this.activeStreams.has(streamId)) {
             debuglog("Accepting SRT connection", { streamId, remoteHost });
@@ -122,6 +139,7 @@ export class SrtInput implements CreatedMediaNode {
           }
           if (this.cfg.streamIds.includes(streamId)) {
             debuglog("Accepting SRT connection", { streamId, remoteHost });
+            this.updates.raiseEvent({ type: "source-connected", streamId });
             this.activeStreams.set(streamId, index);
             return {
               accept: true,
@@ -145,7 +163,24 @@ export class SrtInput implements CreatedMediaNode {
     })
   }
 
-  async disconnectStream(streamId: string) {
+  async enableSource(streamId: string) {
+    this.disabledStreams.delete(streamId);
+    this.updates.raiseEvent({
+      type: 'source-enabled',
+      streamId
+    });
+  }
+
+  async disableSource(streamId: string) {
+    this.disabledStreams.add(streamId);
+    await this.resetSource(streamId);
+    this.updates.raiseEvent({
+      type: 'source-disabled',
+      streamId
+    });
+  }
+
+  async resetSource(streamId: string) {
     if (this.srtServer) {
       const index = this.activeStreams.get(streamId);
       if (index !== undefined) {
@@ -184,8 +219,14 @@ export default class SrtInputDefinition implements ServerComponentDefinition<Srt
   async handleCommand(node: SrtInput, command: SrtInputCommand) {
     const commandType = command.type;
     switch (commandType) {
-      case 'disconnect-source':
-        await node.disconnectStream(command.streamId);
+      case 'disable-source':
+        await node.disableSource(command.streamId);
+        break;
+      case 'enable-source':
+        await node.enableSource(command.streamId);
+        break;
+      case 'reset-source':
+        await node.resetSource(command.streamId);
         break;
       default:
         assertUnreachable(commandType);
@@ -209,13 +250,52 @@ export default class SrtInputDefinition implements ServerComponentDefinition<Srt
             }
 
             const state = runtime.updates.latest();
-            console.log("Current state during disconnect:", state);
+            infolog("Current state during disconnect:", state);
 
             if (!state.connectedStreams.includes(streamId)) {
               return res.status(404).json({ error: 'Stream not found or not connected' });
             }
             runtime.updates.sendCommand({
-              type: 'disconnect-source',
+              type: 'reset-source',
+              streamId
+            })
+            res.status(204).send();
+          } catch (error) {
+            errorlog('Error in disconnect handler:', error);
+            res.status(500).json({ error: 'Failed to disconnect stream' });
+          }
+        }
+      },
+      {
+        ...post<paths>('/enable', paths),
+        handler: ({ runtime }) => async (req, res) => {
+          try {
+            const { streamId } = req.body;
+            if (!streamId) {
+              return res.status(400).json({ error: 'Stream name is required' });
+            }
+
+            runtime.updates.sendCommand({
+              type: 'enable-source',
+              streamId
+            })
+            res.status(204).send();
+          } catch (error) {
+            console.error('Error in disconnect handler:', error);
+            res.status(500).json({ error: 'Failed to disconnect stream' });
+          }
+        }
+      },
+      {
+        ...post<paths>('/disable', paths),
+        handler: ({ runtime }) => async (req, res) => {
+          try {
+            const { streamId } = req.body;
+            if (!streamId) {
+              return res.status(400).json({ error: 'Stream name is required' });
+            }
+            runtime.updates.sendCommand({
+              type: 'disable-source',
               streamId
             })
             res.status(204).send();
