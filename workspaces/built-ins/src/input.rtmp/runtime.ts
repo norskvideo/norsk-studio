@@ -6,7 +6,7 @@ import { resolveRefs } from 'json-refs';
 import { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 import YAML from 'yaml';
-import { paths } from './openApi';
+import { paths } from './types';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 
 export type RtmpInputSettings = Pick<SdkSettings

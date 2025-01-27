@@ -4,7 +4,7 @@ import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, Runt
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
-import { paths } from './openApi';
+import { paths } from './types';
 import fs from 'fs/promises';
 import path from 'path';
 import { resolveRefs } from 'json-refs';
@@ -26,7 +26,7 @@ export type BrowserOverlayState = {
   enabled: boolean
 }
 
-export type BrowserOverlayCommand  
+export type BrowserOverlayCommand
   = BrowserOverlayChangeUrlCommand
   | BrowserOverlayEnableCommand
   | BrowserOverlayDisableCommand
@@ -44,10 +44,10 @@ export type BrowserOverlayDisableCommand = {
   type: 'disable',
 }
 
-export type BrowserOverlayEvent 
-   = BrowserOverlayChangedUrlEvent
-   | BrowserOverlayEnabledEvent
-   | BrowserOverlayDisabledEvent
+export type BrowserOverlayEvent
+  = BrowserOverlayChangedUrlEvent
+  | BrowserOverlayEnabledEvent
+  | BrowserOverlayDisabledEvent
 
 export type BrowserOverlayChangedUrlEvent = {
   type: 'url-changed',
@@ -128,51 +128,51 @@ export default class BrowserOverlayDefinition implements ServerComponentDefiniti
     return [
       {
         ...get('/url'),
-        handler: ({runtime}) => (async (_req, res) => {
+        handler: ({ runtime }) => (async (_req, res) => {
           res.send(runtime.updates.latest().currentUrl);
         })
       },
       {
         ...post('/url'),
-        handler: ({runtime}) => (async (req, res) => {
-          runtime.updates.sendCommand({type: "change-url", url: req.body.url});
+        handler: ({ runtime }) => (async (req, res) => {
+          runtime.updates.sendCommand({ type: "change-url", url: req.body.url });
           res.status(204).send();
         })
       },
       {
         ...get('/status'),
-        handler: ({runtime}) => (async (_req, res) => {
-          res.json({enabled: runtime.updates.latest().enabled})
+        handler: ({ runtime }) => (async (_req, res) => {
+          res.json({ enabled: runtime.updates.latest().enabled })
         })
       },
       {
         ...post('/enable'),
-        handler: ({runtime}) => (async (_req, res) => {
+        handler: ({ runtime }) => (async (_req, res) => {
           const latest = runtime.updates.latest();
           if (latest.enabled) {
-            res.status(309).json({error: "Browser overlay already enabled"});
-          } 
+            res.status(309).json({ error: "Browser overlay already enabled" });
+          }
           else {
-            runtime.updates.sendCommand({type: "enable"});
+            runtime.updates.sendCommand({ type: "enable" });
             res.status(204).send();
           }
         })
       },
       {
         ...post('/disable'),
-        handler: ({runtime}) => (async (_req, res) => {
+        handler: ({ runtime }) => (async (_req, res) => {
           const latest = runtime.updates.latest();
           if (!latest.enabled) {
-            res.status(309).json({error: "Browser overlay already disabled"});
-          } 
+            res.status(309).json({ error: "Browser overlay already disabled" });
+          }
           else {
-            runtime.updates.sendCommand({type: "disable"});
+            runtime.updates.sendCommand({ type: "disable" });
             res.status(204).send();
-          } 
+          }
         })
       },
-      ]
-    }
+    ]
+  }
 }
 
 //
@@ -193,7 +193,7 @@ export class BrowserOverlay implements CreatedMediaNode {
   id: string;
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
   enabledParts: ComposePart<'video' | 'overlay'>[];
-  disabledParts:ComposePart<'video' | 'overlay'>[];   
+  disabledParts: ComposePart<'video' | 'overlay'>[];
 
   static async create(norsk: Norsk, cfg: BrowserOverlayConfig, updates: RuntimeUpdates<BrowserOverlayState, BrowserOverlayCommand, BrowserOverlayEvent>) {
     const node = new BrowserOverlay(norsk, cfg, updates);
@@ -212,7 +212,7 @@ export class BrowserOverlay implements CreatedMediaNode {
   }
 
   async initialise() {
-    this.updates.raiseEvent({type: 'url-changed', url: this.cfg.url})
+    this.updates.raiseEvent({ type: 'url-changed', url: this.cfg.url })
   }
 
   subscribe(sources: StudioNodeSubscriptionSource[]) {
@@ -241,26 +241,26 @@ export class BrowserOverlay implements CreatedMediaNode {
       }
       this.currentVideo = nextVideo;
       this.enabledParts = [
-            {
-              pin: "video",
-              opacity: 1.0,
-              zIndex: 0,
-              compose: VideoComposeDefaults.fullscreen()
-            }, {
-              pin: "overlay",
-              opacity: 1.0,
-              zIndex: 1,
-              compose: VideoComposeDefaults.fullscreen()
-            }
-          ];
+        {
+          pin: "video",
+          opacity: 1.0,
+          zIndex: 0,
+          compose: VideoComposeDefaults.fullscreen()
+        }, {
+          pin: "overlay",
+          opacity: 1.0,
+          zIndex: 1,
+          compose: VideoComposeDefaults.fullscreen()
+        }
+      ];
       this.disabledParts = [
-            {
-              pin: "video",
-              opacity: 1.0,
-              zIndex: 0,
-              compose: VideoComposeDefaults.fullscreen()
-            }
-         ];
+        {
+          pin: "video",
+          opacity: 1.0,
+          zIndex: 0,
+          compose: VideoComposeDefaults.fullscreen()
+        }
+      ];
 
       if (!this.compose) {
         const thisCompose = this.compose = await this.norsk.processor.transform.videoCompose<"video" | "overlay">({
@@ -313,19 +313,19 @@ export class BrowserOverlay implements CreatedMediaNode {
   async changeUrl(newUrl: string) {
     this.cfg.url = newUrl;
     if (this.browser) {
-      this.browser.updateConfig({url: newUrl})
+      this.browser.updateConfig({ url: newUrl })
     }
-    this.updates.raiseEvent({type: 'url-changed', url: this.cfg.url})
+    this.updates.raiseEvent({ type: 'url-changed', url: this.cfg.url })
   }
 
   async enable() {
-    this.compose?.updateConfig({parts: this.enabledParts}) 
-    this.updates.raiseEvent({type: 'enabled'})
+    this.compose?.updateConfig({ parts: this.enabledParts })
+    this.updates.raiseEvent({ type: 'enabled' })
   }
 
   async disable() {
-    this.compose?.updateConfig({parts: this.disabledParts}) 
-    this.updates.raiseEvent({type: 'disabled'})
+    this.compose?.updateConfig({ parts: this.disabledParts })
+    this.updates.raiseEvent({ type: 'disabled' })
   }
 }
 

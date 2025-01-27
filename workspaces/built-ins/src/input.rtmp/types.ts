@@ -90,7 +90,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Reconnect an RTMP stream
+         * Reconnect to an RTMP stream
          * @description Reconnects a previously disconnected RTMP stream
          */
         post: {

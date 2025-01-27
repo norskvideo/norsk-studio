@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "clean": "rm -rf lib",
-    "types": "npx openapi-typescript src/processor.onscreenGraphic/types.yaml -o src/processor.onscreenGraphic/types.ts && npx openapi-typescript src/processor.browserOverlay/types.yaml -o src/processor.browserOverlay/openApi.ts",
+    "types": "make",
     "build": "npm run types && npx studio-wrap-infos src/ && npx npm-run-all build:* && rm -rf build",
     "build:server": "npx tsc",
     "build:client": "npx tsc -p tsconfig-client.json && npx studio-bundle build/info.js client/info.js",
