@@ -92,7 +92,8 @@ jobs:
       if: ${{ inputs.update_deps == 'local' }}
       run: |
           npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
-          npm install --workspaces @norskvideo/norsk-sdk@nightly _peers/norsk-studio-core --save || true
+          npm install --workspaces @norskvideo/norsk-sdk@nightly --save || true 
+          npm install ./_peers/norsk-studio-core --save || true
           npm install
           npm run build
 
