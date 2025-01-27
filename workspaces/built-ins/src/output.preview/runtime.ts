@@ -14,6 +14,7 @@ export type PreviewOutputSettings = {
   displayName: string,
   bufferDelayMs?: SdkSettings['bufferDelayMs'],
   skipTranscode?: boolean,
+  showPreview?: boolean,
   __global: {
     iceServers: IceServer[],
     hardware?: HardwareAccelerationType,
