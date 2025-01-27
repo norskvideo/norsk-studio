@@ -10,6 +10,7 @@ export type WhepOutputSettings = {
   id: string;
   displayName: string,
   bufferDelayMs?: SdkSettings['bufferDelayMs'];
+  showPreview?: boolean;
   __global: {
     iceServers: IceServer[];
   }
@@ -43,7 +44,6 @@ export class WhepOutput extends CustomSinkNode {
       this.norsk = norsk;
       this.updates = updates;
       this.shared = shared;
-      //this.initialised = this.initialise();
       this.initialised = Promise.resolve();
     }
 
