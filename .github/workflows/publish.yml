@@ -22,6 +22,27 @@ on:
         description: 'Run Tests'
         required: true
         type: boolean
+  workflow_call:
+    inputs:
+      update-deps:
+        description: 'Update Norsk SDK'
+        required: true
+        default: true
+        type: boolean
+      new-version:
+        description: 'New Version'
+        required: true
+        default: 'minor'
+        type: string
+        # options:
+        #   - major
+        #   - minor
+        #   - patch
+        #   - nightly
+      run-tests:
+        description: 'Run Tests'
+        required: true
+        type: boolean
 
 jobs:
   run-tests:
