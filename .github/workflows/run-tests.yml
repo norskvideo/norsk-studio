@@ -39,8 +39,7 @@ jobs:
     - name: Run Norsk 
       id: run-norsk
       run: |
-          NETWORK=$(docker inspect -f '{{range $key, $value := .NetworkSettings.Networks}}{{$key}}{{end}}' `hostname`)
-          NORSK_CONTAINER_ID=$(docker run --pull=always --rm -d --network=$NETWORK --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly norskvideo/norsk:${{ inputs.update_deps == 'nightly' && 'nightly' || 'latest'}} --license-file /mnt/license.json) 
+          NORSK_CONTAINER_ID=$(docker run --pull=always --rm -d --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly norskvideo/norsk:${{ inputs.update_deps == 'nightly' && 'nightly' || 'latest'}} --license-file /mnt/license.json) 
           echo "NORSK_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $NORSK_CONTAINER_ID)" >> $GITHUB_OUTPUT
           echo "NORSK_CONTAINER_ID=$NORSK_CONTAINER_ID" >> $GITHUB_OUTPUT
 
