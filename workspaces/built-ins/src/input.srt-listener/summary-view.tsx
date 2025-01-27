@@ -21,7 +21,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
       }
 
       sendCommand({
-        type: "source-disconnected",
+        type: "disconnect-source",
         streamId
       });
     } catch (error) {
@@ -33,33 +33,6 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
     void disconnectStream(streamId);
   };
 
-  const reconnectStream = async (streamId: string) => {
-    try {
-      const response = await fetch(`${urls.componentUrl}/reconnect`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ streamId })
-      });
-
-      if (!response.ok) {
-        console.error("Failed to reconnect");
-      }
-
-      sendCommand({
-        type: "source-connected",
-        streamId,
-      });
-    } catch (error) {
-      console.error("Failed to reconnect to stream", error);
-    }
-  };
-
-  const handleReconnectStream = (streamId: string) => {
-    void reconnectStream(streamId);
-  };
-
   config.streamIds.forEach((streamId) => {
     if (state.connectedStreams.includes(streamId)) {
       connectedSources.push(streamId)
@@ -69,7 +42,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
   })
   return <div className="dark:text-white text-black mb-3 w-60">
     <div id="srt-sources-connected">
-      <span>Sources connected</span>
+      <span>Connected Sources</span>
       <ul>
         {connectedSources.map((streamId) => {
           return <li key={streamId} className="text-green-300">{streamId}
@@ -85,16 +58,10 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
       </ul>
     </div>
     <div id="srt-sources-disconnected" className="mt-3">
-      <span>Sources disconnected</span>
+      <span>Disconnected Sources</span>
       <ul>
         {disconnectedSources.map((streamId) => {
           return <li key={streamId} className="text-orange-300">{streamId}
-             <button
-                onClick={() => handleReconnectStream(streamId)}
-                className="ml-2 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded"
-              >
-                Reconnect
-              </button>
           </li>
         })}
       </ul>

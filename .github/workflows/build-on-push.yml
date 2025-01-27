@@ -26,6 +26,7 @@ jobs:
     needs: get-commits
     with:
       notify_discord: true
+      update_deps: nightly #TODO: local
       run_context: | 
         **Changes :**
         ${{ needs.get-commits.outputs.commits }}

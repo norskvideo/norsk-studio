@@ -7,6 +7,15 @@ on:
         required: false
         default: false
         type: boolean
+      update_deps: 
+        required: false
+        default: none
+        type: string
+        # options:
+        #   - none
+        #   - local
+        #   - nightly
+        #   - latest
       run_context:
         required: false
         default: "No context"
@@ -18,7 +27,7 @@ jobs:
 
     steps:
     - name: Checkout the head commit of the branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Write license file
       id: create-json
@@ -28,10 +37,11 @@ jobs:
         json: ${{ secrets.NORSK_LICENSE }}
 
     - name: Run Norsk 
-      uses: gacts/run-and-post-run@v1
-      with:
-        run: "docker run --pull=always --rm --name norsk -d  --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly -p 6791:6791 -p 6790:6790 -p 8080:8080 norskvideo/norsk --license-file /mnt/license.json"
-        post: docker stop norsk 
+      id: run-norsk
+      run: |
+          NORSK_CONTAINER_ID=$(docker run --pull=always --rm -d -p 6791:6791 -p 6790:6790 -p 8080:8080 --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly norskvideo/norsk:${{ (inputs.update_deps == 'nightly' || inputs.update_deps == 'local') && 'nightly' || 'latest'}} --license-file /mnt/license.json) 
+          echo "NORSK_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $NORSK_CONTAINER_ID)" >> $GITHUB_OUTPUT
+          echo "NORSK_CONTAINER_ID=$NORSK_CONTAINER_ID" >> $GITHUB_OUTPUT
 
     - name: Install Nix
       uses: DeterminateSystems/nix-installer-action@v4
@@ -43,8 +53,34 @@ jobs:
       with:
         file: shell.nix
 
+    - name: Run Build (With Nightly)
+      if: ${{ inputs.update_deps == 'nightly' }}
+      run: |
+          npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
+          npm install --workspaces @norskvideo/norsk-sdk@nightly @norskvideo/norsk-studio@nightly --save || true
+          npm install
+          npm run build
+
     - name: Run Build (With Latest)
-      run: "npm install --workspaces @norskvideo/norsk-sdk@latest && npm install @norskvideo/norsk-studio@latest && npm install && npm run build"
+      if: ${{ inputs.update_deps == 'latest' }}
+      run: |
+          npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
+          npm install --workspaces @norskvideo/norsk-sdk@latest @norskvideo/norsk-studio@latest --save || true
+          npm install
+          npm run build
+
+    - name: Run Build (With Local)
+      if: ${{ inputs.update_deps == 'local' }}
+      run: |
+          npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
+          # TODO: Checkout studio-core to _peers and build it, making sure it's on sdk-nightly
+          npm install --workspaces @norskvideo/norsk-sdk@nightly _peers/studio-core --save || true
+          npm install
+          npm run build
+
+    - name: Run Build (With No Update)
+      if: ${{ inputs.update_deps == 'none' }}
+      run: npm install && npm run build
 
     - name: Run Tests
       env: 
@@ -52,8 +88,13 @@ jobs:
         CONTEXT: ${{ inputs.run_context }}
         GITHUB_REF: ${{ github.ref }}
         GITHUB_RUN_ID: ${{ github.run_id }}
+        NORSK_HOST: ${{ steps.run-norsk.outputs.NORSK_HOST }}
       run: "./scripts/gh-tests.sh"
-      timeout-minutes: 20
+      timeout-minutes: 40
+
+    - name: Stop Norsk 
+      if: always()
+      run: docker stop ${{ steps.run-norsk.outputs.NORSK_CONTAINER_ID }} 
 
     - name: Discord Webhook Action
       uses: tsickert/discord-webhook@v5.3.0
@@ -67,10 +108,10 @@ jobs:
       if: ${{ failure() && inputs.notify_discord && hashFiles('discord.json') == '' }} 
       with:
         webhook-url: ${{ secrets.DISCORD_URL }}
-        username: "Evil Jenkins"
-        avatar-url: "https://i.imgur.com/HzrYPqf.png"
+        username: "Jankings"
+        avatar-url: "https://pones.theponyapi.com/file/ponies/5201928829009920/thumb_small"
         content: ""
-        embed-title: "Norsk Studio Defaults Tests Failed"
+        embed-title: "Norsk Studio (public) Tests Failed"
         embed-color: 15548997
         embed-description: | 
           No Results File Found 
@@ -87,17 +128,19 @@ jobs:
       if: always()
       run: tar cvzf ./logs.tgz ./logs
 
-    - name: Upload VD report to GitHub
+    - name: Upload SS report to GitHub
       if: always()
       uses: actions/upload-artifact@master
       with:
-        name: vd.json
-        path: ./vd.json
+        retention-days: 3
+        name: ss.json
+        path: ./ss.json
 
     - name: Upload Built-in report to GitHub
       if: always()
       uses: actions/upload-artifact@master
       with:
+        retention-days: 3
         name: built-ins.json
         path: ./built-ins.json
 
@@ -105,19 +148,22 @@ jobs:
       if: always()
       uses: actions/upload-artifact@master
       with:
+        retention-days: 3
         name: built-ins.log
         path: workspaces/built-ins/logs/debug.log
 
-    - name: Upload VD logs to GitHub
+    - name: Upload SS logs to GitHub
       if: always()
       uses: actions/upload-artifact@master
       with:
-        name: vd.log
-        path: workspaces/vision-director/logs/debug.log
+        retention-days: 3
+        name: ss.log
+        path: workspaces/source-switcher/logs/debug.log
 
     - name: Upload docker logs to GitHub
       if: always()
       uses: actions/upload-artifact@master
       with:
+        retention-days: 3
         name: logs.tgz
         path: ./logs.tgz

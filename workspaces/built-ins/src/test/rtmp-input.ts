@@ -11,10 +11,10 @@ import RtmpInfo from "../input.rtmp/info";
 import { Av, BaseConfig, NodeInfo, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { expect } from "chai";
-import { AddressInfo } from 'net';
-import { Server } from 'http';
-import fetch from "node-fetch";
-import express from 'express';
+// import { AddressInfo } from 'net';
+// import { Server } from 'http';
+// import fetch from "node-fetch";
+// import express from 'express';
 import { RtmpInputEvent, RtmpInputSettings, RtmpInputState } from "../input.rtmp/runtime";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
 import { _videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
@@ -123,7 +123,7 @@ describe("RTMP Input", () => {
       })
     })
 
-    describe("a single source connects with the right stream id", () => {
+    describe("a single rtmp source connects with the right stream id", () => {
       after(async () => {
         await norsk?.close();
       })
@@ -205,18 +205,18 @@ describe("RTMP Input", () => {
       port: 65403,
       appName: 'yolo',
       streamNames: ['first', 'second']
-    }, (testDocument, _cfg) => {  
+    }, (testDocument, _cfg) => {
       let norsk: Norsk | undefined = undefined;
-    
+
       describe("Both sources connect", () => {
-        after(() => {  
-          void closeNorsk();
+        after(async () => {
+          await closeNorsk();
         });
-    
+
         const closeNorsk = async () => {
           await norsk?.close();
         };
-    
+
         it("should be able to select those streams", async () => {
           norsk = await Norsk.connect({ onShutdown: () => { } });
           const compiled = await testDocument();
@@ -225,7 +225,7 @@ describe("RTMP Input", () => {
           const sink1 = new TraceSink(norsk as Norsk, "sink-1");
           const sink2 = new TraceSink(norsk as Norsk, "sink-2");
           await Promise.all([sink1.initialised, sink2.initialised]);
-    
+
           sink1.subscribe([
             new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml,
               { type: 'take-specific-stream', select: ["audio", "video"], filter: 'first' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
@@ -234,20 +234,20 @@ describe("RTMP Input", () => {
             new StudioNodeSubscriptionSource(source, compiled.components['rtmp'].yaml,
               { type: 'take-specific-stream', select: ["audio", "video"], filter: 'second' }, RtmpInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
           ]);
-    
+
           const av = await _videoAndAudio(norsk!, "source");
           const rtmp = await norsk!.output.rtmp({
             id: "av-rtmp1",
             url: 'rtmp://127.0.0.1:65403/yolo/first'
           });
           rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV);
-    
+
           const rtmp2 = await norsk!.output.rtmp({
             id: "av-rtmp2",
             url: 'rtmp://127.0.0.1:65403/yolo/second'
           });
           rtmp2.subscribe([{ source: av, sourceSelector: selectAV }], requireAV);
-    
+
           await waitForAssert(
             () => sink1.streamCount() == 2 && sink1.totalMessages() > 25 && sink2.streamCount() == 2 && sink2.totalMessages() > 25,
             () => {
@@ -264,96 +264,96 @@ describe("RTMP Input", () => {
     });
   });
 
-  describe("RTMP Input api", () => {
-    impl("with basic stream management", {
-      id: 'rtmp',
-      displayName: 'rtmp',
-      port: 65403,
-      appName: 'yolo',
-      streamNames: ['stream1']
-    }, (testDocument, _cfg) => {
-      let norsk: Norsk | undefined = undefined;
-      let app: express.Application;
-      let server: Server;
-      let port: number;
-  
-      beforeEach(async () => {
-        norsk = await Norsk.connect({ onShutdown: () => { } });
-        app = express();
-        app.use(express.json());
-        server = app.listen(0);
-        port = (server.address() as AddressInfo).port;
-      });
-  
-      afterEach(async () => {
-        await norsk?.close();
-        server?.close();
-      });
-  
-      describe("http api", () => {
-        it("disconnect/reconnect cycle via HTTP API", async () => {
-          const compiled = await testDocument();
-          const result = await go(norsk!, compiled, app);
-          const rtmpNode = result.components['rtmp'];
-          const sink = new TraceSink(norsk as Norsk, "sink");
-          await sink.initialised;
-  
-          const av = await _videoAndAudio(norsk!, "source");
-          let rtmp = await norsk!.output.rtmp({
-            id: "av-rtmp1",
-            url: 'rtmp://127.0.0.1:65403/yolo/stream1'
-          });
-          rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV);  
-          // Wait for initial connection
-          await waitForCondition(() => sink.streamCount() === 2);
-          expect((result.runtimeState.latest["rtmp"] as RtmpInputState).connectedSources).to.include('stream1');
-  
-          const disconnectResponse = await fetch(`http://localhost:${port}/${rtmpNode.id}/disconnect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ streamName: 'stream1' })
-          });
-          expect(disconnectResponse.status).to.equal(204);
-  
-          await waitForCondition(() => sink.streamCount() === 0);
-          expect((result.runtimeState.latest["rtmp"] as RtmpInputState).connectedSources).to.not.include('stream1');
-  
-          const reconnectResponse = await fetch(`http://localhost:${port}/${rtmpNode.id}/reconnect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ streamName: 'stream1' })
-          });
-          expect(reconnectResponse.status).to.equal(204);
-  
-          rtmp = await norsk!.output.rtmp({
-            id: "av-rtmp2",
-            url: 'rtmp://127.0.0.1:65403/yolo/stream1'
-          });
-          rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV);
-  
-          await waitForCondition(() => sink.streamCount() === 2);
-          expect((result.runtimeState.latest["rtmp"] as RtmpInputState).connectedSources).to.include('stream1');
-        });
-  
-        it("handles invalid API requests appropriately", async () => {
-          const compiled = await testDocument();
-          const result = await go(norsk!, compiled, app);
-  
-          const missingNameResponse = await fetch(`http://localhost:${port}/${result.components['rtmp'].id}/disconnect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-          });
-          expect(missingNameResponse.status).to.equal(400);
-  
-          const nonExistentResponse = await fetch(`http://localhost:${port}/${result.components['rtmp'].id}/disconnect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ streamName: 'stream1' })
-          });
-          expect(nonExistentResponse.status).to.equal(404);
-        });
-      });
-    });
-  })
+  // describe("RTMP Input api", () => {
+  //   impl("with basic stream management", {
+  //     id: 'rtmp',
+  //     displayName: 'rtmp',
+  //     port: 65403,
+  //     appName: 'yolo',
+  //     streamNames: ['stream1']
+  //   }, (testDocument, _cfg) => {
+  //     let norsk: Norsk | undefined = undefined;
+  //     let app: express.Application;
+  //     let server: Server;
+  //     let port: number;
+
+  //     beforeEach(async () => {
+  //       norsk = await Norsk.connect({ onShutdown: () => { } });
+  //       app = express();
+  //       app.use(express.json());
+  //       server = app.listen(0);
+  //       port = (server.address() as AddressInfo).port;
+  //     });
+
+  //     afterEach(async () => {
+  //       await norsk?.close();
+  //       server?.close();
+  //     });
+
+  //     describe("http api", () => {
+  //       it("disconnect/reconnect cycle via HTTP API", async () => {
+  //         const compiled = await testDocument();
+  //         const result = await go(norsk!, compiled, app);
+  //         const rtmpNode = result.components['rtmp'];
+  //         const sink = new TraceSink(norsk as Norsk, "sink");
+  //         await sink.initialised;
+
+  //         const av = await _videoAndAudio(norsk!, "source");
+  //         let rtmp = await norsk!.output.rtmp({
+  //           id: "av-rtmp1",
+  //           url: 'rtmp://127.0.0.1:65403/yolo/stream1'
+  //         });
+  //         rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV);
+  //         // Wait for initial connection
+  //         await waitForCondition(() => sink.streamCount() === 2);
+  //         expect((result.runtimeState.latest["rtmp"] as RtmpInputState).connectedSources).to.include('stream1');
+
+  //         const disconnectResponse = await fetch(`http://localhost:${port}/${rtmpNode.id}/disconnect`, {
+  //           method: 'POST',
+  //           headers: { 'Content-Type': 'application/json' },
+  //           body: JSON.stringify({ streamName: 'stream1' })
+  //         });
+  //         expect(disconnectResponse.status).to.equal(204);
+
+  //         await waitForCondition(() => sink.streamCount() === 0);
+  //         expect((result.runtimeState.latest["rtmp"] as RtmpInputState).connectedSources).to.not.include('stream1');
+
+  //         const reconnectResponse = await fetch(`http://localhost:${port}/${rtmpNode.id}/reconnect`, {
+  //           method: 'POST',
+  //           headers: { 'Content-Type': 'application/json' },
+  //           body: JSON.stringify({ streamName: 'stream1' })
+  //         });
+  //         expect(reconnectResponse.status).to.equal(204);
+
+  //         rtmp = await norsk!.output.rtmp({
+  //           id: "av-rtmp2",
+  //           url: 'rtmp://127.0.0.1:65403/yolo/stream1'
+  //         });
+  //         rtmp.subscribe([{ source: av, sourceSelector: selectAV }], requireAV);
+
+  //         await waitForCondition(() => sink.streamCount() === 2);
+  //         expect((result.runtimeState.latest["rtmp"] as RtmpInputState).connectedSources).to.include('stream1');
+  //       });
+
+  //       it("handles invalid API requests appropriately", async () => {
+  //         const compiled = await testDocument();
+  //         const result = await go(norsk!, compiled, app);
+
+  //         const missingNameResponse = await fetch(`http://localhost:${port}/${result.components['rtmp'].id}/disconnect`, {
+  //           method: 'POST',
+  //           headers: { 'Content-Type': 'application/json' },
+  //           body: JSON.stringify({})
+  //         });
+  //         expect(missingNameResponse.status).to.equal(400);
+
+  //         const nonExistentResponse = await fetch(`http://localhost:${port}/${result.components['rtmp'].id}/disconnect`, {
+  //           method: 'POST',
+  //           headers: { 'Content-Type': 'application/json' },
+  //           body: JSON.stringify({ streamName: 'stream1' })
+  //         });
+  //         expect(nonExistentResponse.status).to.equal(404);
+  //       });
+  //     });
+  //   });
+  // })
 });

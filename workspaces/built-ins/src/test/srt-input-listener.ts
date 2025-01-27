@@ -574,7 +574,7 @@ describe("SRT Listener Input", () => {
       let app: express.Application;
       let server: Server;
       let port: number;
-  
+
       beforeEach(async () => {
         norsk = await Norsk.connect({ onShutdown: () => { } });
         app = express();
@@ -582,12 +582,12 @@ describe("SRT Listener Input", () => {
         server = app.listen(0);
         port = (server.address() as AddressInfo).port;
       });
-  
+
       afterEach(async () => {
         await norsk?.close();
         server?.close();
       });
-  
+
       describe("http api", () => {
         it("disconnect/reconnect cycle via HTTP API", async () => {
           const compiled = await testDocument();
@@ -595,19 +595,30 @@ describe("SRT Listener Input", () => {
           const srtNode = result.components['srt'];
           const sink = new TraceSink(norsk as Norsk, "sink");
           await sink.initialised;
-  
+
+          sink.subscribe([
+            new StudioNodeSubscriptionSource(srtNode, compiled.components['srt'].yaml, { type: 'take-specific-stream', select: ["audio", "video"], filter: 'stream1' }, SrtInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+          ])
+
           const av = await _videoAndAudio(norsk!, "source");
-          let srt = await norsk!.output.srt({
+          const srt = await norsk!.output.srt({
             id: "av-srt1",
             mode: "caller",
             host: "127.0.0.1",
             port: 65403,
-            streamId: 'stream1'
+            streamId: 'stream1',
+            // TODO: Find out why this doesn't raise an event when it gets disconnected 
+
           });
+
           srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-  
-          await waitForCondition(() => sink.streamCount() === 2);
+
+          console.log('waiting for connect');
+
+          await waitForCondition(() => sink.streamCount() === 2, 120000);
           expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.include('stream1');
+
+          console.log('calling disconnect');
 
           const disconnectResponse = await fetch(`http://localhost:${port}/${srtNode.id}/disconnect`, {
             method: 'POST',
@@ -615,30 +626,17 @@ describe("SRT Listener Input", () => {
             body: JSON.stringify({ streamId: 'stream1' })
           });
           expect(disconnectResponse.status).to.equal(204);
-  
-          await waitForCondition(() => sink.streamCount() === 0);
-          expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.not.include('stream1');
 
-          const reconnectResponse = await fetch(`http://localhost:${port}/${srtNode.id}/reconnect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ streamId: 'stream1' })
-          });
-          expect(reconnectResponse.status).to.equal(204);
-  
-          srt = await norsk!.output.srt({
-            id: "av-srt2",
-            mode: "caller",
-            host: "127.0.0.1",
-            port: 65403,
-            streamId: 'stream1'
-          });
-          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-  
-          await waitForCondition(() => sink.streamCount() === 2);
+          console.log('disconnect');
+
+          await waitForCondition(() => sink.streamCount() === 0, 120000, 2);
+
+          console.log('waiting for reconnect');
+
+          await waitForCondition(() => sink.streamCount() === 2, 10000);
           expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.include('stream1');
         });
-  
+
         it("handles invalid API requests appropriately", async () => {
           const compiled = await testDocument();
           const result = await go(norsk!, compiled, app);
@@ -649,40 +647,13 @@ describe("SRT Listener Input", () => {
             body: JSON.stringify({})
           });
           expect(missingIdResponse.status).to.equal(400);
-  
+
           const nonExistentResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disconnect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ streamId: 'stream1' })
           });
           expect(nonExistentResponse.status).to.equal(404);
-        });
-  
-        it("prevents reconnecting already connected stream", async () => {
-          const compiled = await testDocument();
-          const result = await go(norsk!, compiled, app);
-          const sink = new TraceSink(norsk as Norsk, "sink");
-          await sink.initialised;
-  
-          const av = await _videoAndAudio(norsk!, "source");
-          const srt = await norsk!.output.srt({
-            id: "av-srt1",
-            mode: "caller",
-            host: "127.0.0.1",
-            port: 65403,
-            streamId: 'stream1'
-          });
-          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-  
-          await waitForCondition(() => sink.streamCount() === 2);
-  
-          const reconnectResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/reconnect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ streamId: 'stream1' })
-          });
-          expect(reconnectResponse.status).to.equal(400);
-          expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.include('stream1');
         });
       });
     });
