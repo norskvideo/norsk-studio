@@ -1,0 +1,16 @@
+name: Nightly Build
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-nightly]
+
+jobs:
+  publish:
+    uses: ./.github/workflows/publish.yml
+    secrets: inherit
+    with:
+      update-deps: true
+      new-version: nightly
+      run-tests: true
+   

@@ -17,6 +17,7 @@ on:
           - major
           - minor
           - patch
+          - nightly
       run-tests:
         description: 'Run Tests'
         required: true
@@ -28,7 +29,9 @@ jobs:
     uses: ./.github/workflows/run-tests.yml
     secrets: inherit
     with:
-      notify_discord: false
+      update_deps: nightly
+      notify_discord: true
+      run_context: "**Note:**: Publishing latest nightly if this passed"
 
   publish:
     needs: run-tests
@@ -36,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout the head commit of the branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Install Nix
       if: ${{ runner.environment == 'github-hosted' }}
@@ -51,80 +54,95 @@ jobs:
       with:
         file: shell.nix
 
-    - name: Update Deps 
-      if: ${{ inputs.update-deps }}
-      run: "npm install --workspaces @norskvideo/norsk-sdk@latest @norskvideo/norsk-studio@latest"
+    - name: Run Build (With Nightly)
+      if: ${{ inputs.update-deps && inputs.new-version == 'nightly' }}
+      run: |
+          npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
+          npm install --workspaces @norskvideo/norsk-sdk@nightly @norskvideo/norsk-studio@nightly --save || true
+          npm install
+          npm run build
 
-    - name: Run Build 
-      run: "npm install && npm run build"
+    - name: Run Build (With Latest)
+      if: ${{ inputs.update-deps && inputs.new-version != 'nightly' }}
+      run: |
+          npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
+          npm install --workspaces @norskvideo/norsk-sdk@latest @norskvideo/norsk-studio@latest --save || true
+          npm install
+          npm run build
 
-    - name: Version Bump
-      run: npm version --workspaces ${{ inputs.new-version }}  --git-tag-version=false
+    - name: Run Build (With No Update)
+      if: ${{ !inputs.update-deps  }}
+      run: npm install && npm run build
 
-    - name: Commit New Version
-      uses: stefanzweifel/git-auto-commit-action@v2.3.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        commit_message: Apply version update
-        branch: main
+    - name: Check for changes
+      id: changes
+      run: |
+        git config --global user.email "jankings@id3as.co.uk"
+        git config --global user.name "Jankings"
+        if git diff --exit-code package-lock.json; then
+          echo "changes_exist=false" >> $GITHUB_OUTPUT
+        else
+          echo "changes_exist=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit latest
+      if: ${{ always() && steps.changes.outputs.changes_exist && inputs.new-version == 'nightly' }}
+      run: |
+        git add workspaces/*/package.json
+        git add package-lock.json
+        git commit -m "Automated dependency update"
+          
+    - name: Tag Nightlies
+      if: ${{ inputs.new-version == 'nightly' }}
+      run: |
+        commit="$(git rev-parse --short=8 HEAD)"
+        label="$(cat workspaces/built-ins/package.json | jq -r .version)-$(date --iso-8601)-$commit"
+        npm version --workspace workspaces/built-ins --no-git-tag-version "$label+nightly"
+        label="$(cat workspaces/source-switcher/package.json | jq -r .version)-$(date --iso-8601)-$commit"
+        npm version --workspace workspaces/source-switcher --no-git-tag-version "$label+nightly"
+        label="$(cat workspaces/aws/package.json | jq -r .version)-$(date --iso-8601)-$commit"
+        npm version --workspace workspaces/aws --no-git-tag-version "$label+nightly"
 
     - name: "Publish"
       id: "publish-bi"
       uses: JS-DevTools/npm-publish@v3
       with:
+        access: public
         token: ${{ secrets.NPM_TOKEN }}
+        tag: ${{ inputs.new-version == 'nightly' && 'nightly' || 'latest' }}
         package: workspaces/built-ins
 
     - name: "Publish"
-      id: "publish-vd"
+      id: "publish-ss"
       uses: JS-DevTools/npm-publish@v3
       with:
+        access: public
         token: ${{ secrets.NPM_TOKEN }}
-        package: workspaces/vision-director
+        tag: ${{ inputs.new-version == 'nightly' && 'nightly' || 'latest' }}
+        package: workspaces/source-switcher
 
     - name: "Publish"
       id: "publish-aws"
       uses: JS-DevTools/npm-publish@v3
       with:
+        access: public
         token: ${{ secrets.NPM_TOKEN }}
+        tag: ${{ inputs.new-version == 'nightly' && 'nightly' || 'latest' }}
         package: workspaces/aws
 
-    - name: Discord Webhook Action
-      uses: tsickert/discord-webhook@v5.3.0
-      if: success()
-      with:
-        webhook-url: ${{ secrets.DISCORD_URL }}
-        username: "Evil Jenkins"
-        avatar_url: "https://i.imgur.com/HzrYPqf.png"
-        content: ""
-        embed-title: "@norskvideo/norsk-studio-built-ins published"
-        embed-color: 5763719 
-        embed-description: Version ${{ steps.publish-bi.outputs.version }}
+    # Actual release
+    - name: Version Bump
+      if: ${{ inputs.new-version != 'nightly' }}
+      run: |
+        npm version --workspaces ${{ inputs.new-version }}  --git-tag-version=false
+        git add workspaces/*/package.json
+        git add package-lock.json
+        git commit -m "Automated Version bump"
 
-    - name: Discord Webhook Action
-      uses: tsickert/discord-webhook@v5.3.0
-      if: success()
-      with:
-        webhook-url: ${{ secrets.DISCORD_URL }}
-        username: "Evil Jenkins"
-        avatar_url: "https://i.imgur.com/HzrYPqf.png"
-        content: ""
-        embed-title: "@norskvideo/norsk-studio-built-ins published"
-        embed-color: 5763719 
-        embed-description: Version ${{ steps.publish-vd.outputs.version }}
-
-    - name: Discord Webhook Action
-      uses: tsickert/discord-webhook@v5.3.0
-      if: success()
-      with:
-        webhook-url: ${{ secrets.DISCORD_URL }}
-        username: "Evil Jenkins"
-        avatar_url: "https://i.imgur.com/HzrYPqf.png"
-        content: ""
-        embed-title: "@norskvideo/norsk-studio-aws published"
-        embed-color: 5763719 
-        embed-description: Version ${{ steps.publish-aws.outputs.version }}
+    # Then push in whatever we now have
+    - name: Push changes
+      run: | 
+        git push 
 
 
 
