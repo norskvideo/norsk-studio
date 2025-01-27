@@ -39,7 +39,7 @@ jobs:
     - name: Run Norsk 
       id: run-norsk
       run: |
-          NORSK_CONTAINER_ID=$(docker run --pull=always --rm -d -p 6791:6791 -p 6790:6790 -p 8080:8080 --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly norskvideo/norsk:${{ (inputs.update_deps == 'nightly' || inputs.update_deps == 'local') && 'nightly' || 'latest'}} --license-file /mnt/license.json) 
+          NORSK_CONTAINER_ID=$(docker run --pull=always --rm -d -p 6791:6791 -p 6790:6790 -p 8080:8080 --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly norskvideo/norsk:${{ inputs.update_deps == 'nightly' && 'nightly' || 'latest'}} --license-file /mnt/license.json) 
           echo "NORSK_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $NORSK_CONTAINER_ID)" >> $GITHUB_OUTPUT
           echo "NORSK_CONTAINER_ID=$NORSK_CONTAINER_ID" >> $GITHUB_OUTPUT
 
@@ -69,12 +69,31 @@ jobs:
           npm install
           npm run build
 
+    - name: Checkout Studio Core
+      uses: actions/checkout@v4
+      if: ${{ inputs.update_deps == 'local' }}
+      with:
+        repository: id3as/norsk-studio-core
+        clean: true 
+        fetch-depth: 0
+        fetch-tags: 1
+        path: _peers/norsk-studio-core
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Build Studio Core
+      if: ${{ inputs.update_deps == 'local' }}
+      working-directory: _peers/norsk-studio-core
+      run: |
+          npm install --save @norskvideo/norsk-sdk@nightly
+          npm install
+          npm run build
+   
     - name: Run Build (With Local)
       if: ${{ inputs.update_deps == 'local' }}
       run: |
           npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
-          # TODO: Checkout studio-core to _peers and build it, making sure it's on sdk-nightly
-          npm install --workspaces @norskvideo/norsk-sdk@nightly _peers/studio-core --save || true
+          npm install --workspaces @norskvideo/norsk-sdk@nightly --save || true 
+          npm install ./_peers/norsk-studio-core --save || true
           npm install
           npm run build
 

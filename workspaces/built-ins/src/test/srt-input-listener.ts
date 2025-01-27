@@ -660,4 +660,16 @@ describe("SRT Listener Input", () => {
   });
 });
 
+// TODO: tests
+// TODO: Not tests, if you see any console.log/console.debug/etc in server-side code, please replace with 'infolog/debuglog/errorlog/etc'
 
+// - ROBS todos (FYI), all types.yamls will automatically be compiled into types.ts (openApi.ts will be deleted)
+// - nodeUrl / componentUrl should be instance/static or similar
+
+// in both permissive/restrictive mode, connect clients means stream is present in connectedStreams
+// in both permissive/restrictive mode, clients that disconnect get removed from connectedStreams
+
+// disabling a disconnected stream prevents it from being connected
+// resetting an enabled stream, disconnects it, but allows it to be re-connected
+// disabling an enabled stream, prevents it from being connected
+// enabling a disabled stream, enables it to be connected
