@@ -39,7 +39,7 @@ jobs:
     - name: Run Norsk 
       id: run-norsk
       run: |
-          NORSK_CONTAINER_ID=$(docker run --pull=always --rm -d -p 6791:6791 -p 6790:6790 -p 8080:8080 --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly norskvideo/norsk:${{ inputs.update_deps == 'nightly' && 'nightly' || 'latest'}} --license-file /mnt/license.json) 
+          NORSK_CONTAINER_ID=$(docker run --pull=always --rm -d -p 6791:6791 -p 6790:6790 -p 8080:8080 --name norsk --mount type=bind,source=${{github.workspace}},target=${{github.workspace}} --mount type=bind,source=${{github.workspace}}/norsk_license.json,target=/mnt/license.json,readonly norskvideo/norsk:${{ inputs.update_deps == 'nightly' && 'nightly' || 'latest'}} --license-file /mnt/license.json) 
           echo "NORSK_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $NORSK_CONTAINER_ID)" >> $GITHUB_OUTPUT
           echo "NORSK_CONTAINER_ID=$NORSK_CONTAINER_ID" >> $GITHUB_OUTPUT
 
@@ -75,6 +75,7 @@ jobs:
       with:
         repository: id3as/norsk-studio-core
         clean: true 
+        ref: main # this could actually be the same ref as this build..?
         fetch-depth: 0
         fetch-tags: 1
         path: _peers/norsk-studio-core
