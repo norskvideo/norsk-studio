@@ -214,10 +214,10 @@ export class ActionReplay {
       transitionDurationMs: 500.0,
       onInboundContextChange: async (ctx) => {
         if (ctx.get('replay')?.length == 2) {
-          this.smooth?.switchSource('replay');
+          await this.smooth?.switchSource('replay');
         }
         else {
-          this.smooth?.switchSource('source');
+          await this.smooth?.switchSource('source');
         }
       }
     })
