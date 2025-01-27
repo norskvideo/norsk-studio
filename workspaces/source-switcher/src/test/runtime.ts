@@ -86,7 +86,7 @@ describe("Multi camera select", () => {
           assertNodeOutputsAudioFrames(norsk, result, 'select'),
           assertNodeOutputsVideoFrames(norsk, result, 'select'),
           waitForAssert(
-            () => latestState()?.availableSources.length == 1,
+            () => latestState()?.availableSources.length == 1 && !!switcher.activeSource.primary.id,
             () => {
               expect(switcher.activeSource.primary.id).equals('fallback', "Active source on component");
               expect(latestState()?.activeSource.id).equals('fallback', "active source on runtime state");
