@@ -1,3 +1,4 @@
+:
 name: Run Tests
 
 on:
@@ -69,12 +70,30 @@ jobs:
           npm install
           npm run build
 
+    - name: Checkout Studio Core
+      uses: actions/checkout@v4
+      if: ${{ inputs.update_deps == 'local' }}
+      with:
+        repository: id3as/norsk-studio-core
+        clean: true 
+        fetch-depth: 0
+        fetch-tags: 1
+        path: _peers/norsk-studio-core
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Build Studio Core
+      if: ${{ inputs.update_deps == 'local' }}
+      working-directory: _peers/norsk-studio-core
+      run: |
+          npm install --save @norskvideo/norsk-sdk@nightly
+          npm install
+          npm run build
+   
     - name: Run Build (With Local)
       if: ${{ inputs.update_deps == 'local' }}
       run: |
           npm remove --workspaces @norskvideo/norsk-api @norskvideo/norsk-sdk @norskvideo/norsk-studio --save || true
-          # TODO: Checkout studio-core to _peers and build it, making sure it's on sdk-nightly
-          npm install --workspaces @norskvideo/norsk-sdk@nightly _peers/studio-core --save || true
+          npm install --workspaces @norskvideo/norsk-sdk@nightly _peers/norsk-studio-core --save || true
           npm install
           npm run build
 
