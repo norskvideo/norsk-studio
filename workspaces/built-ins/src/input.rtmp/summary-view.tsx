@@ -19,7 +19,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<RtmpInputSe
   
   const disconnectStream = async (streamName: string) => {
     try {
-      const response = await fetch(`${urls.componentUrl}/disconnect`, {
+      const response = await fetch(`${urls.staticUrl}/disconnect`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

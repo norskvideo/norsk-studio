@@ -34,7 +34,7 @@ function SummaryView({
 
   const updateGraphics = useCallback(async () => {
     try {
-      const result = await fetch(`${urls.componentUrl}/graphics`);
+      const result = await fetch(`${urls.staticUrl}/graphics`);
       if (result.ok) {
         const newGraphics = (await result.json()) as string[];
         setGraphics(newGraphics);
@@ -48,7 +48,7 @@ function SummaryView({
         message: "Failed to update graphic list.",
       });
     }
-  }, [urls.componentUrl]);
+  }, [urls.staticUrl]);
 
   useEffect(() => {
     updateGraphics().catch(console.error);
@@ -67,7 +67,7 @@ function SummaryView({
     try {
       const form = new FormData();
       form.append("file", fileToUpload);
-      const response = await fetch(`${urls.componentUrl}/graphics`, {
+      const response = await fetch(`${urls.staticUrl}/graphics`, {
         method: "POST",
         body: form,
       });
@@ -107,8 +107,8 @@ function SummaryView({
     try {
       // DELETE doesn't require a body. This is a hack until I figure out
       // how to get openAPI to generate path parameters we can use with Swagger UI
-      console.log(`${urls.componentUrl}`);
-      const response = await fetch(`${urls.componentUrl}/graphic`, {
+      console.log(`${urls.staticUrl}`);
+      const response = await fetch(`${urls.staticUrl}/graphic`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
