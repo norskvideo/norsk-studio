@@ -560,6 +560,146 @@ describe("SRT Listener Input", () => {
     });
   });
 
+  impl("Permissive SRT Listener  stream management", {
+    id: 'srt',
+    displayName: 'srt',
+    port: 65403,
+    host: '0.0.0.0',
+    sourceNames: 'permissive',
+    streamIds: ['stream1'],
+    socketOptions: {}
+  }, (testDocument, _cfg) => {
+  
+    let norsk: Norsk | undefined = undefined;
+    let av: SourceMediaNode | undefined = undefined;
+    let srt: SrtOutputNode | undefined = undefined;
+  
+    beforeEach(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      av = await _videoAndAudio(norsk!, "source");
+    });
+  
+    afterEach(async () => {
+      await srt?.close();
+      await norsk?.close();
+      await new Promise(f => setTimeout(f, 1000));
+    });
+  
+    it("should reflect connected client in connectedStreams", async () => {
+      const compiled = await testDocument();
+      const result = await go(norsk!, compiled);
+  
+      srt = await norsk!.output.srt({
+        id: "av-srt1",
+        mode: "caller",
+        host: "127.0.0.1",
+        port: 65403,
+        streamId: 'stream1'
+      });
+      srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
+  
+      await waitForCondition(() => {
+        const state = result.runtimeState.latest["srt"] as SrtInputState;
+        return state.connectedStreams.includes('stream1');
+      }, 5000);
+    });
+  
+    it("should remove disconnected client from connectedStreams", async () => {
+      const compiled = await testDocument();
+      const result = await go(norsk!, compiled);
+  
+      srt = await norsk!.output.srt({
+        id: "av-srt1",
+        mode: "caller",
+        host: "127.0.0.1",
+        port: 65403,
+        streamId: 'stream1'
+      });
+      srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
+  
+      await waitForCondition(() => {
+        const state = result.runtimeState.latest["srt"] as SrtInputState;
+        return state.connectedStreams.includes('stream1');
+      }, 5000);
+  
+      await srt.close();
+      await waitForCondition(() => {
+        const state = result.runtimeState.latest["srt"] as SrtInputState;
+        return !state.connectedStreams.includes('stream1');
+      }, 5000);
+    });
+  });
+  
+  impl("Restrictive SRT Listener stream management", {
+    id: 'srt',
+    displayName: 'srt',
+    port: 65403,
+    host: '0.0.0.0',
+    sourceNames: 'strict',
+    streamIds: ['stream1'],
+    socketOptions: {}
+  }, (testDocument, _cfg) => {
+    
+    let norsk: Norsk | undefined = undefined;
+    let av: SourceMediaNode | undefined = undefined;
+    let srt: SrtOutputNode | undefined = undefined;
+  
+    beforeEach(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      av = await _videoAndAudio(norsk!, "source");
+    });
+  
+    afterEach(async () => {
+      await srt?.close();
+      await norsk?.close();
+      await new Promise(f => setTimeout(f, 1000));
+    });
+  
+    it("should reflect connected client in connectedStreams", async () => {
+      const compiled = await testDocument();
+      const result = await go(norsk!, compiled);
+  
+      srt = await norsk!.output.srt({
+        id: "av-srt1",
+        mode: "caller",
+        host: "127.0.0.1",
+        port: 65403,
+        streamId: 'stream1'
+      });
+      srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
+  
+      await waitForCondition(() => {
+        const state = result.runtimeState.latest["srt"] as SrtInputState;
+        return state.connectedStreams.includes('stream1');
+      }, 5000);
+    });
+  
+    it("should remove disconnected client from connectedStreams", async () => {
+      const compiled = await testDocument();
+      const result = await go(norsk!, compiled);
+  
+      srt = await norsk!.output.srt({
+        id: "av-srt1",
+        mode: "caller",
+        host: "127.0.0.1",
+        port: 65403,
+        streamId: 'stream1'
+      });
+      srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
+  
+      await waitForCondition(() => {
+        const state = result.runtimeState.latest["srt"] as SrtInputState;
+        return state.connectedStreams.includes('stream1');
+      }, 5000);
+
+      await srt.close();
+      await waitForCondition(() => {
+        const state = result.runtimeState.latest["srt"] as SrtInputState;
+        return !state.connectedStreams.includes('stream1');
+      }, 5000);
+    });
+  });
+  
   describe("SRT Input API", () => {
     impl("with basic stream management", {
       id: 'srt',
@@ -655,13 +795,168 @@ describe("SRT Listener Input", () => {
           });
           expect(nonExistentResponse.status).to.equal(404);
         });
+
+        it("should prevent connection to disabled stream", async () => {
+          const compiled = await testDocument();
+          const result = await go(norsk!, compiled, app);
+      
+          const disableResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disable`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamId: 'stream1' })
+          });
+          expect(disableResponse.status).to.equal(204);
+      
+          const av = await _videoAndAudio(norsk!, "source");
+          const srt = await norsk!.output.srt({
+            id: "av-srt1",
+            mode: "caller",
+            host: "127.0.0.1",
+            port: 65403,
+            streamId: 'stream1'
+          });
+          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
+      
+          await waitForCondition(() => {
+            const state = result.runtimeState.latest["srt"] as SrtInputState;
+            return !state.connectedStreams.includes('stream1');
+          }, 5000);
+        });
+      
+        it("should allow reconnection after reset", async () => {
+          const compiled = await testDocument();
+          const result = await go(norsk!, compiled, app);
+      
+          const av = await _videoAndAudio(norsk!, "source");
+          let srt = await norsk!.output.srt({
+            id: "av-srt1",
+            mode: "caller",
+            host: "127.0.0.1",
+            port: 65403,
+            streamId: 'stream1'
+          });
+          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
+      
+          await waitForCondition(() => {
+            const state = result.runtimeState.latest["srt"] as SrtInputState;
+            return state.connectedStreams.includes('stream1');
+          }, 5000);
+      
+          const resetResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disconnect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamId: 'stream1' })
+          });
+          expect(resetResponse.status).to.equal(204);
+      
+          await waitForCondition(() => {
+            const state = result.runtimeState.latest["srt"] as SrtInputState;
+            return !state.connectedStreams.includes('stream1');
+          }, 5000);
+      
+          srt = await norsk!.output.srt({
+            id: "av-srt2",
+            mode: "caller",
+            host: "127.0.0.1",
+            port: 65403,
+            streamId: 'stream1'
+          });
+          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
+      
+          await waitForCondition(() => {
+            const state = result.runtimeState.latest["srt"] as SrtInputState;
+            return state.connectedStreams.includes('stream1');
+          }, 5000);
+        });
+      
+        it("should prevent reconnection of disabled stream", async () => {
+          const compiled = await testDocument();
+          const result = await go(norsk!, compiled, app);
+          
+          const av = await _videoAndAudio(norsk!, "source");
+          let srt = await norsk!.output.srt({
+            id: "av-srt1",
+            mode: "caller",
+            host: "127.0.0.1",
+            port: 65403,
+            streamId: 'stream1'
+          });
+          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
+      
+          await waitForCondition(() => {
+            const state = result.runtimeState.latest["srt"] as SrtInputState;
+            return state.connectedStreams.includes('stream1');
+          }, 5000);
+      
+          const disableResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disable`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamId: 'stream1' })
+          });
+          expect(disableResponse.status).to.equal(204);
+      
+          await waitForCondition(() => {
+            const state = result.runtimeState.latest["srt"] as SrtInputState;
+            return !state.connectedStreams.includes('stream1');
+          }, 5000);
+      
+          srt = await norsk!.output.srt({
+            id: "av-srt2",
+            mode: "caller",
+            host: "127.0.0.1",
+            port: 65403,
+            streamId: 'stream1'
+          });
+          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
+      
+          await waitForCondition(() => {
+            const state = result.runtimeState.latest["srt"] as SrtInputState;
+            return !state.connectedStreams.includes('stream1');
+          }, 5000);
+        });
+      
+        it("should allow connection after enabling disabled stream", async () => {
+          const compiled = await testDocument();
+          const result = await go(norsk!, compiled, app);
+      
+          const disableResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disable`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamId: 'stream1' })
+          });
+          expect(disableResponse.status).to.equal(204);
+      
+          const enableResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/enable`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamId: 'stream1' })
+          });
+          expect(enableResponse.status).to.equal(204);
+      
+          const av = await _videoAndAudio(norsk!, "source");
+          const srt = await norsk!.output.srt({
+            id: "av-srt1",
+            mode: "caller",
+            host: "127.0.0.1",
+            port: 65403,
+            streamId: 'stream1'
+          });
+          srt.subscribe([{ source: av, sourceSelector: selectAV }]);
+      
+          await waitForCondition(() => {
+            const state = result.runtimeState.latest["srt"] as SrtInputState;
+            return state.connectedStreams.includes('stream1');
+          }, 5000);
+        });
+
+
       });
     });
   });
 });
 
 // TODO: tests
-// TODO: Not tests, if you see any console.log/console.debug/etc in server-side code, please replace with 'infolog/debuglog/errorlog/etc'
+
 
 // in both permissive/restrictive mode, connect clients means stream is present in connectedStreams
 // in both permissive/restrictive mode, clients that disconnect get removed from connectedStreams
