@@ -569,26 +569,26 @@ describe("SRT Listener Input", () => {
     streamIds: ['stream1'],
     socketOptions: {}
   }, (testDocument, _cfg) => {
-  
+
     let norsk: Norsk | undefined = undefined;
     let av: SourceMediaNode | undefined = undefined;
     let srt: SrtOutputNode | undefined = undefined;
-  
+
     beforeEach(async () => {
       norsk = await Norsk.connect({ onShutdown: () => { } });
       av = await _videoAndAudio(norsk!, "source");
     });
-  
+
     afterEach(async () => {
       await srt?.close();
       await norsk?.close();
       await new Promise(f => setTimeout(f, 1000));
     });
-  
+
     it("should reflect connected client in connectedStreams", async () => {
       const compiled = await testDocument();
       const result = await go(norsk!, compiled);
-  
+
       srt = await norsk!.output.srt({
         id: "av-srt1",
         mode: "caller",
@@ -597,17 +597,17 @@ describe("SRT Listener Input", () => {
         streamId: 'stream1'
       });
       srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
-  
+
       await waitForCondition(() => {
         const state = result.runtimeState.latest["srt"] as SrtInputState;
         return state.connectedStreams.includes('stream1');
       }, 5000);
     });
-  
+
     it("should remove disconnected client from connectedStreams", async () => {
       const compiled = await testDocument();
       const result = await go(norsk!, compiled);
-  
+
       srt = await norsk!.output.srt({
         id: "av-srt1",
         mode: "caller",
@@ -616,77 +616,7 @@ describe("SRT Listener Input", () => {
         streamId: 'stream1'
       });
       srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
-  
-      await waitForCondition(() => {
-        const state = result.runtimeState.latest["srt"] as SrtInputState;
-        return state.connectedStreams.includes('stream1');
-      }, 5000);
-  
-      await srt.close();
-      await waitForCondition(() => {
-        const state = result.runtimeState.latest["srt"] as SrtInputState;
-        return !state.connectedStreams.includes('stream1');
-      }, 5000);
-    });
-  });
-  
-  impl("Restrictive SRT Listener stream management", {
-    id: 'srt',
-    displayName: 'srt',
-    port: 65403,
-    host: '0.0.0.0',
-    sourceNames: 'strict',
-    streamIds: ['stream1'],
-    socketOptions: {}
-  }, (testDocument, _cfg) => {
-    
-    let norsk: Norsk | undefined = undefined;
-    let av: SourceMediaNode | undefined = undefined;
-    let srt: SrtOutputNode | undefined = undefined;
-  
-    beforeEach(async () => {
-      norsk = await Norsk.connect({ onShutdown: () => { } });
-      av = await _videoAndAudio(norsk!, "source");
-    });
-  
-    afterEach(async () => {
-      await srt?.close();
-      await norsk?.close();
-      await new Promise(f => setTimeout(f, 1000));
-    });
-  
-    it("should reflect connected client in connectedStreams", async () => {
-      const compiled = await testDocument();
-      const result = await go(norsk!, compiled);
-  
-      srt = await norsk!.output.srt({
-        id: "av-srt1",
-        mode: "caller",
-        host: "127.0.0.1",
-        port: 65403,
-        streamId: 'stream1'
-      });
-      srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
-  
-      await waitForCondition(() => {
-        const state = result.runtimeState.latest["srt"] as SrtInputState;
-        return state.connectedStreams.includes('stream1');
-      }, 5000);
-    });
-  
-    it("should remove disconnected client from connectedStreams", async () => {
-      const compiled = await testDocument();
-      const result = await go(norsk!, compiled);
-  
-      srt = await norsk!.output.srt({
-        id: "av-srt1",
-        mode: "caller",
-        host: "127.0.0.1",
-        port: 65403,
-        streamId: 'stream1'
-      });
-      srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
-  
+
       await waitForCondition(() => {
         const state = result.runtimeState.latest["srt"] as SrtInputState;
         return state.connectedStreams.includes('stream1');
@@ -699,7 +629,77 @@ describe("SRT Listener Input", () => {
       }, 5000);
     });
   });
-  
+
+  impl("Restrictive SRT Listener stream management", {
+    id: 'srt',
+    displayName: 'srt',
+    port: 65403,
+    host: '0.0.0.0',
+    sourceNames: 'strict',
+    streamIds: ['stream1'],
+    socketOptions: {}
+  }, (testDocument, _cfg) => {
+
+    let norsk: Norsk | undefined = undefined;
+    let av: SourceMediaNode | undefined = undefined;
+    let srt: SrtOutputNode | undefined = undefined;
+
+    beforeEach(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      av = await _videoAndAudio(norsk!, "source");
+    });
+
+    afterEach(async () => {
+      await srt?.close();
+      await norsk?.close();
+      await new Promise(f => setTimeout(f, 1000));
+    });
+
+    it("should reflect connected client in connectedStreams", async () => {
+      const compiled = await testDocument();
+      const result = await go(norsk!, compiled);
+
+      srt = await norsk!.output.srt({
+        id: "av-srt1",
+        mode: "caller",
+        host: "127.0.0.1",
+        port: 65403,
+        streamId: 'stream1'
+      });
+      srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
+
+      await waitForCondition(() => {
+        const state = result.runtimeState.latest["srt"] as SrtInputState;
+        return state.connectedStreams.includes('stream1');
+      }, 5000);
+    });
+
+    it("should remove disconnected client from connectedStreams", async () => {
+      const compiled = await testDocument();
+      const result = await go(norsk!, compiled);
+
+      srt = await norsk!.output.srt({
+        id: "av-srt1",
+        mode: "caller",
+        host: "127.0.0.1",
+        port: 65403,
+        streamId: 'stream1'
+      });
+      srt.subscribe([{ source: av!, sourceSelector: selectAV }]);
+
+      await waitForCondition(() => {
+        const state = result.runtimeState.latest["srt"] as SrtInputState;
+        return state.connectedStreams.includes('stream1');
+      }, 5000);
+
+      await srt.close();
+      await waitForCondition(() => {
+        const state = result.runtimeState.latest["srt"] as SrtInputState;
+        return !state.connectedStreams.includes('stream1');
+      }, 5000);
+    });
+  });
+
   describe("SRT Input API", () => {
     impl("with basic stream management", {
       id: 'srt',
@@ -747,18 +747,12 @@ describe("SRT Listener Input", () => {
             host: "127.0.0.1",
             port: 65403,
             streamId: 'stream1',
-            // TODO: Find out why this doesn't raise an event when it gets disconnected 
-
           });
 
           srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-
-          console.log('waiting for connect');
-
           await waitForCondition(() => sink.streamCount() === 2, 120000);
           expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.include('stream1');
 
-          console.log('calling disconnect');
 
           const disconnectResponse = await fetch(`http://localhost:${port}/${srtNode.id}/disconnect`, {
             method: 'POST',
@@ -767,11 +761,7 @@ describe("SRT Listener Input", () => {
           });
           expect(disconnectResponse.status).to.equal(204);
 
-          console.log('disconnect');
-
           await waitForCondition(() => sink.streamCount() === 0, 120000, 2);
-
-          console.log('waiting for reconnect');
 
           await waitForCondition(() => sink.streamCount() === 2, 10000);
           expect((result.runtimeState.latest["srt"] as SrtInputState).connectedStreams).to.include('stream1');
@@ -799,14 +789,14 @@ describe("SRT Listener Input", () => {
         it("should prevent connection to disabled stream", async () => {
           const compiled = await testDocument();
           const result = await go(norsk!, compiled, app);
-      
+
           const disableResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disable`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ streamId: 'stream1' })
           });
           expect(disableResponse.status).to.equal(204);
-      
+
           const av = await _videoAndAudio(norsk!, "source");
           const srt = await norsk!.output.srt({
             id: "av-srt1",
@@ -816,17 +806,26 @@ describe("SRT Listener Input", () => {
             streamId: 'stream1'
           });
           srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-      
+
+          // TODO: Again, I'd ideally like the SRT output (above) to be raising an event
+          // when it fails to connect/etc but for some reason it doesn't have that functionality
+          // we should at least wait for a while to see if it manages to connect
+          // because obviously it should not
+          let failedToConnect = false;
           await waitForCondition(() => {
             const state = result.runtimeState.latest["srt"] as SrtInputState;
-            return !state.connectedStreams.includes('stream1');
-          }, 5000);
+            return state.connectedStreams.includes('stream1');
+          }, 2500).catch(() => {
+            failedToConnect = true;
+          }).finally(() => {
+            expect(failedToConnect).is.true;
+          });
         });
-      
+
         it("should allow reconnection after reset", async () => {
           const compiled = await testDocument();
           const result = await go(norsk!, compiled, app);
-      
+
           const av = await _videoAndAudio(norsk!, "source");
           let srt = await norsk!.output.srt({
             id: "av-srt1",
@@ -836,24 +835,24 @@ describe("SRT Listener Input", () => {
             streamId: 'stream1'
           });
           srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-      
+
           await waitForCondition(() => {
             const state = result.runtimeState.latest["srt"] as SrtInputState;
             return state.connectedStreams.includes('stream1');
           }, 5000);
-      
+
           const resetResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disconnect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ streamId: 'stream1' })
           });
           expect(resetResponse.status).to.equal(204);
-      
+
           await waitForCondition(() => {
             const state = result.runtimeState.latest["srt"] as SrtInputState;
             return !state.connectedStreams.includes('stream1');
           }, 5000);
-      
+
           srt = await norsk!.output.srt({
             id: "av-srt2",
             mode: "caller",
@@ -862,17 +861,17 @@ describe("SRT Listener Input", () => {
             streamId: 'stream1'
           });
           srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-      
+
           await waitForCondition(() => {
             const state = result.runtimeState.latest["srt"] as SrtInputState;
             return state.connectedStreams.includes('stream1');
           }, 5000);
         });
-      
+
         it("should prevent reconnection of disabled stream", async () => {
           const compiled = await testDocument();
           const result = await go(norsk!, compiled, app);
-          
+
           const av = await _videoAndAudio(norsk!, "source");
           let srt = await norsk!.output.srt({
             id: "av-srt1",
@@ -882,24 +881,20 @@ describe("SRT Listener Input", () => {
             streamId: 'stream1'
           });
           srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-      
+
           await waitForCondition(() => {
             const state = result.runtimeState.latest["srt"] as SrtInputState;
             return state.connectedStreams.includes('stream1');
           }, 5000);
-      
+
           const disableResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disable`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ streamId: 'stream1' })
           });
           expect(disableResponse.status).to.equal(204);
-      
-          await waitForCondition(() => {
-            const state = result.runtimeState.latest["srt"] as SrtInputState;
-            return !state.connectedStreams.includes('stream1');
-          }, 5000);
-      
+
+
           srt = await norsk!.output.srt({
             id: "av-srt2",
             mode: "caller",
@@ -908,31 +903,40 @@ describe("SRT Listener Input", () => {
             streamId: 'stream1'
           });
           srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-      
+
+          // TODO: Again, I'd ideally like the SRT output (above) to be raising an event
+          // when it fails to connect/etc but for some reason it doesn't have that functionality
+          // we should at least wait for a while to see if it manages to connect
+          // because obviously it should not
+          let failedToConnect = false;
           await waitForCondition(() => {
             const state = result.runtimeState.latest["srt"] as SrtInputState;
-            return !state.connectedStreams.includes('stream1');
-          }, 5000);
+            return state.connectedStreams.includes('stream1');
+          }, 2500).catch(() => {
+            failedToConnect = true;
+          }).finally(() => {
+            expect(failedToConnect).is.true;
+          });
         });
-      
+
         it("should allow connection after enabling disabled stream", async () => {
           const compiled = await testDocument();
           const result = await go(norsk!, compiled, app);
-      
+
           const disableResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/disable`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ streamId: 'stream1' })
           });
           expect(disableResponse.status).to.equal(204);
-      
+
           const enableResponse = await fetch(`http://localhost:${port}/${result.components['srt'].id}/enable`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ streamId: 'stream1' })
           });
           expect(enableResponse.status).to.equal(204);
-      
+
           const av = await _videoAndAudio(norsk!, "source");
           const srt = await norsk!.output.srt({
             id: "av-srt1",
@@ -942,7 +946,7 @@ describe("SRT Listener Input", () => {
             streamId: 'stream1'
           });
           srt.subscribe([{ source: av, sourceSelector: selectAV }]);
-      
+
           await waitForCondition(() => {
             const state = result.runtimeState.latest["srt"] as SrtInputState;
             return state.connectedStreams.includes('stream1');
