@@ -159,7 +159,6 @@ export class SrtInput implements CreatedMediaNode {
       onCreate: (node) => {
         this.relatedMediaNodes.addOutput(node);
       }
-      //  ...this.cfg,
     })
   }
 
