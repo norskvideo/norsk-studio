@@ -7,7 +7,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
 
   const resetStream = async (streamId: string) => {
     try {
-      const response = await fetch(`${urls.nodeUrl}/disconnect`, {
+      const response = await fetch(`${urls.instanceUrl}/disconnect`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -31,7 +31,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
 
   const disableStream = async (streamId: string) => {
     try {
-      const response = await fetch(`${urls.nodeUrl}/disable`, {
+      const response = await fetch(`${urls.instanceUrl}/disable`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -55,7 +55,7 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
 
   const enableStream = async (streamId: string) => {
     try {
-      const response = await fetch(`${urls.nodeUrl}/enable`, {
+      const response = await fetch(`${urls.instanceUrl}/enable`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
