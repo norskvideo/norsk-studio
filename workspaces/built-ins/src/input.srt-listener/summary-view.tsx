@@ -1,25 +1,12 @@
 import { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { SrtInputCommand, SrtInputSettings, SrtInputState } from "./runtime";
 
-function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSettings, SrtInputState, SrtInputCommand >) {
+function SummaryView({ state, config, sendCommand }: ViewProps<SrtInputSettings, SrtInputState, SrtInputCommand >) {
   const connectedSources: string[] = [];
   const disconnectedSources: string[] = [];
 
   const resetStream = async (streamId: string) => {
     try {
-      const response = await fetch(`${urls.instanceUrl}/disconnect`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ streamId }),
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Stream failed to disconnect");
-      }
-
       sendCommand({
         type: "reset-source",
         streamId
@@ -31,21 +18,8 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
 
   const disableStream = async (streamId: string) => {
     try {
-      const response = await fetch(`${urls.instanceUrl}/disable`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ streamId }),
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Failed to disable stream");
-      }
-
       sendCommand({
-        type: "reset-source",
+        type: "disable-source",
         streamId
       });
     } catch (error) {
@@ -55,21 +29,9 @@ function SummaryView({ state, config, urls, sendCommand }: ViewProps<SrtInputSet
 
   const enableStream = async (streamId: string) => {
     try {
-      const response = await fetch(`${urls.instanceUrl}/enable`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ streamId }),
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Failed to enable stream");
-      }
-
+    
       sendCommand({
-        type: "reset-source",
+        type: "enable-source",
         streamId
       });
     } catch (error) {
