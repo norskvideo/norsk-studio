@@ -80,7 +80,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/reconnect": {
+    "/enable": {
         parameters: {
             query?: never;
             header?: never;
@@ -90,8 +90,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Reconnect to an RTMP stream
-         * @description Reconnects a previously disconnected RTMP stream
+         * Re-enables a disabled RTMP stream
+         * @description Re-enables a previously disconnected RTMP stream
          */
         post: {
             parameters: {
@@ -100,12 +100,12 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            /** @description The stream to reconnect */
+            /** @description The stream to re-enable */
             requestBody?: {
                 content: {
                     "application/json": {
                         /**
-                         * @description The name of the stream to reconnect
+                         * @description The name of the stream to re-enable
                          * @example camera1
                          */
                         streamName: string;
@@ -113,7 +113,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description The stream was successfully reconnected */
+                /** @description The stream was successfully re-enabled */
                 204: {
                     headers: {
                         [name: string]: unknown;
@@ -134,7 +134,83 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Failed to reconnect stream */
+                /** @description Failed to re-enable stream */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description A description of the error */
+                            error?: string;
+                            /** @description Additional error details */
+                            details?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disables an RTMP stream by id
+         * @description null
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description The stream to disable */
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @description The Id of the stream to disable
+                         * @example camera1
+                         */
+                        streamId: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The stream was successfully disabled */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The stream isn't known about, or invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description A description of the error */
+                            error?: string;
+                            /** @description Additional error details */
+                            details?: string;
+                        };
+                    };
+                };
+                /** @description Failed to disable stream */
                 500: {
                     headers: {
                         [name: string]: unknown;

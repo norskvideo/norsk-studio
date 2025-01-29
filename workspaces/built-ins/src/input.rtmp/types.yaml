@@ -51,13 +51,13 @@ paths:
                     type: string
                     description: Additional error details
 
-  /reconnect:
+  /enable:
     post:
-      summary: Reconnect to an RTMP stream
-      description: Reconnects a previously disconnected RTMP stream
+      summary: Re-enables a disabled RTMP stream
+      description: Re-enables a previously disconnected RTMP stream
       x-route-type: instance
       requestBody:
-        description: The stream to reconnect
+        description: The stream to re-enable
         content:
           application/json:
             schema:
@@ -66,11 +66,11 @@ paths:
               properties:
                 streamName:
                   type: string
-                  description: The name of the stream to reconnect
+                  description: The name of the stream to re-enable
                   example: camera1
       responses:
         204:
-          description: The stream was successfully reconnected
+          description: The stream was successfully re-enabled
         400:
           description: Stream is already connected or invalid request
           content:
@@ -85,7 +85,7 @@ paths:
                     type: string
                     description: Additional error details
         500:
-          description: Failed to reconnect stream
+          description: Failed to re-enable stream
           content:
             application/json:
               schema:
@@ -97,3 +97,51 @@ paths:
                   details:
                     type: string
                     description: Additional error details
+  
+  /disable:
+    post:
+      summary: Disables an RTMP stream by id
+      description: 
+      x-route-type: instance
+      requestBody:
+        description: The stream to disable
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ['streamId']
+              properties:
+                streamId:
+                  type: string
+                  description: The Id of the stream to disable
+                  example: camera1
+      responses:
+        204:
+          description: The stream was successfully disabled
+        400:
+          description: The stream isn't known about, or invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details
+        500:
+          description: Failed to disable stream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error
+                  details:
+                    type: string
+                    description: Additional error details
+

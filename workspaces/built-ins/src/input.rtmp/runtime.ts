@@ -20,16 +20,27 @@ export type RtmpInputSettings = Pick<SdkSettings
   };
 
 export type RtmpInputState = {
-  connectedSources: string[]
+  connectedStreams: string[],
+  disabledStreams: string[]
+
 }
 
 export type RtmpInputEvent = {
-  type: "source-connected" | "source-disconnected",
-  streamName: string,
-}
+  type: "source-connected", streamName: string
+} | { type: "source-disconnected", streamName: string }
+  | { type: "source-enabled", streamName: string }
+  | { type: "source-disabled", streamName: string }
+
+
 
 export type RtmpInputCommand = {
-  type: "disconnect-source",
+  type: "disable-source",
+  streamName: string,
+} | {
+  type: "enable-source",
+  streamName: string,
+} | {
+  type: "reset-source",
   streamName: string,
 }
 
@@ -39,7 +50,10 @@ export class RtmpInput implements CreatedMediaNode {
 
   norsk: Norsk;
   cfg: RtmpInputSettings;
-  activeStreams: string[] = [];
+
+  activeStreams = new Map<string, number>();
+  disabledStreams = new Set<string>();
+
   initialised: Promise<void>;
   rtmpServer: RtmpServerInputNode | null = null;
 
@@ -68,19 +82,50 @@ export class RtmpInput implements CreatedMediaNode {
         certFile: process.env.SSL_CERT_FILE,
         keyFile: process.env.SSL_KEY_FILE,
       },
-      onConnection: (connectionId: string, app: string, url: string) => {
+
+      onConnectionStatusChange: (_cid: string, status, streamKeys: RtmpServerStreamKeys) => {
+        switch (status) {
+          case 'disconnected':
+            for (const key of streamKeys) {
+              if (key.videoStreamKey.sourceName) {
+                const streamName = key.videoStreamKey.sourceName.sourceName;
+                if (streamName) {
+                  this.activeStreams.delete(streamName);
+                  this.updates.raiseEvent({ type: "source-disconnected", streamName });
+                  debuglog("Stream disconnected", { streamName, activeStreams: this.activeStreams });
+                }
+              }
+            }
+        }
+      },
+
+      onConnection: (connnectionId: string, app: string, url: string) => {
+        if (this.disabledStreams.has(connnectionId)) {
+          debuglog("Rejecting connection as stream is presently disabled", { url });
+          return {
+            accept: false
+          };
+        }
         if (app === this.cfg.appName) {
-          debuglog("Accepted connection with app name", { app, connectionId, url });
+          debuglog("Accepted connection with app name", { app, connnectionId, url });
           return { accept: true };
         } else {
-          debuglog("Rejecting connection with unknown app name", { app, connectionId, url });
+          debuglog("Rejecting connection with unknown app name", { app, connnectionId, url });
           return { accept: false };
         }
       },
 
       onStream: (cid: string, app: string, url: string, streamId: number, publishingName: string) => {
         debuglog("Stream request received", { publishingName, activeStreams: this.activeStreams });
-
+      
+        if (this.disabledStreams.has(publishingName)) {
+          debuglog("Rejecting connection as stream is presently disabled", { publishingName });
+          return {
+            accept: false,
+            reason: "Stream is disabled"
+          };
+        }
+    
         if (!this.cfg.streamNames.includes(publishingName)) {
           debuglog("Rejecting unknown stream name", { publishingName });
           return {
@@ -88,8 +133,8 @@ export class RtmpInput implements CreatedMediaNode {
             reason: "Unknown stream name"
           };
         }
-
-        if (this.activeStreams.includes(publishingName)) {
+      
+        if (this.activeStreams.has(publishingName)) {
           debuglog("Rejecting duplicate stream connection", { publishingName });
           return {
             accept: false,
@@ -97,13 +142,11 @@ export class RtmpInput implements CreatedMediaNode {
           };
         }
 
-        debuglog("Accepting stream", { publishingName });
-
-        this.activeStreams = [...this.activeStreams, publishingName];
-        this.updates.update({
-          connectedSources: [...this.activeStreams]
-        });
-
+        if (this.cfg.streamNames.includes(publishingName)) {
+          debuglog("Accepting stream", { publishingName });
+          this.activeStreams.set(publishingName, streamId);
+          this.updates.raiseEvent({ type: "source-connected", streamName: publishingName });
+        }
         return {
           accept: true,
           videoStreamKey: {
@@ -116,38 +159,42 @@ export class RtmpInput implements CreatedMediaNode {
           },
         };
       },
+   
+      onClose: () => {},
 
-
-      onConnectionStatusChange: (_cid: string, status: string, streamKeys: RtmpServerStreamKeys) => {
-        if (status !== "disconnected") {
-          return;
-        }
-        for (const key of streamKeys) {
-          if (key.videoStreamKey.sourceName) {
-            const streamName = key.videoStreamKey.sourceName.sourceName;
-            this.activeStreams = this.activeStreams.filter((s) => s !== streamName);
-            this.updates.update({
-              connectedSources: [...this.activeStreams]
-            });
-            this.updates.raiseEvent({ type: "source-disconnected", streamName });
-            debuglog("Stream disconnected", { streamName, activeStreams: this.activeStreams });
-          }
-        }
-      },
       onCreate: (node) => {
         this.relatedMediaNodes.addOutput(node);
       }
     });
   }
 
-  async disconnectStream(streamName: string) {
-    debuglog("Unsubscribing stream", { streamName, beforeState: this.activeStreams });
+  async enableSource(streamName: string) {
+    this.disabledStreams.delete(streamName);
+    this.updates.raiseEvent({
+      type: 'source-enabled',
+      streamName
+    });
+    debuglog("Stream enabled", { streamName, activeStreams: this.activeStreams });
+  }
 
+  async disableSource(streamName: string) {
+    this.disabledStreams.add(streamName);
+    await this.resetSource(streamName);
+    this.updates.raiseEvent({
+      type: 'source-disabled',
+      streamName
+    });
+  }
+
+  async resetSource(streamName: string) {
     if (this.rtmpServer) {
-      //  TODO: Add this functionality to the Norsk SDK
+      this.rtmpServer.closeConnection(streamName);
+      this.updates.raiseEvent({
+        type: 'source-disconnected',
+        streamName
+      })
     }
-
-    debuglog("Stream unsubscribed", { streamName, afterState: this.activeStreams });
+    debuglog("Stream reset", { streamName, afterState: this.activeStreams });
   }
 }
 
@@ -181,8 +228,14 @@ export default class RtmpInputDefinition implements ServerComponentDefinition<Rt
   async handleCommand(node: RtmpInput, command: RtmpInputCommand) {
     const commandType = command.type;
     switch (commandType) {
-      case 'disconnect-source':
-        await node.disconnectStream(command.streamName);
+      case 'disable-source':
+        await node.disableSource(command.streamName);
+        break;
+      case 'enable-source':
+        await node.enableSource(command.streamName);
+        break;
+      case 'reset-source':
+        await node.resetSource(command.streamName);
         break;
       default:
         assertUnreachable(commandType);
@@ -206,13 +259,13 @@ export default class RtmpInputDefinition implements ServerComponentDefinition<Rt
             }
 
             const state = runtime.updates.latest();
-            console.log("Current state during disconnect:", state);
+            debuglog("Current state during disconnect:", state);
 
-            if (!state.connectedSources.includes(streamName)) {
+            if (!state.connectedStreams.includes(streamName)) {
               return res.status(404).json({ error: 'Stream not found or not connected' });
             }
             runtime.updates.sendCommand({
-              type: 'disconnect-source',
+              type: 'reset-source',
               streamName
             })
             res.status(204).send();
@@ -222,6 +275,45 @@ export default class RtmpInputDefinition implements ServerComponentDefinition<Rt
           }
         }
       },
+      {
+        ...post<paths>('/enable', paths),
+        handler: ({ runtime }) => async (req, res) => {
+          try {
+            const { streamName } = req.body;
+            if (!streamName) {
+              return res.status(400).json({ error: 'Stream name is required' });
+            }
+
+            runtime.updates.sendCommand({
+              type: 'enable-source',
+              streamName
+            })
+            res.status(204).send();
+          } catch (error) {
+            console.error('Error in disconnect handler:', error);
+            res.status(500).json({ error: 'Failed to disconnect stream' });
+          }
+        }
+      },
+      {
+        ...post<paths>('/disable', paths),
+        handler: ({ runtime }) => async (req, res) => {
+          try {
+            const { streamName } = req.body;
+            if (!streamName) {
+              return res.status(400).json({ error: 'Stream name is required' });
+            }
+            runtime.updates.sendCommand({
+              type: 'disable-source',
+              streamName
+            })
+            res.status(204).send();
+          } catch (error) {
+            console.error('Error in disconnect handler:', error);
+            res.status(500).json({ error: 'Failed to disconnect stream' });
+          }
+        }
+      }
     ];
   }
 }

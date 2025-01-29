@@ -39,15 +39,21 @@ export default function({
         }
       },
       runtime: {
-        initialState: () => ({ connectedSources: [] }),
+        initialState: () => ({ connectedStreams: [], disabledStreams: [] }),
         handleEvent(ev, state) {
           const evType = ev.type;
           switch (evType) {
             case "source-connected":
-              state.connectedSources.push(ev.streamName)
+              state.connectedStreams.push(ev.streamName)
               break;
             case "source-disconnected":
-              state.connectedSources = state.connectedSources.filter((s) => s !== ev.streamName)
+              state.connectedStreams = state.connectedStreams.filter((s) => s !== ev.streamName)
+              break;
+            case "source-enabled":
+              state.disabledStreams = state.disabledStreams.filter((streamName) => streamName !== ev.streamName)
+              break;
+            case "source-disabled":
+              state.disabledStreams.push(ev.streamName)
               break;
             default:
               assertUnreachable(evType)
