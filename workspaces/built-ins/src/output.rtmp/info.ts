@@ -51,7 +51,8 @@ export default function ({
       inline: InlineView,
     },
     configForm: {
-      form: {
+      form: { 
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
         url: { help: "The URL of the remote RTMP server to connect to, including the full stream path and credentials", hint: { type: "text", validation: Z.string().min(5) } },
         bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
         avDelayMs: { help: "How many milliseconds to delay A/V to account for subtitles", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 50.0 } },

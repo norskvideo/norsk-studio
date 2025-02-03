@@ -6,6 +6,7 @@ import { CustomSinkNode, SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/
 export type StatisticsOutputSettings = {
   id: string;
   displayName: string,
+  notes?: string,
 };
 
 export type StatisticsOutputState = {

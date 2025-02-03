@@ -18,7 +18,8 @@ export type BrowserOverlayConfig = {
   },
   id: string,
   displayName: string,
-  url: string
+  url: string,
+  notes?: string,
 }
 
 export type BrowserOverlayState = {

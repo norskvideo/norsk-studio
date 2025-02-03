@@ -6,6 +6,7 @@ import { CustomSourceNode } from '@norskvideo/norsk-studio/lib/extension/base-no
 export type SilenceConfig = {
   id: string,
   displayName: string,
+  notes?: string,
   sampleRate: SampleRate,
   channelLayout: ChannelLayout
 }

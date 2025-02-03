@@ -68,6 +68,7 @@ export default function({
         hardware: HardwareSelection()
       },
       form: {
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
       }
     }
   });

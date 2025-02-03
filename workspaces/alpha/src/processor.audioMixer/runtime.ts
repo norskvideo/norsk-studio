@@ -9,6 +9,7 @@ export type AudioMixerSettings = {
   displayName: string;
   defaultGain: number;
   channelLayout: ChannelLayout;
+  notes?: string,
 };
 
 export type AudioMixerLevels = {

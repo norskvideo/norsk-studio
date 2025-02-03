@@ -6,6 +6,7 @@ import { CustomSinkNode, SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/
 export type RtmpOutputSettings = {
   id: string;
   displayName: string,
+  notes?: string,
   url: string;
   bufferDelayMs?: SdkSettings['bufferDelayMs'];
   avDelayMs?: SdkSettings['avDelayMs'];

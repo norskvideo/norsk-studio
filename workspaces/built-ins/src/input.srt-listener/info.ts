@@ -71,6 +71,13 @@ export default function({
       },
       configForm: {
         form: {
+          notes: {
+            help: "Notes about this component",
+            hint: {
+              type: 'text',
+              optional: true
+            }
+          },
           port: {
             help: "The port this SRT input will listen on", hint: {
               type: 'numeric',
@@ -125,7 +132,7 @@ export default function({
               global: unique('sourceName')
             }
           },
-        }
+        },
       }
     });
 }

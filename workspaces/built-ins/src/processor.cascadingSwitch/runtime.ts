@@ -15,6 +15,7 @@ import { CustomAutoDuplexNode, SubscriptionOpts } from "@norskvideo/norsk-studio
 export type CascadingSwitchConfig = {
   id: MediaNodeId,
   displayName: string,
+  notes?: string,
   resolution: { width: number, height: number },
   frameRate: { frames: number, seconds: number },
   sampleRate: SampleRate,

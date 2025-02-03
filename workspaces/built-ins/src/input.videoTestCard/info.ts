@@ -29,6 +29,13 @@ export default function({
     },
     configForm: {
       form: {
+        notes: {
+          help: "Notes about this component",
+          hint: {
+            type: 'text',
+            optional: true
+          }
+        },
         resolution: {
           help: "The resolution of the test card stream",
           hint: { type: 'select', options: Resolutions, defaultValue: { width: 1280, height: 720 } }

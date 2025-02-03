@@ -13,6 +13,7 @@ import { paths } from './types';
 export type SrtOutputSettings = Pick<SdkSettings, 'port' | 'host' | 'mode' | 'passphrase' | 'streamId' | 'bufferDelayMs' | 'avDelayMs'> & {
   id: string,
   displayName: string,
+  notes?: string,
   socketOptions: SocketOptions
 };
 
@@ -52,10 +53,10 @@ function post<T>(path: keyof T, paths: Transmuted<T>) {
 class SrtOutput extends CustomSinkNode {
   norsk: Norsk;
   cfg: SrtOutputSettings;
+  // srtOutputNode: SrtOutputNode = new SrtOutputNode()
   enabled: boolean = true;
   initialised: Promise<void>;
-  nodeCounter: number = 0;
-
+  
   static async create(norsk: Norsk, cfg: SrtOutputSettings) {
     const node = new SrtOutput(cfg, norsk);
     await node.initialised;
@@ -73,7 +74,7 @@ class SrtOutput extends CustomSinkNode {
     const node = await this.norsk.output.srt({
       ...this.cfg,
       ...this.cfg.socketOptions,
-      id: this.incrementNodeId(this.cfg.id),
+      id: this.cfg.id,
     });
 
     this.setup({ sink: node });
@@ -93,11 +94,6 @@ class SrtOutput extends CustomSinkNode {
       await this.close()
       debuglog("Output disabled", { id: this.id });
       }
-  }
-
-  incrementNodeId(id: string): string {
-    this.nodeCounter++;
-    return `${id}-${this.nodeCounter}`;
   }
 }
 

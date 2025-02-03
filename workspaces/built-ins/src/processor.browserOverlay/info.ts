@@ -62,6 +62,7 @@ export default function({
       },
       form: {
         url: { help: "URL to render on top of the video", hint: { type: 'text', validation: Z.string().url(), defaultValue: "" } },
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
       }
     }
   });

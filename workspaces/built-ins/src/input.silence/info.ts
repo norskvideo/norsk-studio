@@ -21,6 +21,13 @@ export default function({ defineComponent, Audio }: Registration) {
     },
     configForm: {
       form: {
+        notes: {
+          help: "Notes about this component",
+          hint: {
+            type: 'text',
+            optional: true
+          }
+        },
         sampleRate: {
           help: "Samplerate in Hz of the generated audio",
           hint: {

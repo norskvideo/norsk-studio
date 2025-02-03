@@ -72,6 +72,7 @@ export default function(R: Registration) {
             }
           }
         },
+        notes: { help: "Additional notes about this component", hint: { type: 'text', optional: true } },
       }
     },
     designtime: {

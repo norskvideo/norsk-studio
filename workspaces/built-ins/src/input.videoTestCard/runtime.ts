@@ -5,8 +5,8 @@ import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/l
 
 export type VideoTestcardGeneratorSettings = Pick<SdkSettings, 'resolution' | 'frameRate' | 'sourceName' | 'pattern'> & {
   id: string,
-
   displayName: string,
+  notes?: string,
 };
 
 export default class VideoTestCardDefinition implements ServerComponentDefinition<VideoTestcardGeneratorSettings, SimpleInputWrapper> {

@@ -113,7 +113,8 @@ export default function({
             type: "select",
             options: channelLayouts().map((ch) => { return { value: ch as string, display: ch as string } }),
           }
-        }
+        },
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
       }
     }
   });

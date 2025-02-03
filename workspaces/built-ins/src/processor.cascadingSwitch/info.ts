@@ -134,6 +134,7 @@ export default function({
             defaultValue: []
           }
         },
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
       },
     },
   });

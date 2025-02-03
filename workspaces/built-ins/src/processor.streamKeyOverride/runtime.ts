@@ -16,6 +16,7 @@ export type StreamKeyOverrideConfig = {
   programNumber?: number,
   streamId?: number,
   renditionName?: string,
+  notes?: string,
 }
 
 export default class StreamKeyOverrideDefinition implements ServerComponentDefinition<StreamKeyOverrideConfig, StreamKeyOverride> {

@@ -55,6 +55,7 @@ export default function({
     configForm: {
       form: {
         defaultGain: { help: "The default gain for audio dB", hint: { type: 'numeric', validation: Z.number().gte(-40).lte(40), defaultValue: 0 } },
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
       }
     }
   });

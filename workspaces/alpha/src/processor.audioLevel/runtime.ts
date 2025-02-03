@@ -7,6 +7,7 @@ export type AudioLevelSettings = {
   id: string;
   displayName: string;
   defaultGain: Db;
+  notes?: string,
 };
 
 export type AudioLevelState = {

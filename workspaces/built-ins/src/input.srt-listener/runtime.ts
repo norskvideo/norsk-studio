@@ -17,6 +17,7 @@ export type SrtInputSettings = Pick<SdkSettings
   & {
     id: string,
     displayName: string,
+    notes?: string,
 
     // We'll either only allow the stream ids provided
     // or we'll assign them automatically by index
@@ -61,7 +62,6 @@ export class SrtInput implements CreatedMediaNode {
   srtServer: SrtInputNode | null = null;
 
   updates: RuntimeUpdates<SrtInputState, SrtInputCommand, SrtInputEvent>;
-  nodeCounter: number = 0;
 
   static async create(norsk: Norsk, cfg: SrtInputSettings, updates: RuntimeUpdates<SrtInputState, SrtInputCommand, SrtInputEvent>) {
     const node = new SrtInput(norsk, cfg, updates);

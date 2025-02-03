@@ -4,6 +4,7 @@ import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/l
 export type UdpTsInputSettings = Pick<SdkSettings, 'interface' | 'timeout' | 'rtpDecapsulate' | 'sourceName' | 'host' | 'port'> & {
   id: string,
   displayName: string,
+  notes?: string,
 }
 
 export default class UdpTsInputDefinition implements ServerComponentDefinition<UdpTsInputSettings, SimpleInputWrapper> {

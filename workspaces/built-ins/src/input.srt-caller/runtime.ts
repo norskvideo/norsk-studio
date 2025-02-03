@@ -7,7 +7,8 @@ import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 export type SrtInputSettings = Pick<SdkSettings, 'port' | 'host' | 'sourceName' | 'passphrase' | 'streamId'> & {
   id: string,
   displayName: string,
-  socketOptions: SocketOptions
+  socketOptions: SocketOptions,
+  notes?: string,
 };
 
 export default class SrtInputDefinition implements ServerComponentDefinition<SrtInputSettings, SimpleInputWrapper> {
@@ -33,7 +34,6 @@ export default class SrtInputDefinition implements ServerComponentDefinition<Srt
               break;
             default:
               assertUnreachable(status);
-
           }
         },
         ...cfg

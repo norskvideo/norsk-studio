@@ -29,6 +29,7 @@ export type AutoCmafConfig = {
   id: string,
   displayName: string,
   name: string,
+  notes?: string,
   sessionId: boolean,
   segments: AutoCmafSegment,
   s3Destinations: AutoCmafS3Destination[],
@@ -172,7 +173,6 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
       }
     ];
   }
-
 }
 
 export class AutoCmaf extends CustomSinkNode {

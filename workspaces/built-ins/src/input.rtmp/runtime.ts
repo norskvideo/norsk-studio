@@ -15,6 +15,7 @@ export type RtmpInputSettings = Pick<SdkSettings
   & {
     id: string,
     displayName: string,
+    notes?: string,
     appName: string,
     streamNames: string[],
   };

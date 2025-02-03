@@ -29,6 +29,7 @@ export type OnscreenGraphicConfig = {
   },
   id: string,
   displayName: string,
+  notes?: string,
   initialGraphic?: OnscreenGraphicFile,
   initialPosition?: OnscreenGraphicPosition;
 }

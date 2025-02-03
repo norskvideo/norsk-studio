@@ -5,6 +5,7 @@ import { SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/extension/base-n
 export type UdpTsOutputSettings = Pick<SdkSettings, 'port' | 'destinationHost' | 'interface' | 'bufferDelayMs' | 'avDelayMs'> & {
   id: string,
   displayName: string,
+  notes?: string,
 };
 
 export default class UdpTsOutputDefinition implements ServerComponentDefinition<UdpTsOutputSettings, SimpleSinkWrapper> {

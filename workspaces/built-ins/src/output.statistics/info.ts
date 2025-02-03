@@ -38,7 +38,9 @@ export default function({
       inline: InlineView
     },
     configForm: {
-      form: {}
+      form: {
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
+      }
     }
   });
 }

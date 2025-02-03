@@ -11,6 +11,7 @@ export type FixedLadderConfig = {
   }
   id: string,
   displayName: string,
+  notes?: string
   rungs: LadderRungDefinition[]
 }
 

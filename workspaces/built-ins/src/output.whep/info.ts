@@ -50,6 +50,7 @@ export default function(R: Registration) {
         iceServers: GlobalIceServers(R)
       },
       form: {
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
         bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
         showPreview: { help: "Show video preview", hint: {type: 'boolean', defaultValue: true }}
       },

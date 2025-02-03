@@ -12,6 +12,7 @@ import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util
 export type PreviewOutputSettings = {
   id: string;
   displayName: string,
+  notes?: string,
   bufferDelayMs?: SdkSettings['bufferDelayMs'],
   skipTranscode?: boolean,
   showPreview?: boolean,
@@ -25,7 +26,6 @@ export type PreviewOutputState = {
   url?: string
   levels?: { peak: number, rms: number }
 }
-
 
 export type PreviewOutputEvent = {
   type: 'url-published',

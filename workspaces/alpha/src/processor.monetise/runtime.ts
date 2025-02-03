@@ -18,7 +18,8 @@ export type MonetiseOutputSettings = {
   __global: {
     iceServers: IceServer[];
     hardware?: HardwareAccelerationType;
-  }
+  },
+  notes?: string,
 };
 
 export type MonetiseOutputState = {

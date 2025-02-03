@@ -6,7 +6,8 @@ export type LatencyStatsOutputSettings = {
   id: string;
   displayName: string,
   startNodeId: string,
-  endNodeId: string
+  endNodeId: string,
+  notes?: string,
 };
 
 export type LatencyStatsOutputState = {

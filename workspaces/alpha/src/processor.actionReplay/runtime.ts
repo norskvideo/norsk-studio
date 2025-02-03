@@ -15,7 +15,8 @@ export type ActionReplayConfig = {
   displayName: string,
   __global: {
     hardware?: HardwareAccelerationType,
-  }
+  },
+  notes?: string,
 }
 
 export type ActionReplayState = {

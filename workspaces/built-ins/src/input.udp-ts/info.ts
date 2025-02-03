@@ -26,6 +26,7 @@ export default function({
       },
       configForm: {
         form: {
+          notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
           port: { help: "The receiving port", hint: { type: 'numeric', validation: Port, defaultValue: 5001, global: unique('port') } },
           host: { help: "The receiving IP address/hostname", hint: { type: 'text', validation: Hostname, defaultValue: "127.0.0.1" } },
           sourceName: { help: "Source name to identify this by", hint: { type: 'text', validation: SourceName, defaultValue: "udp-ts", global: unique('sourceName') } },

@@ -8,6 +8,7 @@ export type WhisperTranscribeConfig = {
   model: string,
   translate: boolean,
   language: string,
+  notes?: string,
 }
 
 export default class WhisperTranscribeDefinition implements ServerComponentDefinition<WhisperTranscribeConfig, WhisperTranscribeNode> {

@@ -58,6 +58,7 @@ export default function(registration: Registration) {
     },
     configForm: {
       form: {
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
         port: {
           help: "The port this SRT output will connect to or listen on",
           hint: {

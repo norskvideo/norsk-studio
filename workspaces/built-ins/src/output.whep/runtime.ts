@@ -9,6 +9,7 @@ import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util
 export type WhepOutputSettings = {
   id: string;
   displayName: string,
+  notes?: string,
   bufferDelayMs?: SdkSettings['bufferDelayMs'];
   showPreview?: boolean;
   __global: {

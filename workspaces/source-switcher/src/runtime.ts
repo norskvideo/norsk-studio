@@ -35,7 +35,8 @@ export type SourceSwitchConfig = {
   __global: {
     iceServers: IceServer[];
     hardware?: HardwareAccelerationType,
-  }
+  },
+  notes?: string,
 
   // Need an image uploaded
   // that'll need to live in the global data dir

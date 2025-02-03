@@ -60,6 +60,7 @@ export default function(R: Registration) {
         hardware: HardwareSelection()
       },
       form: {
+        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
       }
     }
   });
