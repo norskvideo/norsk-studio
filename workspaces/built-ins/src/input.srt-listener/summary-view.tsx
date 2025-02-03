@@ -59,54 +59,65 @@ function SummaryView({ state, config, sendCommand }: ViewProps<SrtInputSettings,
       disconnectedSources.push(streamId)
     }
   })
-  return <div className="dark:text-white text-black mb-3 w-60">
-    <div id="srt-sources-connected">
-      <span>Connected Sources</span>
-      <ul>
-        {connectedSources.map((streamId) => {
-          return <li key={streamId} className="text-green-300">{streamId}
-             <button
-                onClick={() => handleResetStream(streamId)}
-                className="ml-2 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
-              >
-                Reset
-              </button>
-             <button
-                onClick={() => handleDisableStream(streamId)}
-                className="ml-2 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
-              >
-                Disable
-              </button>
-          </li>
-        })}
-      </ul>
+  return (
+    <div className="dark:text-white text-black w-60">
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold mb-2 dark:text-gray-300">Connected Sources</h3>
+        <ul className="space-y-2">
+          {connectedSources.map((streamId) => (
+            <li key={streamId} className="flex items-center justify-between group">
+              <span className="text-green-400 font-medium">{streamId}</span>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleResetStream(streamId)}
+                  className="opacity-80 group-hover:opacity-100 px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => handleDisableStream(streamId)}
+                  className="opacity-80 group-hover:opacity-100 px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                >
+                  Disable
+                </button>
+              </div>
+            </li>
+          ))}
+          {connectedSources.length === 0 && (
+            <li className="text-sm text-gray-500 dark:text-gray-400 italic">No connected sources</li>
+          )}
+        </ul>
+      </div>
+      <div>
+        <h3 className="text-sm font-semibold mb-2 dark:text-gray-300">Disconnected Sources</h3>
+        <ul className="space-y-2">
+          {disconnectedSources.map((streamId) => (
+            <li key={streamId} className="flex items-center justify-between group">
+              <span className="text-orange-300 font-medium">{streamId}</span>
+              {state.disabledStreams.includes(streamId) ? (
+                <button
+                  onClick={() => handleEnableStream(streamId)}
+                  className="opacity-80 group-hover:opacity-100 px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                >
+                  Enable
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleDisableStream(streamId)}
+                  className="opacity-80 group-hover:opacity-100 px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                >
+                  Disable
+                </button>
+              )}
+            </li>
+          ))}
+          {disconnectedSources.length === 0 && (
+            <li className="text-sm text-gray-500 dark:text-gray-400 italic">No disconnected sources</li>
+          )}
+        </ul>
+      </div>
     </div>
-    <div id="srt-sources-disconnected" className="mt-3">
-      <span>Disconnected Sources</span>
-      <ul>
-        {disconnectedSources.map((streamId) => {
-          return <li key={streamId} className="text-orange-300">{streamId}
-            { state.disabledStreams.includes(streamId) ?
-             <button
-                onClick={() => handleEnableStream(streamId)}
-                className="ml-2 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
-              >
-                Enable
-              </button>
-              :
-             <button
-                onClick={() => handleDisableStream(streamId)}
-                className="ml-2 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
-              >
-                Disable
-              </button>
-             }
-
-          </li>
-        })}
-      </ul>
-    </div>
-  </div>
+  );
 }
 
 export default SummaryView;
