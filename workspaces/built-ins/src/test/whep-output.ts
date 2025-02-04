@@ -13,7 +13,10 @@ import WhepInfo from "../output.whep/info";
 import { Av, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { SimpleInputWrapper, SimpleSinkWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
-
+import { AddressInfo } from 'net';
+import { Server } from 'http';
+import fetch from "node-fetch";
+import express from 'express';
 async function defaultRuntime(): Promise<RuntimeSystem> {
   const runtime = emptyRuntime();
   await registerAll(runtime);
@@ -48,11 +51,29 @@ describe("WHEP Output", () => {
   let whep: SimpleSinkWrapper = undefined!;
   let source: SimpleInputWrapper = undefined!;
 
+  // afterEach(async () => {
+  //   await norsk?.close();
+  //   await page?.close();
+  //   await browser?.close();
+  //   await new Promise(f => setTimeout(f, 1000));
+  // })
+
   afterEach(async () => {
-    await norsk?.close();
-    await page?.close();
-    await browser?.close();
-  })
+    try {
+      if (page) {
+        await page.close().catch(() => {});
+      }
+      if (browser) {
+        await browser.close().catch(() => {});
+      }
+      if (norsk) {
+        await norsk.close().catch(() => {});
+      }
+      await new Promise(f => setTimeout(f, 1000));
+    } catch (error) {
+      console.error('Error in afterEach cleanup:', error);
+    }
+  });
 
   beforeEach(async () => {
     norsk = await Norsk.connect({ onShutdown: () => { } });
@@ -158,5 +179,205 @@ describe("WHEP Output", () => {
       void doIt();
     })
   })
+
+  describe("WHEP Output API", () => {
+    let norsk: Norsk | undefined = undefined;
+    let whep: SimpleSinkWrapper = undefined!;
+    let source: SimpleInputWrapper = undefined!;
+    let browser: Browser | undefined = undefined;
+    let page: Page | undefined = undefined;
+    let app: express.Application;
+    let server: Server;
+    let port: number;
+    let testCounter = 0;
+  
+    beforeEach(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      app = express();
+      app.use(express.json());
+      server = app.listen(0);
+      port = (server.address() as AddressInfo).port;
+      testCounter++;
+      
+      const compiled = await testDocument();
+      const result = await go(norsk, compiled, app);
+      whep = result.components["whep"] as SimpleSinkWrapper;
+      source = await videoAndAudio(norsk, `source-${testCounter}`);
+      whep.subscribe([new StudioNodeSubscriptionSource(
+        source,
+        testSourceDescription(),
+        { type: "take-all-streams", select: Av }
+      )]);
+    });
+  
+    afterEach(async () => {
+      try {
+        if (page) {
+          await page.close().catch(() => {});
+        }
+        if (browser) {
+          await browser.close().catch(() => {});
+        }
+        if (server) {
+          await new Promise<void>((resolve) => {
+            server?.close(() => resolve());
+          });
+        }
+        if (norsk) {
+          await norsk.close().catch(() => {});
+        }
+        await new Promise(f => setTimeout(f, 1000));
+      } catch (error) {
+        console.error('Error in afterEach cleanup:', error);
+      }
+    });
+  
+    it("should handle initial state correctly", async () => {
+      browser = await puppeteer.launch({
+        headless: 'new',
+        executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+  
+      page = await browser.newPage();
+      
+      await new Promise<void>((r) => {
+        async function doIt() {
+          await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+          await page?.waitForSelector('video', { timeout: 100.0 })
+            .catch(() => {
+              setTimeout(() => void doIt(), 100.0);
+            }).then((v) => {
+              expect(v).exist;
+            }).finally(() => {
+              r();
+            });
+        }
+        void doIt();
+      });
+    });
+  
+    it("should handle disable and enable cycle", async () => {
+      browser = await puppeteer.launch({
+        headless: 'new',
+        executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+  
+      page = await browser.newPage();
+
+      await new Promise<void>((r) => {
+        async function doIt() {
+          await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+          await page?.waitForSelector('video', { timeout: 100.0 })
+            .catch(() => {
+              setTimeout(() => void doIt(), 100.0);
+            }).then((v) => {
+              expect(v).exist;
+            }).finally(() => {
+              r();
+            });
+        }
+        void doIt();
+      });
+  
+      const disableResponse = await fetch(`http://localhost:${port}/${whep.id}/disable`, {
+        method: 'POST'
+      });
+      expect(disableResponse.status).to.equal(204);
+  
+      await page.reload();
+      await new Promise<void>((r) => {
+        async function doIt() {
+          await page?.waitForSelector('video', { timeout: 1000.0 })
+            .catch(() => {
+            }).then((v) => {
+              expect(v).not.exist;
+            }).finally(() => {
+              r();
+            });
+        }
+        void doIt();
+      });
+  
+      const enableResponse = await fetch(`http://localhost:${port}/${whep.id}/enable`, {
+        method: 'POST'
+      });
+      expect(enableResponse.status).to.equal(204);
+  
+      await page.reload();
+
+      // Verify video comes back
+      await new Promise<void>((r) => {
+        async function doIt() {
+          await page?.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+          await page?.waitForSelector('video', { timeout: 100.0 })
+            .catch(() => {
+              setTimeout(() => void doIt(), 100.0);
+            }).then((v) => {
+              expect(v).exist;
+            }).finally(() => {
+              r();
+            });
+        }
+        void doIt();
+      });
+    });
+  
+    it("handles invalid API requests appropriately", async () => {
+      const alreadyEnabledResponse = await fetch(`http://localhost:${port}/${whep.id}/enable`, {
+        method: 'POST'
+      });
+      expect(alreadyEnabledResponse.status).to.equal(400);
+  
+      const disableResponse = await fetch(`http://localhost:${port}/${whep.id}/disable`, {
+        method: 'POST'
+      });
+      expect(disableResponse.status).to.equal(204);
+  
+      const alreadyDisabledResponse = await fetch(`http://localhost:${port}/${whep.id}/disable`, {
+        method: 'POST'
+      });
+      expect(alreadyDisabledResponse.status).to.equal(400);
+    });
+  
+    it("should maintain disabled state across source changes", async () => {
+      browser = await puppeteer.launch({
+        headless: 'new',
+        executablePath: process.env.BROWSER_FOR_TESTING ? process.env.BROWSER_FOR_TESTING : undefined,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+  
+      page = await browser.newPage();
+  
+      const disableResponse = await fetch(`http://localhost:${port}/${whep.id}/disable`, {
+        method: 'POST'
+      });
+      expect(disableResponse.status).to.equal(204);
+  
+      // Change source
+      const newSource = await videoAndAudio(norsk!, 'new-source');
+      whep.subscribe([new StudioNodeSubscriptionSource(
+        newSource,
+        testSourceDescription(),
+        { type: "take-all-streams", select: Av }
+      )]);
+  
+      // Verify still no video after source change
+      await page.goto('http://127.0.0.1:8080/whep/whep/whep.html');
+      await new Promise<void>((r) => {
+        async function doIt() {
+          await page?.waitForSelector('video', { timeout: 1000.0 })
+            .catch(() => {
+            }).then((v) => {
+              expect(v).not.exist;
+            }).finally(() => {
+              r();
+            });
+        }
+        void doIt();
+      });
+    });
+  });
 });
 
