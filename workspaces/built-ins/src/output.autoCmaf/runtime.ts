@@ -10,7 +10,9 @@ import { CryptoDetails } from '../shared/drm/cpix';
 import { ezdrmInit } from '../shared/drm/ezdrm';
 import { axinomInit } from '../shared/drm/axinom';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
+import { Media } from '@norskvideo/norsk-studio/lib/extension/client-types';
 
+import util from 'util';
 
 export type AutoCmafS3Destination = {
   host: string,
@@ -240,6 +242,7 @@ export class AutoCmaf extends CustomSinkNode {
       source: SourceMediaNode
     }[] = [];
 
+    debuglog("Handling context in AutoCMAF", [...this.currentSources.values()].map(s => [ s.streams.select, s.activeSourceKeys(), util.inspect(s.latestStreams(), { depth: null})] ));
 
     // Build up a list of actually active streams
     this.currentSources.forEach((subscription) => {
@@ -438,7 +441,21 @@ export class AutoCmaf extends CustomSinkNode {
       this.defaultProgramNumber = 0;
       this.defaultSourceName = '';
     }
-    this.mv?.subscribe(defaultSources);
+    this.mv?.subscribe(defaultSources, (ctx) => {
+      // Basic validation to stop multipublishing multivariant playlist
+      let videos = 0;
+      let audios = 0;
+      this.currentSources.forEach(src => {
+        debuglog(src.info?.name + " - " + util.inspect(src.latestStreams().map(s => s.metadata), {depth: null}));
+        videos += src.streams.select.filter((x: Media) => x == "video").length;
+        audios += src.streams.select.filter((x: Media) => x == "audio").length;
+      })
+      if (ctx.streams.filter(s => s.message.case === "video").length >= videos && ctx.streams.filter(s => s.message.case === "audio").length >= audios) {
+        return "accept";
+      } else {
+        return "deny";
+      }
+    });
 
     for (const mv of this.currentMultiVariants) {
       const sources = this.currentMedia.flatMap((m) => {
