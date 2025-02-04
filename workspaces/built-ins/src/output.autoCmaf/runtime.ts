@@ -3,7 +3,6 @@ import { AdMarker, AutoProcessorMediaNode, CmafDestinationSettings, CmafMultiVar
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
 import { CreatedMediaNode, InstanceRouteInfo, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
-import { ReportBuilder } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { debuglog, infolog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { AxinomConfig, EzDrmConfig } from '@norskvideo/norsk-studio/lib/shared/config';
 import { CryptoDetails } from '../shared/drm/cpix';
@@ -57,7 +56,7 @@ export type CmafOutputState = {
 
 export type CmafOutputEvent = {
   type: 'url-published' | 'output-enabled' | 'output-disabled',
-  url: string,
+  url?: string,
   drmToken?: string,
 };
 
@@ -87,13 +86,13 @@ function post<T>(path: keyof T, paths: Transmuted<T>) {
 
 
 export default class AutoCmafDefinition implements ServerComponentDefinition<AutoCmafConfig, AutoCmaf, CmafOutputState, CmafOutputCommand, CmafOutputEvent> {
-  async create(norsk: Norsk, cfg: AutoCmafConfig, cb: OnCreated<AutoCmaf>, { updates, report }: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
-    const node = await AutoCmaf.create(norsk, cfg, report);
+  async create(norsk: Norsk, cfg: AutoCmafConfig, cb: OnCreated<AutoCmaf>, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
+    const node = await AutoCmaf.create(norsk, cfg, runtime);
     cb(node);
     const mv = node.mv;
     if (mv) {
-      report.registerOutput(cfg.id, mv.url);
-      updates.raiseEvent({ type: 'url-published', url: mv.url, drmToken: node.crypto?.token });
+      runtime.report.registerOutput(cfg.id, mv.url);
+      runtime.updates.raiseEvent({ type: 'url-published', url: mv.url, drmToken: node.crypto?.token });
     }
   }
 
@@ -134,7 +133,6 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
 
             runtime.updates.raiseEvent({
               type: 'output-enabled',
-              url: state.url ?? '',
             });
 
             res.sendStatus(204);
@@ -161,7 +159,6 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
 
             runtime.updates.raiseEvent({
               type: 'output-disabled',
-              url: state.url ?? '',
             });
 
             res.sendStatus(204);
@@ -199,21 +196,20 @@ export class AutoCmaf extends CustomSinkNode {
   destinations: CmafDestinationSettings[];
 
   advertDestinations: string[] = [];
-  report: ReportBuilder;
+  runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>;
   enabled: boolean = true;
-  nodeCounter: number = 0;
 
-  static async create(norsk: Norsk, cfg: AutoCmafConfig, report: ReportBuilder) {
-    const node = new AutoCmaf(cfg, norsk, report);
+  static async create(norsk: Norsk, cfg: AutoCmafConfig, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
+    const node = new AutoCmaf(cfg, norsk, runtime);
     await node.initialised;
     return node;
   }
 
-  constructor(cfg: AutoCmafConfig, norsk: Norsk, report: ReportBuilder) {
+  constructor(cfg: AutoCmafConfig, norsk: Norsk, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
     super(cfg.id);
     this.cfg = cfg;
     this.norsk = norsk;
-    this.report = report;
+    this.runtime = runtime;
 
     if (this.cfg.sessionId) {
       this.sessionId = (Math.random() + 1).toString(36).substring(7);
@@ -285,8 +281,7 @@ export class AutoCmaf extends CustomSinkNode {
       mpdAdditions: "",
     } : {};
     const mv = await this.norsk.output.cmafMultiVariant({
-      id: this.incrementNodeId(`${this.cfg.id}-multivariant`),
-      //id: `${this.cfg.id}-multivariant`,
+      id: `${this.cfg.id}-multivariant`,
       playlistName: this.cfg.name,
       destinations: this.destinations,
       ...mvCryptoSettings,
@@ -295,15 +290,11 @@ export class AutoCmaf extends CustomSinkNode {
     this.mv = mv;
   }
 
-  incrementNodeId(id: string): string {
-    this.nodeCounter++;
-    return `${id}-${this.nodeCounter}`;
-  }
-
   async enableOutput() {
     if (!this.enabled) {
       this.enabled = true;
       await this.handleContext();
+      this.runtime.updates.raiseEvent({type: 'output-enabled' })
       debuglog("Output enabled", { id: this.id });
     }
   }
@@ -314,6 +305,7 @@ export class AutoCmaf extends CustomSinkNode {
       for (const media of this.currentMedia) {
         await media.node.close();
       }
+      this.runtime.updates.raiseEvent({ type: 'output-disabled' })
       this.currentMedia = [];
       debuglog("output disabled", { id: this.id });
     }
@@ -378,14 +370,14 @@ export class AutoCmaf extends CustomSinkNode {
         }
         this.currentMultiVariants.push(newMv);
         const mv = await this.norsk.output.cmafMultiVariant({
-          id: this.incrementNodeId(`${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`),
-          //id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
+          id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
           playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
           destinations: this.destinations
         });
         debuglog("Creating program-specific multi-variant in AutoCMAF", { id: this.id, streamKey: stream.key });
         newMv.node = mv;
-        this.report.registerOutput(this.cfg.id, mv.url);
+        this.runtime.report.registerOutput(this.cfg.id, mv.url);
+        // this.report.registerOutput(this.cfg.id, mv.url);
       }
 
       const streamKeyString = `${stream.key.sourceName}-${stream.key.programNumber}-${stream.key.streamId}-${stream.key.renditionName}`;
@@ -403,8 +395,7 @@ export class AutoCmaf extends CustomSinkNode {
             segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
             partDurationSeconds: this.cfg.segments.targetPartDuration,
             destinations: this.destinations,
-            id: this.incrementNodeId(`${this.id}-${streamKeyString}-video`),
-            //id: `${this.id}-${streamKeyString}-video`,
+            id: `${this.id}-${streamKeyString}-video`,
             ...videoCryptoSettings,
           });
           video.onPlaylistAddition = (_, p) => p;
@@ -438,8 +429,7 @@ export class AutoCmaf extends CustomSinkNode {
             segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
             partDurationSeconds: this.cfg.segments.targetPartDuration,
             destinations: this.destinations,
-            id: this.incrementNodeId(`${this.id}-${streamKeyString}-video`),
-            //id: `${this.id}-${streamKeyString}-audio`,
+            id: `${this.id}-${streamKeyString}-audio`,
             ...audioCryptoSettings,
           });
           audio.onPlaylistAddition = (_, p) => p;
@@ -467,7 +457,7 @@ export class AutoCmaf extends CustomSinkNode {
           const subtitle = await this.norsk.output.cmafWebVtt({
             segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
             destinations: this.destinations,
-            id: this.incrementNodeId(`${this.id}-${streamKeyString}-webvtt`),
+            id: `${this.id}-${streamKeyString}-webvtt`,
           });
           subtitle.subscribe([{
             source: stream.source,
