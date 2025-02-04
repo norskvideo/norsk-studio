@@ -1,10 +1,16 @@
-import { Norsk, ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, WhepOutputNode } from '@norskvideo/norsk-sdk';
-
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-import { CustomSinkNode, SimpleSinkWrapper, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { AutoProcessorMediaNode, Norsk, ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, WhepOutputNode } from '@norskvideo/norsk-sdk';
+import { CreatedMediaNode, InstanceRouteInfo, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomSinkNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
-import {webRtcSettings} from '../shared/webrtcSettings';
+import { webRtcSettings } from '../shared/webrtcSettings';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
+import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { resolveRefs } from 'json-refs';
+import { OpenAPIV3 } from 'openapi-types';
+import fs from 'fs/promises';
+import path from 'path';
+import YAML from 'yaml';
+import { paths } from './types';
 
 export type WhepOutputSettings = {
   id: string;
@@ -18,91 +24,239 @@ export type WhepOutputSettings = {
 };
 
 export type WhepOutputState = {
-  url?: string;
+  url?: string,
+  enabled: boolean,
 };
 
 export type WhepOutputEvent = {
-  type: 'url-published';
-  url: string;
-};
+  type: 'output-enabled' | 'output-disabled'
+} | { type: 'url-published', url: string }
 
-export type WhepOutputCommand = object;
-
-export class WhepOutput extends CustomSinkNode {
-   initialised: Promise<void>;
-    norsk: Norsk;
-    updates: RuntimeUpdates<WhepOutputState, WhepOutputCommand, WhepOutputEvent>;
-    shared: StudioShared;
-  
-  
-    cfg: WhepOutputSettings;
-    whep?: WhepOutputNode;
-    context: ContextPromiseControl = new ContextPromiseControl(this.subscribeImpl.bind(this));
-  
-    constructor(norsk: Norsk, { updates, shared }: StudioRuntime<WhepOutputState, WhepOutputCommand, WhepOutputEvent>, cfg: WhepOutputSettings) {
-      super(cfg.id);
-      this.cfg = cfg;
-      this.norsk = norsk;
-      this.updates = updates;
-      this.shared = shared;
-      this.initialised = Promise.resolve();
-    }
-
-    override subscribe(sources: StudioNodeSubscriptionSource[], _opts?: SubscriptionOpts): void {
-      this.context.setSources(sources);
-    }
-  
-    async subscribeImpl(sources: StudioNodeSubscriptionSource[]) {
-      const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0)?.selectVideo();
-      const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0)?.selectAudio();
-  
-      const subscriptions: ReceiveFromAddressAuto[] = [];
-  
-      if (videoSource && videoSource.length > 0) {
-        subscriptions.push(videoSource[0]);
-      }
-  
-      if (audioSource && audioSource.length > 0) {
-        subscriptions.push(audioSource[0]);
-      }
-  
-      if (subscriptions.length > 0) {
-        if (!this.whep) {
-          const whepCfg: SdkSettings = {
-            id: `${this.cfg.id}-whep`,
-            bufferDelayMs: this.cfg.bufferDelayMs,
-            onPublishStart: () => {
-              const url = this.whep?.endpointUrl;
-              if (url) {
-                this.updates.raiseEvent({ type: 'url-published', url });
-                this.updates.update({ url });
-              }
-            },
-            ...webRtcSettings(this.cfg.__global.iceServers)
-          };
-  
-          this.whep = await this.norsk.output.whep(whepCfg);
-        }
-  
-        // Subscribe to all available streams
-        this.whep?.subscribe(subscriptions, (ctx) => {
-          return ctx.streams.length === subscriptions.length;
-        });
-      } else {
-        // Clean up if no sources
-        await this.whep?.close();
-        this.whep = undefined;
-        this.updates.update({});
-      }
-    }
-  
+export type WhepOutputCommand = {
+  type: "enable-output" | "disable-output"
 }
 
-export default class WhepOutputDefinition implements ServerComponentDefinition<WhepOutputSettings, SimpleSinkWrapper, WhepOutputState, WhepOutputCommand, WhepOutputEvent> {
-  async create(norsk: Norsk, cfg: WhepOutputSettings, cb: OnCreated<SimpleSinkWrapper>, runtime: StudioRuntime<WhepOutputState, WhepOutputCommand, WhepOutputEvent>) {
-    const node = new WhepOutput(norsk, runtime, cfg);
+export class WhepOutput extends CustomSinkNode {
+  norsk: Norsk;
+  runtime: StudioRuntime<WhepOutputState, WhepOutputCommand, WhepOutputEvent>;
+
+  cfg: WhepOutputSettings;
+  whep?: WhepOutputNode;
+  context: ContextPromiseControl = new ContextPromiseControl(this.subscribeImpl.bind(this));
+
+  currentSources: Map<CreatedMediaNode, StudioNodeSubscriptionSource> = new Map();
+  currentMedia: { node: AutoProcessorMediaNode<string> }[] = [];
+
+  initialised: Promise<void>
+  enabled: boolean = true;
+
+  static async create(norsk: Norsk, cfg: WhepOutputSettings, runtime: StudioRuntime<WhepOutputState, WhepOutputCommand, WhepOutputEvent>) {
+    const node = new WhepOutput(cfg, norsk, runtime);
+    await node.initialised;
+    return node;
+  }
+
+  constructor(cfg: WhepOutputSettings, norsk: Norsk, runtime: StudioRuntime<WhepOutputState, WhepOutputCommand, WhepOutputEvent>) {
+    super(cfg.id);
+    this.cfg = cfg;
+    this.norsk = norsk;
+    this.runtime = runtime;
+    this.initialised = Promise.resolve();
+  }
+
+  override subscribe(sources: StudioNodeSubscriptionSource[], _opts?: SubscriptionOpts): void {
+    this.currentSources = new Map();
+    sources.forEach((s) => {
+      this.currentSources.set(s.source, s);
+    });
+    
+    this.context.setSources(sources);
+  }
+
+  async subscribeImpl(sources: StudioNodeSubscriptionSource[]) {
+    if (!this.enabled) {
+      debuglog("Skipping subscription - output disabled", { id: this.id });
+      return;
+    }
+
+    const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0)?.selectVideo();
+    const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0)?.selectAudio();
+
+    const subscriptions: ReceiveFromAddressAuto[] = [];
+
+    if (videoSource && videoSource.length > 0) {
+      subscriptions.push(videoSource[0]);
+    }
+
+    if (audioSource && audioSource.length > 0) {
+      subscriptions.push(audioSource[0]);
+    }
+
+    if (subscriptions.length > 0) {
+      if (!this.whep) {
+        const whepCfg: SdkSettings = {
+          id: `${this.cfg.id}-whep`,
+          bufferDelayMs: this.cfg.bufferDelayMs,
+          onPublishStart: () => {
+            const url = this.whep?.endpointUrl;
+            if (url) {
+              this.runtime.updates.raiseEvent({ type: 'url-published', url })
+              this.runtime.updates.update({
+                url,
+                enabled: true,
+              });
+            }
+          },
+          ...webRtcSettings(this.cfg.__global.iceServers)
+        };
+
+        this.whep = await this.norsk.output.whep(whepCfg);
+      }
+
+      // Subscribe to all available streams
+      this.whep?.subscribe(subscriptions, (ctx) => {
+        return ctx.streams.length === subscriptions.length;
+      });
+    } else {
+      // Clean up if no sources
+      await this.whep?.close();
+      this.whep = undefined;
+      this.runtime.updates.update({
+        enabled: false
+      });
+    }
+  }
+
+  async enableOutput() {
+    if (!this.enabled) {
+      this.enabled = true;
+      const sources = Array.from(this.currentSources.values());
+      debuglog("Sources", sources);
+      await this.subscribeImpl(sources)
+      this.runtime.updates.raiseEvent({ type: 'output-enabled' });
+      this.runtime.updates.update({
+        enabled: true
+      });
+      debuglog("Output enabled", { id: this.id });
+    }
+  }
+
+  async disableOutput() {
+    if (this.enabled) {
+      this.enabled = false;
+      
+      if (this.whep) {
+        await this.whep.close();
+        this.whep = undefined;
+      }
+
+      this.runtime.updates.raiseEvent({ type: 'output-disabled' });
+      this.runtime.updates.update({
+        enabled: false
+      });
+      debuglog("Output disabled", { id: this.id });
+    }
+  }
+}
+
+type Transmuted<T> = {
+  [Key in keyof T]: OpenAPIV3.PathItemObject;
+};
+function coreInfo<T>(path: keyof T, op: OpenAPIV3.OperationObject) {
+  return {
+    url: path,
+    summary: op.summary,
+    description: op.description,
+    requestBody: op.requestBody,
+    responses: op.responses,
+  }
+}
+
+function post<T>(path: keyof T, paths: Transmuted<T>) {
+  return {
+    ...coreInfo(path, paths[path]['post']!),
+    method: 'POST' as const,
+  }
+}
+
+export default class WhepOutputDefinition implements ServerComponentDefinition<WhepOutputSettings, WhepOutput, WhepOutputState, WhepOutputCommand, WhepOutputEvent> {
+  async create(norsk: Norsk, cfg: WhepOutputSettings, cb: OnCreated<WhepOutput>, runtime: StudioRuntime<WhepOutputState, WhepOutputCommand, WhepOutputEvent>) {
+    const node = new WhepOutput(cfg, norsk, runtime);
     runtime.report.registerOutput(cfg.id, node.whep?.endpointUrl);
     await node.initialised;
     cb(node);
+  }
+
+  async handleCommand(node: WhepOutput, command: WhepOutputCommand) {
+    switch (command.type) {
+      case 'enable-output':
+        await node.enableOutput();
+        break;
+      case 'disable-output':
+        await node.disableOutput();
+        break;
+    }
+  }
+
+  async instanceRoutes(): Promise<InstanceRouteInfo<WhepOutputSettings, WhepOutput, WhepOutputState, WhepOutputCommand, WhepOutputEvent>[]> {
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'));
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+    const paths = resolved.paths as Transmuted<paths>;
+
+    return [
+      {
+        ...post<paths>('/enable', paths),
+        handler: ({ runtime }) => async (_req, res) => {
+          try {
+            const state = runtime.updates.latest();
+            if (state.enabled) {
+              return res.status(400).json({ error: 'Output is already enabled' });
+            }
+
+            runtime.updates.update({ ...state, enabled: true });
+
+            runtime.updates.sendCommand({
+              type: 'enable-output'
+            });
+
+            runtime.updates.raiseEvent({
+              type: 'output-enabled'
+            });
+
+            res.sendStatus(204);
+          } catch (error) {
+            console.error('Error in enable handler:', error);
+            res.status(500).json({ error: 'Failed to enable output' });
+          }
+        }
+      },
+      {
+        ...post<paths>('/disable', paths),
+        handler: ({ runtime }) => async (_req, res) => {
+          try {
+            const state = runtime.updates.latest();
+            if (!state.enabled) {
+              return res.status(400).json({ error: 'Output is already disabled' });
+            }
+
+            runtime.updates.update({ ...state, enabled: false });
+
+            runtime.updates.sendCommand({
+              type: 'disable-output'
+            });
+
+            runtime.updates.raiseEvent({
+              type: 'output-disabled'
+            });
+
+            res.sendStatus(204);
+          } catch (error) {
+            console.error('Error in disable handler:', error);
+            res.status(500).json({ error: 'Failed to disable output' });
+          }
+        }
+      }
+    ];
   }
 }

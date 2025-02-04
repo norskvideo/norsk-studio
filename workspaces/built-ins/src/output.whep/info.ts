@@ -3,6 +3,8 @@ import type Registration from "@norskvideo/norsk-studio/lib/extension/registrati
 
 import { GlobalIceServers } from '@norskvideo/norsk-studio/lib/shared/config'
 import React from "react";
+const SummaryView = React.lazy(async () => import('./summary-view'));
+
 
 export default function(R: Registration) {
   const {
@@ -31,19 +33,26 @@ export default function(R: Registration) {
     display: (_desc) => { return {}; },
     css: ["styles.css"],
     runtime: {
-      initialState: () => ({}),
+      initialState: () => ({ enabled: true }),
       handleEvent(ev, state) {
         const evType = ev.type;
         switch (evType) {
           case 'url-published':
             state.url = ev.url;
             break;
+          case "output-enabled":
+            state.enabled = true;
+            break;
+          case "output-disabled":
+            state.enabled = false;
+            break;
           default:
             assertUnreachable(evType)
         }
         return { ...state };
       },
-      inline: InlineView
+      inline: InlineView,
+      summary: SummaryView
     },
     configForm: {
       global: {

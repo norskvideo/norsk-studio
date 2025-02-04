@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import type { WhepOutputState, WhepOutputSettings } from "./runtime";
+import type { WhepOutputState, WhepOutputSettings, WhepOutputCommand } from "./runtime";
 import { WhepClient } from "@norskvideo/webrtc-client";
 import type { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
-function InlineView({ state, config, raise }: ViewProps<WhepOutputSettings, WhepOutputState>) {
+function InlineView({ state, config, raise }: ViewProps<WhepOutputSettings, WhepOutputState, WhepOutputCommand>) {
   const url = state.url;
   const id = config.id;
   const [showPreview, setShowPreview] = useState(config.showPreview ?? true);
