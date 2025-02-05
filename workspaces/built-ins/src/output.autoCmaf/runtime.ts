@@ -124,17 +124,9 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
             if (state.enabled) {
               return res.status(400).json({ error: 'Output is already enabled' });
             }
-
-            runtime.updates.update({ ...state, enabled: true });
-
             runtime.updates.sendCommand({
               type: 'enable-output'
             });
-
-            runtime.updates.raiseEvent({
-              type: 'output-enabled',
-            });
-
             res.sendStatus(204);
           } catch (error) {
             console.error('Error in enable handler:', error);
@@ -150,17 +142,9 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
             if (!state.enabled) {
               return res.status(400).json({ error: 'Output is already disabled' });
             }
-
-            runtime.updates.update({ ...state, enabled: false });
-
             runtime.updates.sendCommand({
               type: 'disable-output'
             });
-
-            runtime.updates.raiseEvent({
-              type: 'output-disabled',
-            });
-
             res.sendStatus(204);
           } catch (error) {
             console.error('Error in disable handler:', error);
@@ -293,7 +277,7 @@ export class AutoCmaf extends CustomSinkNode {
   async enableOutput() {
     if (!this.enabled) {
       this.enabled = true;
-      await this.handleContext();
+      await this.control.schedule();
       this.runtime.updates.raiseEvent({type: 'output-enabled' })
       debuglog("Output enabled", { id: this.id });
     }
@@ -377,7 +361,6 @@ export class AutoCmaf extends CustomSinkNode {
         debuglog("Creating program-specific multi-variant in AutoCMAF", { id: this.id, streamKey: stream.key });
         newMv.node = mv;
         this.runtime.report.registerOutput(this.cfg.id, mv.url);
-        // this.report.registerOutput(this.cfg.id, mv.url);
       }
 
       const streamKeyString = `${stream.key.sourceName}-${stream.key.programNumber}-${stream.key.streamId}-${stream.key.renditionName}`;

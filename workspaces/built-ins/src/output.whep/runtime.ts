@@ -24,7 +24,7 @@ export type WhepOutputSettings = {
 };
 
 export type WhepOutputState = {
-  url?: string,
+  url?: string;
   enabled: boolean,
 };
 
@@ -101,10 +101,6 @@ export class WhepOutput extends CustomSinkNode {
             const url = this.whep?.endpointUrl;
             if (url) {
               this.runtime.updates.raiseEvent({ type: 'url-published', url })
-              this.runtime.updates.update({
-                url,
-                enabled: true,
-              });
             }
           },
           ...webRtcSettings(this.cfg.__global.iceServers)
@@ -112,18 +108,12 @@ export class WhepOutput extends CustomSinkNode {
 
         this.whep = await this.norsk.output.whep(whepCfg);
       }
-
-      // Subscribe to all available streams
       this.whep?.subscribe(subscriptions, (ctx) => {
         return ctx.streams.length === subscriptions.length;
       });
     } else {
-      // Clean up if no sources
       await this.whep?.close();
       this.whep = undefined;
-      this.runtime.updates.update({
-        enabled: false
-      });
     }
   }
 
@@ -134,9 +124,6 @@ export class WhepOutput extends CustomSinkNode {
       debuglog("Sources", sources);
       await this.subscribeImpl(sources)
       this.runtime.updates.raiseEvent({ type: 'output-enabled' });
-      this.runtime.updates.update({
-        enabled: true
-      });
       debuglog("Output enabled", { id: this.id });
     }
   }
@@ -151,9 +138,6 @@ export class WhepOutput extends CustomSinkNode {
       }
 
       this.runtime.updates.raiseEvent({ type: 'output-disabled' });
-      this.runtime.updates.update({
-        enabled: false
-      });
       debuglog("Output disabled", { id: this.id });
     }
   }
@@ -213,17 +197,9 @@ export default class WhepOutputDefinition implements ServerComponentDefinition<W
             if (state.enabled) {
               return res.status(400).json({ error: 'Output is already enabled' });
             }
-
-            runtime.updates.update({ ...state, enabled: true });
-
             runtime.updates.sendCommand({
               type: 'enable-output'
             });
-
-            runtime.updates.raiseEvent({
-              type: 'output-enabled'
-            });
-
             res.sendStatus(204);
           } catch (error) {
             console.error('Error in enable handler:', error);
@@ -239,17 +215,9 @@ export default class WhepOutputDefinition implements ServerComponentDefinition<W
             if (!state.enabled) {
               return res.status(400).json({ error: 'Output is already disabled' });
             }
-
-            runtime.updates.update({ ...state, enabled: false });
-
             runtime.updates.sendCommand({
               type: 'disable-output'
             });
-
-            runtime.updates.raiseEvent({
-              type: 'output-disabled'
-            });
-
             res.sendStatus(204);
           } catch (error) {
             console.error('Error in disable handler:', error);

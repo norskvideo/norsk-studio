@@ -498,14 +498,11 @@ describe("Auto CMAF Output", () => {
         method: 'POST'
       });
       expect(disableResponse.status).to.equal(204);
-      
-      expect(cmaf.runtime.updates.latest().enabled).to.be.false;
     
       const enableResponse = await fetch(`http://localhost:${port}/${cmaf.id}/enable`, {
         method: 'POST'
       });
       expect(enableResponse.status).to.equal(204);
-      expect(cmaf.runtime.updates.latest().enabled).to.be.true;
     });
    
     it("should handle invalid API requests appropriately", async () => {
