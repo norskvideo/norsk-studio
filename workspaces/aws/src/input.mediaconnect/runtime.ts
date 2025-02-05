@@ -13,7 +13,8 @@ export type MediaConnectConfig = {
   id: string,
   displayName: string,
   flowArn: string,
-  outputArn: string
+  outputArn: string,
+  notes?: string,
 }
 
 export default class MediaConnectSourceDefinition implements ServerComponentDefinition<MediaConnectConfig, MediaConnectSource> {

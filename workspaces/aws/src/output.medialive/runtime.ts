@@ -21,7 +21,8 @@ export type MediaLiveConfig = {
 
   // the index of the destination within that input
   // in which we'll find out RTP details
-  destinationIndex: number
+  destinationIndex: number,
+  notes?: string,
 }
 
 export type MediaLiveState = {

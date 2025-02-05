@@ -52,11 +52,14 @@ export default function ({
     },
     configForm: {
       form: { 
-        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
         url: { help: "The URL of the remote RTMP server to connect to, including the full stream path and credentials", hint: { type: "text", validation: Z.string().min(5) } },
         bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
         avDelayMs: { help: "How many milliseconds to delay A/V to account for subtitles", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 50.0 } },
-        retryConnectionTimeout: { help: "Number of seconds to wait until a retry is attempted to the RTMP server", hint: { type: "numeric", validation: Z.number().min(1).max(10), defaultValue: 5 } }
+        retryConnectionTimeout: { help: "Number of seconds to wait until a retry is attempted to the RTMP server", hint: { type: "numeric", validation: Z.number().min(1).max(10), defaultValue: 5 } },
+        notes: { 
+          help: "Additional notes about this component", 
+          hint: { type: 'text', optional: true } 
+        },
       }
     }
   });

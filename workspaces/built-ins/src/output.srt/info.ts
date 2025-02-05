@@ -58,7 +58,6 @@ export default function(registration: Registration) {
     },
     configForm: {
       form: {
-        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
         port: {
           help: "The port this SRT output will connect to or listen on",
           hint: {
@@ -97,7 +96,11 @@ export default function(registration: Registration) {
             view: SocketConfiguration,
             form: srtSocketOptions(validation)
           }
-        }
+        },
+        notes: { 
+          help: "Additional notes about this component", 
+          hint: { type: 'text', optional: true } 
+        },
       }
     }
   });

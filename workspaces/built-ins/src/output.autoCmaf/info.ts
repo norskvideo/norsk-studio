@@ -125,13 +125,6 @@ export default function(R: Registration) {
             type: 'text', defaultValue: "default", validation: Z.string().min(5).max(15)
           }
         },
-        notes: {
-          help: "Notes about this component",
-          hint: {
-            type: 'text',
-            optional: true
-          }
-        },
         sessionId: {
           help: "Generate a unique session id per run to avoid cache collisions",
           hint: {
@@ -252,6 +245,13 @@ export default function(R: Registration) {
               },
             ],
           },
+        },
+        notes: {
+          help: "Additional notes about this component",
+          hint: {
+            type: 'text',
+            optional: true
+          }
         },
       }
     }

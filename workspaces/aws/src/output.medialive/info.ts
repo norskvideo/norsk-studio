@@ -78,7 +78,11 @@ export default function({ defineComponent, validation: { Z }, All }: Registratio
             component: UrlSelection,
             validation: Z.number().min(0, "Choosing a url is mandatory")
           }
-        }
+        },
+        notes: { 
+          help: "Additional notes about this component", 
+          hint: { type: 'text', optional: true } 
+        },
       }
     }
   });

@@ -7,6 +7,7 @@ import { warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 export type AwsTranscribeConfig = Pick<SdkSettings, 'language'> & Pick<TranslateSdkSettings, 'targetLanguage'> & {
   id: string,
   displayName: string,
+  notes?: string,
 }
 
 export type LanguageInfo = { name: string, code: string };

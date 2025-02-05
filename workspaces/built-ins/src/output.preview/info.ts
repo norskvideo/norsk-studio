@@ -66,16 +66,13 @@ export default function(R: Registration) {
         hardware: HardwareSelection()
       },
       form: {
-        notes: {
-          help: "Notes about this component",
-          hint: {
-            type: 'text',
-            optional: true
-          }
-        },
         bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
         skipTranscode: { help: "Skip transcoding for WebRTC-ready streams", hint: {type: 'boolean', defaultValue: false }},
-        showPreview: { help: "Show video preview", hint: { type: 'boolean', defaultValue: true }}
+        showPreview: { help: "Show video preview", hint: { type: 'boolean', defaultValue: true }},
+        notes: { 
+          help: "Additional notes about this component", 
+          hint: { type: 'text', optional: true } 
+        },
       }
     }
   });

@@ -38,7 +38,11 @@ export default function({ defineComponent, Av, validation: { Z } }: Registration
             component: OutputSelection,
             validation: Z.string().min(1, "Choosing an output is mandatory")
           }
-        }
+        },
+        notes: { 
+          help: "Additional notes about this component", 
+          hint: { type: 'text', optional: true } 
+        },
       }
     }
   });

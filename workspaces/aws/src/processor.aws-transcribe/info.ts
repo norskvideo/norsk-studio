@@ -60,7 +60,11 @@ export default function({
     configForm: {
       form: {
         language: { help: "Source language to transcribe", hint: { type: 'custom', component: TranscribeLanguageSelection, defaultValue: "en-US", validation: LanguageTagWithCountry } },
-        targetLanguage: { help: "Target language to translate to (optional).", hint: { type: 'custom', component: TranslateLanguageSelection, defaultValue: "", validation: Z.union([LanguageTagOptionalCountry, Z.string().length(0)]) } }
+        targetLanguage: { help: "Target language to translate to (optional).", hint: { type: 'custom', component: TranslateLanguageSelection, defaultValue: "", validation: Z.union([LanguageTagOptionalCountry, Z.string().length(0)]) } },
+        notes: { 
+          help: "Additional notes about this component", 
+          hint: { type: 'text', optional: true } 
+        },
       }
     }
   });

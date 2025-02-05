@@ -65,13 +65,6 @@ export default function({
       },
       configForm: {
         form: {
-          notes: {
-            help: "Notes about this component",
-            hint: {
-              type: 'text',
-              optional: true
-            }
-          },
           port: { help: "The port this RTMP input will listen on", hint: { type: 'numeric', validation: Port, defaultValue: defaultPort, global: unique('port') } },
           ssl: { help: "Optional: SSL", hint: { type: 'boolean', optional: true } },
           appName: { help: "Name of the app", hint: { type: "text", validation: Z.string().min(1), defaultValue: 'norsk' } },
@@ -83,7 +76,14 @@ export default function({
               validation: Z.array(SourceName),
               global: unique('sourceName')
             }
-          }
+          },
+          notes: {
+            help: "Additional notes about this component",
+            hint: {
+              type: 'text',
+              optional: true
+            }
+          },
         }
       }
     });

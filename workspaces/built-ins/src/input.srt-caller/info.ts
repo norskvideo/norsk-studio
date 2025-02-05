@@ -35,13 +35,6 @@ export default function({
       },
       configForm: {
         form: {
-          notes: {
-            help: "Notes about this component",
-            hint: {
-              type: 'text',
-              optional: true
-            }
-          },
           port: { help: "The port this SRT input will connect to", hint: { type: 'numeric', validation: Port, defaultValue: 5001 } },
           host: { help: "The IP address/hostname this SRT input will connect to", hint: { type: 'text', validation: Hostname, defaultValue: "0.0.0.0" } },
           sourceName: { help: "Source name to identify this by", hint: { type: 'text', validation: SourceName, defaultValue: "camera1" } },
@@ -54,7 +47,14 @@ export default function({
               view: SocketConfiguration,
               form: srtSocketOptions(validation)
             }
-          }
+          },
+          notes: {
+            help: "Additional notes about this component",
+            hint: {
+              type: 'text',
+              optional: true
+            }
+          },
         }
       }
     });

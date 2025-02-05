@@ -30,11 +30,14 @@ export default function({
     },
     configForm: {
       form: {
-        notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },
         port: { help: "The port this UDP TS output will send to", hint: { type: 'numeric', validation: Port, defaultValue: 8001 } },
         destinationHost: { help: "The IP address/Hostname this UDP TS output will send to", hint: { type: 'text', validation: Hostname, defaultValue: "127.0.0.1" } },
         bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
         interface: { help: "Which interface to bind to for publishing", hint: { type: 'text', validation: Z.union([Z.string().length(0), Iface]), defaultValue: "any" } },
+        notes: { 
+          help: "Additional notes about this component", 
+          hint: { type: 'text', optional: true } 
+        },
       }
     }
   });
