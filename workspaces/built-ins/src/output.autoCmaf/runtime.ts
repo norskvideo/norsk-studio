@@ -385,7 +385,7 @@ export class AutoCmaf extends CustomSinkNode {
           newMv.ts = await this.norsk.output.cmafMultiVariant({
             id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}-ts`,
             //id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
-            playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}-ts`,
+            playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
             destinations: this.destinations
           });
           this.runtime.report.registerOutput(this.cfg.id, newMv.ts.url);

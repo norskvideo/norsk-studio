@@ -118,7 +118,13 @@ describe("Auto CMAF Output", () => {
     });
   }
 
-  describe("A single video and audio stream", () => {
+
+  function describeTest(title: string, cb: (mode: 'cmaf' | 'ts') => () => void) {
+    describe(`${title} - CMAF`, cb('cmaf'))
+    describe(`${title} - TS`, cb('ts'))
+  }
+
+  describeTest("A single video and audio stream", (mode) => () => {
     let norsk: Norsk | undefined = undefined;
     let result: RunResult | undefined = undefined;
 
@@ -129,7 +135,7 @@ describe("Auto CMAF Output", () => {
     beforeEach(async () => {
       norsk = await Norsk.connect({ onShutdown: () => { } });
       const source = await videoAndAudio(norsk, 'source');
-      result = await sharedSetup(norsk, [source]);
+      result = await sharedSetup(norsk, [source], { mode });
     })
 
     it("Spins up a multi-variant playlist with the one stream", async () => {
@@ -144,37 +150,8 @@ describe("Auto CMAF Output", () => {
       }
     })
   });
-  describe("A single video and audio stream, TS enabled", () => {
-    let norsk: Norsk | undefined = undefined;
-    let result: RunResult | undefined = undefined;
 
-    afterEach(async () => {
-      await norsk?.close();
-    })
-
-    beforeEach(async () => {
-      norsk = await Norsk.connect({ onShutdown: () => { } });
-      const source = await videoAndAudio(norsk, 'source');
-      result = await sharedSetup(norsk, [source], { mode: 'ts' });
-    })
-
-    it("Does not spins up a CMAF multi-variant playlist", async () => {
-      const mv = result?.registeredOutputs.find((s) => s.url?.endsWith("default.m3u8") && s.url.indexOf("cmaf/") > 0);
-      expect(mv).not.exist;
-    })
-    it("Spins up a TS multi-variant playlist with the one stream", async () => {
-      const mv = result?.registeredOutputs.find((s) => s.url?.endsWith("default.m3u8") && s.url.indexOf("ts/") > 0);
-      expect(mv).exist;
-
-      // We can probably assume that if the playlists are in the manifest that they exist in Norsk, there (will be) tests for that over there
-      if (mv?.url) {
-        const finalManifest = await awaitCompleteManifest(mv.url, 2);
-        expect(finalManifest.variants).length(1);
-        expect(finalManifest.variants[0]?.audio).length(1);
-      }
-    })
-  });
-  describe("Two videos and one audio stream", () => {
+  describeTest("Two videos and one audio stream", (mode) => () => {
     let norsk: Norsk | undefined = undefined;
     let result: RunResult | undefined = undefined;
 
@@ -187,7 +164,7 @@ describe("Auto CMAF Output", () => {
       const video1 = await video(norsk, 'source1', { renditionName: "high", sourceName: "source" });
       const video2 = await video(norsk, 'source2', { renditionName: "low", sourceName: "source" });
       const audio1 = await audio(norsk, 'source3', { renditionName: "default", sourceName: "source" });
-      result = await sharedSetup(norsk, [video1, video2, audio1]);
+      result = await sharedSetup(norsk, [video1, video2, audio1], { mode });
     })
 
     it("Spins up a multi-variant playlist with all the streams", async () => {
@@ -203,41 +180,7 @@ describe("Auto CMAF Output", () => {
     })
   });
 
-  describe("Two videos and one audio stream, TS enabled", () => {
-    let norsk: Norsk | undefined = undefined;
-    let result: RunResult | undefined = undefined;
-
-    afterEach(async () => {
-      await norsk?.close();
-    })
-
-    beforeEach(async () => {
-      norsk = await Norsk.connect({ onShutdown: () => { } });
-      const video1 = await video(norsk, 'source1', { renditionName: "high", sourceName: "source" });
-      const video2 = await video(norsk, 'source2', { renditionName: "low", sourceName: "source" });
-      const audio1 = await audio(norsk, 'source3', { renditionName: "default", sourceName: "source" });
-      result = await sharedSetup(norsk, [video1, video2, audio1], { mode: 'ts' });
-    })
-
-    it("Does not spins up a CMAF multi-variant playlist", async () => {
-      const mv = result?.registeredOutputs.find((s) => s.url?.endsWith("default.m3u8") && s.url.indexOf("cmaf/") > 0);
-      expect(mv).not.exist;
-    })
-
-    it("Spins up a multi-variant playlist with all the streams", async () => {
-      const mv = result?.registeredOutputs.find((s) => s.url?.endsWith("default.m3u8") && s.url.indexOf("ts/") > 0);
-      expect(mv).exist;
-
-      // We can probably assume that if the playlists are in the manifest that they exist in Norsk, there (will be) tests for that over there
-      if (mv?.url) {
-        const finalManifest = await awaitCompleteManifest(mv.url, 3);
-        expect(finalManifest.variants).length(2);
-        expect(finalManifest.variants[0]?.audio).length(1);
-      }
-    })
-  });
-
-  describe("Two sources", () => {
+  describeTest("Two sources", (mode) => () => {
     let norsk: Norsk | undefined = undefined;
     let result: RunResult = undefined!;
 
@@ -251,7 +194,7 @@ describe("Auto CMAF Output", () => {
       const video2 = await video(norsk, 'source2-video', { renditionName: "high", sourceName: "source2" });
       const audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
       const audio2 = await audio(norsk, 'source2-audio', { renditionName: "default", sourceName: "source2" });
-      result = await sharedSetup(norsk, [video1, video2, audio1, audio2]);
+      result = await sharedSetup(norsk, [video1, video2, audio1, audio2], { mode });
     })
 
     it("Spins up a multi-variant playlist with all the streams", async () => {
@@ -280,7 +223,7 @@ describe("Auto CMAF Output", () => {
     })
   });
 
-  describe("Stream within a source goes away", () => {
+  describeTest("Stream within a source goes away", (mode) => () => {
     let norsk: Norsk | undefined = undefined;
     let result: RunResult = undefined!;
     let video1: SimpleInputWrapper = undefined!;
@@ -300,7 +243,7 @@ describe("Auto CMAF Output", () => {
       video3 = await video(norsk, 'source1-video-low', { renditionName: "low", sourceName: "source1" });
       audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
       audio2 = await audio(norsk, 'source2-audio', { renditionName: "default", sourceName: "source2" });
-      result = await sharedSetup(norsk, [video1, video2, audio1, audio2, video3]);
+      result = await sharedSetup(norsk, [video1, video2, audio1, audio2, video3], { mode });
     })
 
     it("Removes the media stream from the multivariant", async () => {
@@ -327,7 +270,7 @@ describe("Auto CMAF Output", () => {
     })
   });
 
-  function streamGoesAwayAndComesBack(wait: boolean) {
+  function streamGoesAwayAndComesBack(wait: boolean, mode: 'cmaf' | 'ts') {
 
     let norsk: Norsk = undefined!;
     let result: RunResult & { setSources: (sources: CreatedMediaNode[]) => void } = undefined!;
@@ -344,7 +287,7 @@ describe("Auto CMAF Output", () => {
       video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
       video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
       audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
-      result = await sharedSetup(norsk, [video1, video2, audio1]);
+      result = await sharedSetup(norsk, [video1, video2, audio1], { mode });
     })
 
     it("Removes the stream from the multi-variant then re-adds it", async () => {
@@ -367,15 +310,15 @@ describe("Auto CMAF Output", () => {
     })
   }
 
-  describe("Stream within a source goes away and comes back, wait", () => {
-    streamGoesAwayAndComesBack(true);
+  describeTest("Stream within a source goes away and comes back, wait", (mode) => () => {
+    streamGoesAwayAndComesBack(true, mode);
   });
 
-  describe("Stream within a source goes away and comes back, no wait", () => {
-    streamGoesAwayAndComesBack(true);
+  describeTest("Stream within a source goes away and comes back, no wait", (mode) => () => {
+    streamGoesAwayAndComesBack(true, mode);
   });
 
-  describe("Whole source goes away", () => {
+  describeTest("Whole source goes away", (mode) => () => {
     let norsk: Norsk = undefined!;
     let result: RunResult & { setSources: (sources: CreatedMediaNode[]) => void } = undefined!;
     let video1: SimpleInputWrapper = undefined!;
@@ -391,7 +334,7 @@ describe("Auto CMAF Output", () => {
       video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
       video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
       audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
-      result = await sharedSetup(norsk, [video1, video2, audio1]);
+      result = await sharedSetup(norsk, [video1, video2, audio1], { mode });
     })
 
     it("Removes the multivariant", async () => {
@@ -413,7 +356,7 @@ describe("Auto CMAF Output", () => {
   });
 
 
-  function wholeSourceGoesAwayComesBack(wait: boolean) {
+  function wholeSourceGoesAwayComesBack(wait: boolean, mode: 'cmaf' | 'ts') {
 
     let norsk: Norsk = undefined!;
     let result: RunResult & { setSources: (sources: CreatedMediaNode[]) => void } = undefined!;
@@ -430,7 +373,7 @@ describe("Auto CMAF Output", () => {
       video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
       video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
       audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
-      result = await sharedSetup(norsk, [video1, video2, audio1]);
+      result = await sharedSetup(norsk, [video1, video2, audio1], { mode });
     })
 
     it("Re-creates the multivariant", async () => {
@@ -464,16 +407,16 @@ describe("Auto CMAF Output", () => {
   }
 
   // Happy path
-  describe("Whole source goes away and comes back again, wait", () => {
-    wholeSourceGoesAwayComesBack(true);
+  describeTest("Whole source goes away and comes back again, wait", (mode) => () => {
+    wholeSourceGoesAwayComesBack(true, mode);
   });
 
   // Did we write the async stuff properly so we don't end up with clashes?
-  describe("Whole source goes away and comes back again, no wait", () => {
-    wholeSourceGoesAwayComesBack(false);
+  describeTest("Whole source goes away and comes back again, no wait", (mode) => () => {
+    wholeSourceGoesAwayComesBack(false, mode);
   });
 
-  describe("Auto CMAF state management", () => {
+  describeTest("Auto CMAF state management", (mode) => () => {
     let norsk: Norsk | undefined = undefined;
     let result: RunResult | undefined = undefined;
     let app: express.Application;
@@ -505,7 +448,7 @@ describe("Auto CMAF Output", () => {
                   targetSegmentDuration: 2,
                 },
                 s3Destinations: [],
-                mode: 'cmaf'
+                mode
               }
             ).reify())
         .reify();
