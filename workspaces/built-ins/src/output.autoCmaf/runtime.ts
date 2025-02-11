@@ -32,13 +32,16 @@ export type AutoCmafConfig = {
   sessionId: boolean,
   segments: AutoCmafSegment,
   s3Destinations: AutoCmafS3Destination[],
-  mode: 'ts' | 'cmaf';
   drmProvider?: 'ezdrm' | 'axinom',
   __global: {
     ezdrmConfig?: EzDrmConfig,
     axinomConfig?: AxinomConfig,
   },
 }
+
+type AutoCmafConfigExtended = {
+  mode: 'ts' | 'cmaf'
+} & AutoCmafConfig
 
 export type AutoCmafSegment = {
   retentionPeriod: number,
@@ -88,6 +91,10 @@ function post<T>(path: keyof T, paths: Transmuted<T>) {
 
 export default class AutoCmafDefinition implements ServerComponentDefinition<AutoCmafConfig, AutoCmaf, CmafOutputState, CmafOutputCommand, CmafOutputEvent> {
   async create(norsk: Norsk, cfg: AutoCmafConfig, cb: OnCreated<AutoCmaf>, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
+    return this.createImpl(norsk, { mode: 'cmaf', ...cfg }, cb, runtime);
+  }
+
+  async createImpl(norsk: Norsk, cfg: AutoCmafConfigExtended, cb: OnCreated<AutoCmaf>, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
     const node = await AutoCmaf.create(norsk, cfg, runtime);
     cb(node);
     const mv = node.mv;
@@ -159,7 +166,7 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
 
 export class AutoCmaf extends CustomSinkNode {
   norsk: Norsk;
-  cfg: AutoCmafConfig;
+  cfg: AutoCmafConfigExtended;
   currentSources: Map<CreatedMediaNode, StudioNodeSubscriptionSource> = new Map();
   currentMedia: { node: AutoProcessorMediaNode<string>, key: StreamKey, scheduleAd: (marker: AdMarker, destinationId: string) => void }[] = [];
   crypto?: CryptoDetails;
@@ -183,13 +190,13 @@ export class AutoCmaf extends CustomSinkNode {
   runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>;
   enabled: boolean = true;
 
-  static async create(norsk: Norsk, cfg: AutoCmafConfig, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
+  static async create(norsk: Norsk, cfg: AutoCmafConfigExtended, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
     const node = new AutoCmaf(cfg, norsk, runtime);
     await node.initialised;
     return node;
   }
 
-  constructor(cfg: AutoCmafConfig, norsk: Norsk, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
+  constructor(cfg: AutoCmafConfigExtended, norsk: Norsk, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
     super(cfg.id);
     this.cfg = cfg;
     this.norsk = norsk;

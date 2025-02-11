@@ -31,8 +31,8 @@ export default function(R: Registration) {
   return defineComponent<AutoCmafConfig, CmafOutputState, CmafOutputCommand, CmafOutputEvent>({
     identifier: 'output.autoCmaf',
     category: 'output',
-    name: "Auto Playlists",
-    description: "This component handles the creation of CMAF/HLS-TS outputs from multiple video and audio streams.",
+    name: "Auto CMAF",
+    description: "This component handles the creation of CMAF outputs from multiple video and audio streams.",
     subscription: {
       // Again, accept anything
       // but reject the same stream twice
@@ -196,17 +196,6 @@ export default function(R: Registration) {
                 },
               },
             }
-          }
-        },
-        mode: {
-          help: "CMAF or HLS/TS",
-          hint: {
-            type: 'select',
-            defaultValue: 'cmaf',
-            options: [
-              { display: "CMAF", value: 'cmaf' },
-              { display: "HLS/TS", value: 'ts' }
-            ]
           }
         },
         s3Destinations: {

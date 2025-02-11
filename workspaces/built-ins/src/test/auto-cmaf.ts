@@ -11,6 +11,7 @@ import { AutoCmaf, AutoCmafConfig, CmafOutputCommand, CmafOutputEvent, CmafOutpu
 import * as HLS from 'hls-parser';
 import { types } from "hls-parser";
 import AutoCmafInfo from "../output.autoCmaf/info";
+import AutoHlsInfo from "../output.autoHls/info";
 import { RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { CreatedMediaNode, StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
 import { testRuntime } from "@norskvideo/norsk-studio/lib/test/_util/runtime";
@@ -29,13 +30,13 @@ async function defaultRuntime(): Promise<RuntimeSystem> {
 }
 
 describe("Auto CMAF Output", () => {
-  async function sharedSetup(norsk: Norsk, sources: CreatedMediaNode[], cfg?: Partial<AutoCmafConfig>) {
+  async function sharedSetup(norsk: Norsk, sources: CreatedMediaNode[], mode: 'cmaf' | 'ts') {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
         new YamlNodeBuilder<AutoCmafConfig, CmafOutputState, CmafOutputCommand, CmafOutputEvent>
-          ('cmaf',
-            AutoCmafInfo(RegistrationConsts),
+          ("cmaf",
+            (mode == 'cmaf' ? AutoCmafInfo(RegistrationConsts) : AutoHlsInfo(RegistrationConsts)),
             {
               name: 'default',
               sessionId: false,
@@ -44,9 +45,7 @@ describe("Auto CMAF Output", () => {
                 targetPartDuration: 0.5,
                 targetSegmentDuration: 2,
               },
-              mode: 'cmaf',
               s3Destinations: [],
-              ...cfg
             }
           ).reify())
       .reify();
@@ -135,7 +134,7 @@ describe("Auto CMAF Output", () => {
     beforeEach(async () => {
       norsk = await Norsk.connect({ onShutdown: () => { } });
       const source = await videoAndAudio(norsk, 'source');
-      result = await sharedSetup(norsk, [source], { mode });
+      result = await sharedSetup(norsk, [source], mode);
     })
 
     it("Spins up a multi-variant playlist with the one stream", async () => {
@@ -164,7 +163,7 @@ describe("Auto CMAF Output", () => {
       const video1 = await video(norsk, 'source1', { renditionName: "high", sourceName: "source" });
       const video2 = await video(norsk, 'source2', { renditionName: "low", sourceName: "source" });
       const audio1 = await audio(norsk, 'source3', { renditionName: "default", sourceName: "source" });
-      result = await sharedSetup(norsk, [video1, video2, audio1], { mode });
+      result = await sharedSetup(norsk, [video1, video2, audio1], mode);
     })
 
     it("Spins up a multi-variant playlist with all the streams", async () => {
@@ -194,7 +193,7 @@ describe("Auto CMAF Output", () => {
       const video2 = await video(norsk, 'source2-video', { renditionName: "high", sourceName: "source2" });
       const audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
       const audio2 = await audio(norsk, 'source2-audio', { renditionName: "default", sourceName: "source2" });
-      result = await sharedSetup(norsk, [video1, video2, audio1, audio2], { mode });
+      result = await sharedSetup(norsk, [video1, video2, audio1, audio2], mode);
     })
 
     it("Spins up a multi-variant playlist with all the streams", async () => {
@@ -243,7 +242,7 @@ describe("Auto CMAF Output", () => {
       video3 = await video(norsk, 'source1-video-low', { renditionName: "low", sourceName: "source1" });
       audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
       audio2 = await audio(norsk, 'source2-audio', { renditionName: "default", sourceName: "source2" });
-      result = await sharedSetup(norsk, [video1, video2, audio1, audio2, video3], { mode });
+      result = await sharedSetup(norsk, [video1, video2, audio1, audio2, video3], mode);
     })
 
     it("Removes the media stream from the multivariant", async () => {
@@ -287,7 +286,7 @@ describe("Auto CMAF Output", () => {
       video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
       video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
       audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
-      result = await sharedSetup(norsk, [video1, video2, audio1], { mode });
+      result = await sharedSetup(norsk, [video1, video2, audio1], mode);
     })
 
     it("Removes the stream from the multi-variant then re-adds it", async () => {
@@ -334,7 +333,7 @@ describe("Auto CMAF Output", () => {
       video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
       video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
       audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
-      result = await sharedSetup(norsk, [video1, video2, audio1], { mode });
+      result = await sharedSetup(norsk, [video1, video2, audio1], mode);
     })
 
     it("Removes the multivariant", async () => {
@@ -373,7 +372,7 @@ describe("Auto CMAF Output", () => {
       video1 = await video(norsk, 'source1-video', { renditionName: "high", sourceName: "source1" });
       video2 = await video(norsk, 'source2-video', { renditionName: "medium", sourceName: "source1" });
       audio1 = await audio(norsk, 'source1-audio', { renditionName: "default", sourceName: "source1" });
-      result = await sharedSetup(norsk, [video1, video2, audio1], { mode });
+      result = await sharedSetup(norsk, [video1, video2, audio1], mode);
     })
 
     it("Re-creates the multivariant", async () => {
@@ -437,8 +436,8 @@ describe("Auto CMAF Output", () => {
       const yaml = new YamlBuilder()
         .addNode(
           new YamlNodeBuilder<AutoCmafConfig, CmafOutputState, CmafOutputCommand, CmafOutputEvent>
-            ('cmaf',
-              AutoCmafInfo(RegistrationConsts),
+            ("cmaf",
+              (mode == 'cmaf' ? AutoCmafInfo(RegistrationConsts) : AutoHlsInfo(RegistrationConsts)),
               {
                 name: 'default',
                 sessionId: false,
@@ -448,7 +447,6 @@ describe("Auto CMAF Output", () => {
                   targetSegmentDuration: 2,
                 },
                 s3Destinations: [],
-                mode
               }
             ).reify())
         .reify();

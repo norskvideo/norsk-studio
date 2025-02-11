@@ -35,6 +35,8 @@ import input_videoTestCard from "./input.videoTestCard/info";
 AllComponents.push((r: Registration) => input_videoTestCard(r) as unknown as NodeInfo<BaseConfig>);
 import output_autoCmaf from "./output.autoCmaf/info";
 AllComponents.push((r: Registration) => output_autoCmaf(r) as unknown as NodeInfo<BaseConfig>);
+import output_autoHls from "./output.autoHls/info";
+AllComponents.push((r: Registration) => output_autoHls(r) as unknown as NodeInfo<BaseConfig>);
 import output_preview from "./output.preview/info";
 AllComponents.push((r: Registration) => output_preview(r) as unknown as NodeInfo<BaseConfig>);
 import output_rtmp from "./output.rtmp/info";
