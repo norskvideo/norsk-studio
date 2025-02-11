@@ -31,8 +31,8 @@ export default function(R: Registration) {
   return defineComponent<AutoCmafConfig, CmafOutputState, CmafOutputCommand, CmafOutputEvent>({
     identifier: 'output.autoCmaf',
     category: 'output',
-    name: "Auto CMAF",
-    description: "This component handles the creation of CMAF outputs from multiple video and audio streams.",
+    name: "Auto Playlists",
+    description: "This component handles the creation of CMAF/HLS-TS outputs from multiple video and audio streams.",
     subscription: {
       // Again, accept anything
       // but reject the same stream twice
@@ -45,7 +45,7 @@ export default function(R: Registration) {
     extraValidation: (ctx) => {
       const audioStreams = ctx.subscriptions.filter((s) => s.validatedStreams.select.includes("audio"));
       if (audioStreams.length == 0) {
-        ctx.addError("AutoCMAF requires at least one audio stream")
+        ctx.addError("AutoPlaylist requires at least one audio stream")
       }
       // hard to validate on multiple audio streams, as you can have one per 'stream'
       // I think we need to raise sensible runtime errors somewhere
@@ -196,6 +196,17 @@ export default function(R: Registration) {
                 },
               },
             }
+          }
+        },
+        mode: {
+          help: "CMAF or HLS/TS",
+          hint: {
+            type: 'select',
+            defaultValue: 'cmaf',
+            options: [
+              { display: "CMAF", value: 'cmaf' },
+              { display: "HLS/TS", value: 'ts' }
+            ]
           }
         },
         s3Destinations: {
