@@ -480,16 +480,16 @@ describe("Auto CMAF Output", () => {
     let server: Server;
     let port: number;
     let source: SimpleInputWrapper;
-  
+
     beforeEach(async () => {
       norsk = await Norsk.connect({ onShutdown: () => { } });
       app = express();
       app.use(express.json());
       server = app.listen(0);
       port = (server.address() as AddressInfo).port;
-  
+
       source = await videoAndAudio(norsk, 'source');
-      
+
       const runtime = await defaultRuntime();
       const yaml = new YamlBuilder()
         .addNode(
@@ -505,13 +505,14 @@ describe("Auto CMAF Output", () => {
                   targetSegmentDuration: 2,
                 },
                 s3Destinations: [],
+                mode: 'cmaf'
               }
             ).reify())
         .reify();
-  
+
       const compiled = document.load(__filename, runtime, YAML.stringify(yaml));
       result = await go(norsk, compiled, app);
-      
+
       const cmaf = result.components["cmaf"] as AutoCmaf;
       cmaf.subscribe([new StudioNodeSubscriptionSource(
         source,
@@ -528,26 +529,26 @@ describe("Auto CMAF Output", () => {
           });
         }
         if (source) {
-          await source.close().catch(() => {});
+          await source.close().catch(() => { });
         }
         if (norsk) {
-          await norsk.close().catch(() => {});
+          await norsk.close().catch(() => { });
         }
         await new Promise(f => setTimeout(f, 500));
       } catch (error) {
         console.error('Error in afterEach cleanup:', error);
       }
     });
-  
+
     it("should handle initial state correctly", async () => {
       const cmaf = result!.components["cmaf"] as AutoCmaf;
       const initialState = cmaf.runtime.updates.latest();
       expect(initialState.enabled).to.be.true;
-  
+
       const mv = result?.registeredOutputs.find((s) => s.url?.endsWith("default.m3u8"));
       expect(mv).to.exist;
       expect(mv?.url).to.exist;
-  
+
       const initialManifest = await awaitCompleteManifest(mv!.url!, 2);
       expect(initialManifest.variants).length(1);
       expect(initialManifest.variants[0]?.audio).length(1);
@@ -559,61 +560,61 @@ describe("Auto CMAF Output", () => {
       expect(mv).to.exist;
 
       expect(cmaf.runtime.updates.latest().enabled).to.be.true;
-    
+
       const disableResponse = await fetch(`http://localhost:${port}/${cmaf.id}/disable`, {
         method: 'POST'
       });
       expect(disableResponse.status).to.equal(204);
-    
+
       const enableResponse = await fetch(`http://localhost:${port}/${cmaf.id}/enable`, {
         method: 'POST'
       });
       expect(enableResponse.status).to.equal(204);
     });
-   
+
     it("should handle invalid API requests appropriately", async () => {
       const cmaf = result!.components["cmaf"] as AutoCmaf;
-  
+
       const alreadyEnabledResponse = await fetch(`http://localhost:${port}/${cmaf.id}/enable`, {
         method: 'POST'
       });
       expect(alreadyEnabledResponse.status).to.equal(400);
-  
+
       const disableResponse = await fetch(`http://localhost:${port}/${cmaf.id}/disable`, {
         method: 'POST'
       });
       expect(disableResponse.status).to.equal(204);
-  
+
       const alreadyDisabledResponse = await fetch(`http://localhost:${port}/${cmaf.id}/disable`, {
         method: 'POST'
       });
       expect(alreadyDisabledResponse.status).to.equal(400);
     });
-  
+
     it("should maintain disabled state across source changes", async () => {
       const cmaf = result!.components["cmaf"] as AutoCmaf;
       const mv = result?.registeredOutputs.find((s) => s.url?.endsWith("default.m3u8"));
       expect(mv).to.exist;
-  
+
       const disableResponse = await fetch(`http://localhost:${port}/${cmaf.id}/disable`, {
         method: 'POST'
       });
       expect(disableResponse.status).to.equal(204);
-  
+
       const newSource = await videoAndAudio(norsk!, 'new-source');
       cmaf.subscribe([new StudioNodeSubscriptionSource(
         newSource,
         testSourceDescription(),
         { type: 'take-first-stream', select: ["video", "audio"] }
       )]);
-  
+
       const disabledResponse = await fetch(mv!.url!);
       expect(disabledResponse.status).to.not.equal(200);
     });
-  
+
     it("should emit appropriate events on state changes", async () => {
       const cmaf = result!.components["cmaf"] as AutoCmaf;
-  
+
       const disabledEventPromise = new Promise<void>((resolve) => {
         const originalRaiseEvent = cmaf.runtime.updates.raiseEvent;
         cmaf.runtime.updates.raiseEvent = (event: CmafOutputEvent) => {
@@ -623,14 +624,14 @@ describe("Auto CMAF Output", () => {
           return originalRaiseEvent.call(cmaf.runtime.updates, event);
         };
       });
-  
+
       const disableResponse = await fetch(`http://localhost:${port}/${cmaf.id}/disable`, {
         method: 'POST'
       });
       expect(disableResponse.status).to.equal(204);
-  
+
       await disabledEventPromise;
-  
+
       const enabledEventPromise = new Promise<void>((resolve) => {
         const originalRaiseEvent = cmaf.runtime.updates.raiseEvent;
         cmaf.runtime.updates.raiseEvent = (event: CmafOutputEvent) => {
@@ -640,12 +641,12 @@ describe("Auto CMAF Output", () => {
           return originalRaiseEvent.call(cmaf.runtime.updates, event);
         };
       });
-  
+
       const enableResponse = await fetch(`http://localhost:${port}/${cmaf.id}/enable`, {
         method: 'POST'
       });
       expect(enableResponse.status).to.equal(204);
-  
+
       await enabledEventPromise;
     });
   });
