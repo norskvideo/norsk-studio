@@ -91,13 +91,9 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
     const node = await AutoCmaf.create(norsk, cfg, runtime);
     cb(node);
     const mv = node.mv;
-    if (mv?.cmaf) {
-      runtime.report.registerOutput(cfg.id, mv.cmaf.url);
-      runtime.updates.raiseEvent({ type: 'url-published', url: mv.cmaf.url, drmToken: node.crypto?.token });
-    }
-    if (mv?.ts) {
-      runtime.updates.raiseEvent({ type: 'url-published', url: mv.ts.url, drmToken: node.crypto?.token });
-      runtime.report.registerOutput(cfg.id, mv.ts.url);
+    if (mv) {
+      runtime.report.registerOutput(cfg.id, mv.url);
+      runtime.updates.raiseEvent({ type: 'url-published', url: mv.url, drmToken: node.crypto?.token });
     }
   }
 
@@ -165,18 +161,18 @@ export class AutoCmaf extends CustomSinkNode {
   norsk: Norsk;
   cfg: AutoCmafConfig;
   currentSources: Map<CreatedMediaNode, StudioNodeSubscriptionSource> = new Map();
-  currentMedia: { cmaf?: AutoProcessorMediaNode<string>, ts?: AutoProcessorMediaNode<string>, key: StreamKey, scheduleAd: (marker: AdMarker, destinationId: string) => void }[] = [];
+  currentMedia: { node: AutoProcessorMediaNode<string>, key: StreamKey, scheduleAd: (marker: AdMarker, destinationId: string) => void }[] = [];
   crypto?: CryptoDetails;
 
   control: ContextPromiseControl = new ContextPromiseControl(this.handleContext.bind(this));
 
   // If there is only one program/source then this is the only one worth looking at
-  mv?: { cmaf?: CmafMultiVariantOutputNode, ts?: HlsTsMultiVariantOutputNode };
+  mv?: CmafMultiVariantOutputNode | HlsTsMultiVariantOutputNode;
   defaultProgramNumber: number = 0;
   defaultSourceName: string = '';
 
   // But we'll make further entries if we see further programs
-  currentMultiVariants: { cmaf?: CmafMultiVariantOutputNode, ts?: HlsTsMultiVariantOutputNode, programNumber: number, sourceName: string }[] = [];
+  currentMultiVariants: { node?: CmafMultiVariantOutputNode | HlsTsMultiVariantOutputNode, programNumber: number, sourceName: string }[] = [];
 
   initialised: Promise<void>;
 
@@ -277,7 +273,7 @@ export class AutoCmaf extends CustomSinkNode {
         ...mvCryptoSettings,
       });
       this.setup({ sink: cmaf });
-      this.mv = { cmaf };
+      this.mv = cmaf;
     } else {
       const ts = await this.norsk.output.hlsTsMultiVariant({
         id: `${this.cfg.id}-multivariant-ts`,
@@ -286,7 +282,7 @@ export class AutoCmaf extends CustomSinkNode {
         ...mvCryptoSettings,
       });
       this.setup({ sink: ts });
-      this.mv = { ts };
+      this.mv = ts;
     }
 
   }
@@ -304,8 +300,7 @@ export class AutoCmaf extends CustomSinkNode {
     if (this.enabled) {
       this.enabled = false;
       for (const media of this.currentMedia) {
-        await media.ts?.close();
-        await media.cmaf?.close();
+        await media.node?.close();
       }
       this.runtime.updates.raiseEvent({ type: 'output-disabled' })
       this.currentMedia = [];
@@ -368,27 +363,26 @@ export class AutoCmaf extends CustomSinkNode {
         const newMv = {
           programNumber: stream.key.programNumber,
           sourceName: stream.key.sourceName,
-          cmaf: undefined as (undefined | CmafMultiVariantOutputNode),
-          ts: undefined as (undefined | HlsTsMultiVariantOutputNode)
+          node: undefined as (undefined | CmafMultiVariantOutputNode | HlsTsMultiVariantOutputNode),
         }
         this.currentMultiVariants.push(newMv);
         debuglog("Creating program-specific multi-variant in AutoPlaylist", { id: this.id, streamKey: stream.key });
         if (this.cfg.mode == 'cmaf') {
-          newMv.cmaf = await this.norsk.output.cmafMultiVariant({
+          newMv.node = await this.norsk.output.cmafMultiVariant({
             id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}-cmaf`,
             //id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
             playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
             destinations: this.destinations
           });
-          this.runtime.report.registerOutput(this.cfg.id, newMv.cmaf.url);
+          this.runtime.report.registerOutput(this.cfg.id, newMv.node.url);
         } else {
-          newMv.ts = await this.norsk.output.cmafMultiVariant({
+          newMv.node = await this.norsk.output.cmafMultiVariant({
             id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}-ts`,
             //id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
             playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
             destinations: this.destinations
           });
-          this.runtime.report.registerOutput(this.cfg.id, newMv.ts.url);
+          this.runtime.report.registerOutput(this.cfg.id, newMv.node.url);
         }
       }
 
@@ -404,19 +398,18 @@ export class AutoCmaf extends CustomSinkNode {
             mpdAdditions: this.crypto.video.dashSignalling,
           } : {};
 
-          let videoTs: HlsTsVideoOutputNode | undefined = undefined;
-          let videoCmaf: CmafVideoOutputNode | undefined = undefined;
+          let node: HlsTsVideoOutputNode | CmafVideoOutputNode | undefined = undefined;
 
           if (this.cfg.mode == 'cmaf') {
-            const local = videoCmaf = await this.norsk.output.cmafVideo({
+            const local = node = await this.norsk.output.cmafVideo({
               segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
               partDurationSeconds: this.cfg.segments.targetPartDuration,
               destinations: this.destinations,
               id: `${this.id}-${streamKeyString}-video-cmaf`,
               ...videoCryptoSettings,
             });
-            videoCmaf.onPlaylistAddition = (_, p) => p;
-            videoCmaf.onPlaylistAddition = undefined;
+            local.onPlaylistAddition = (_, p) => p;
+            local.onPlaylistAddition = undefined;
 
             subscribes.push(new Promise((resolve, _reject) => {
               local.subscribe([{
@@ -425,7 +418,7 @@ export class AutoCmaf extends CustomSinkNode {
               }], (_) => true, (_) => resolve({}));
             }));
           } else {
-            const local = videoTs = await this.norsk.output.hlsTsVideo({
+            const local = node = await this.norsk.output.hlsTsVideo({
               segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
               destinations: this.destinations,
               id: `${this.id}-${streamKeyString}-video-ts`,
@@ -440,20 +433,14 @@ export class AutoCmaf extends CustomSinkNode {
           }
           const newMedia = {
             key: stream.key,
-            cmaf: videoCmaf,
-            ts: videoTs,
+            node,
             scheduleAd: (ad: AdMarker, destinationId: string) => {
               const now = new Date();
-              videoCmaf?.scheduleTag(ad, now, destinationId)
-              videoTs?.scheduleTag(ad, now, destinationId)
+              node?.scheduleTag(ad, now, destinationId)
             }
           }
           this.currentMedia.push(newMedia);
-
-          if (videoCmaf)
-            this.registerInput(videoCmaf);
-          if (videoTs)
-            this.registerInput(videoTs);
+          this.registerInput(node);
           break;
         }
         case "audio": {
@@ -462,19 +449,18 @@ export class AutoCmaf extends CustomSinkNode {
             m3uAdditions: this.crypto.audio.mediaSignaling,
             mpdAdditions: this.crypto.audio.dashSignalling,
           } : {};
-          let audioCmaf: CmafAudioOutputNode | undefined = undefined;
-          let audioTs: HlsTsAudioOutputNode | undefined = undefined;
+          let node: HlsTsAudioOutputNode | CmafAudioOutputNode | undefined = undefined;
 
           if (this.cfg.mode == 'cmaf') {
-            const local = audioCmaf = await this.norsk.output.cmafAudio({
+            const local = node = await this.norsk.output.cmafAudio({
               segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
               partDurationSeconds: this.cfg.segments.targetPartDuration,
               destinations: this.destinations,
               id: `${this.id}-${streamKeyString}-audio-cmaf`,
               ...audioCryptoSettings,
             });
-            audioCmaf.onPlaylistAddition = (_, p) => p;
-            audioCmaf.onPlaylistAddition = undefined;
+            local.onPlaylistAddition = (_, p) => p;
+            local.onPlaylistAddition = undefined;
             subscribes.push(new Promise((resolve, _reject) => {
               local.subscribe([{
                 source: stream.source,
@@ -482,7 +468,7 @@ export class AutoCmaf extends CustomSinkNode {
               }], (_) => true, (_) => resolve({}));
             }));
           } else {
-            const local = audioTs = await this.norsk.output.hlsTsAudio({
+            const local = node = await this.norsk.output.hlsTsAudio({
               segmentDurationSeconds: this.cfg.segments.targetSegmentDuration,
               destinations: this.destinations,
               id: `${this.id}-${streamKeyString}-audio-ts`,
@@ -497,19 +483,14 @@ export class AutoCmaf extends CustomSinkNode {
           }
           const newMedia = {
             key: stream.key,
-            cmaf: audioCmaf,
-            ts: audioTs,
+            node,
             scheduleAd: (ad: AdMarker, destinationId: string) => {
               const now = new Date();
-              audioCmaf?.scheduleTag(ad, now, destinationId)
-              audioTs?.scheduleTag(ad, now, destinationId)
+              node?.scheduleTag(ad, now, destinationId)
             }
           }
           this.currentMedia.push(newMedia);
-          if (audioCmaf)
-            this.registerInput(audioCmaf);
-          if (audioTs)
-            this.registerInput(audioTs);
+          this.registerInput(node);
           break;
         }
         case "subtitle": {
@@ -528,8 +509,7 @@ export class AutoCmaf extends CustomSinkNode {
 
             const newMedia = {
               key: stream.key,
-              cmaf: subtitleCmaf,
-              ts: undefined,
+              node: subtitleCmaf,
               scheduleAd: (ad: AdMarker, destinationId: string) => {
                 const now = new Date();
                 subtitleCmaf.scheduleTag(ad, now, destinationId)
@@ -585,18 +565,16 @@ export class AutoCmaf extends CustomSinkNode {
     })
 
     for (const deletion of deletions) {
-      const cmaf = deletion.cmaf;
-      const ts = deletion.ts;
+      const node = deletion.node;
       this.currentMedia = this.currentMedia.filter((x) =>
         !streamKeysAreEqual(x.key, deletion.key))
-      await cmaf?.close();
-      await ts?.close();
+      await node?.close();
     }
 
     await Promise.all(creations);
 
     const defaultSources = this.currentMedia.flatMap((m) => {
-      if (m.key.programNumber == this.defaultProgramNumber && m.key.sourceName == this.defaultSourceName) return [{ cmaf: m.cmaf, ts: m.ts, sourceSelector: selectPlaylist }];
+      if (m.key.programNumber == this.defaultProgramNumber && m.key.sourceName == this.defaultSourceName) return [{ source: m.node, sourceSelector: selectPlaylist }];
       return [];
     });
 
@@ -606,29 +584,20 @@ export class AutoCmaf extends CustomSinkNode {
       this.defaultSourceName = '';
     }
 
-    this.mv?.cmaf?.subscribe(defaultSources.filter((s) => !!s.cmaf)
-      .map((s) => ({ source: s.cmaf!, sourceSelector: s.sourceSelector })));
-
-    this.mv?.ts?.subscribe(defaultSources.filter((s) => !!s.ts)
-      .map((s) => ({ source: s.ts!, sourceSelector: s.sourceSelector })));
+    this.mv?.subscribe(defaultSources.
+      map((s) => ({ source: s.source, sourceSelector: s.sourceSelector })));
 
     for (const mv of this.currentMultiVariants) {
-      const cmafSources = this.currentMedia.flatMap((m) => {
-        if (m.key.programNumber == mv.programNumber && m.key.sourceName == mv.sourceName && m.cmaf) return [{ source: m.cmaf, sourceSelector: selectPlaylist }];
+      const sources = this.currentMedia.flatMap((m) => {
+        if (m.key.programNumber == mv.programNumber && m.key.sourceName == mv.sourceName && m.node) return [{ source: m.node, sourceSelector: selectPlaylist }];
         return [];
       })
-      const tsSources = this.currentMedia.flatMap((m) => {
-        if (m.key.programNumber == mv.programNumber && m.key.sourceName == mv.sourceName && m.ts) return [{ source: m.ts, sourceSelector: selectPlaylist }];
-        return [];
-      })
-      if (cmafSources.length == 0 && tsSources.length == 0) {
+      if (sources.length == 0) {
         infolog("Removing multi-variant because all streams have gone")
-        await mv.cmaf?.close();
-        await mv.ts?.close();
+        await mv.node?.close();
         this.currentMultiVariants = this.currentMultiVariants.filter((m) => m != mv);
       }
-      mv.cmaf?.subscribe(cmafSources);
-      mv.ts?.subscribe(tsSources);
+      mv.node?.subscribe(sources);
     }
 
     // The most important thing really, don't release this current context change
