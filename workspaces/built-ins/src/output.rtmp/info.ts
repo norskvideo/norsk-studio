@@ -7,7 +7,7 @@ export default function ({
   Av,
   validation: { Z, JitterBuffer },
 }: Registration) {
-
+  const SummaryView = React.lazy(async () => import('./summary-view'));
   const InlineView = React.lazy(async () => import('./inline-view'));
 
   return defineComponent<RtmpOutputSettings, RtmpOutputState, object, RtmpOutputEvent>({
@@ -32,7 +32,7 @@ export default function ({
       };
     },
     runtime: {
-      initialState: () => ({ connected: false, connectRetries: 0 }),
+      initialState: () => ({ connected: false, connectRetries: 0, enabled: true }),
       handleEvent: (ev, state) => {
         const evType = ev.type;
         switch (evType) {
@@ -43,12 +43,19 @@ export default function ({
             state.connected = false;
             state.connectRetries++;
             break;
+            case "output-enabled":
+              state.enabled = true;
+              break;
+            case "output-disabled":
+              state.enabled = false;
+              break;
           default:
             assertUnreachable(evType)
         }
         return { ...state };
       },
       inline: InlineView,
+      summary: SummaryView
     },
     configForm: {
       form: { 

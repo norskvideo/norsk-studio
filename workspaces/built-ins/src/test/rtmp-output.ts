@@ -1,7 +1,7 @@
 import { Norsk } from "@norskvideo/norsk-sdk";
 import { registerAll } from "../";
 import { RuntimeSystem } from "@norskvideo/norsk-studio/lib/extension/runtime-system";
-import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder"
+import { YamlBuilder, YamlNodeBuilder, emptyRuntime } from "@norskvideo/norsk-studio/lib/test/_util/builder";
 import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go from '@norskvideo/norsk-studio/lib/runtime/execution';
@@ -12,9 +12,13 @@ import RtmpInputInfo from "../input.rtmp/info";
 import { Av, BaseConfig, NodeInfo, RegistrationConsts, Video } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { SimpleInputWrapper, SimpleSinkWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 import { StudioNodeSubscriptionSource } from "@norskvideo/norsk-studio/lib/extension/runtime-types";
-import { TraceSink } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
+import { TraceSink, waitForAssert } from "@norskvideo/norsk-studio/lib/test/_util/sinks";
 import { expect } from "chai";
 import { RtmpInputEvent, RtmpInputSettings, RtmpInputState } from "../input.rtmp/runtime";
+import express from 'express';
+import { Server } from 'http';
+import { AddressInfo } from 'net';
+import fetch from "node-fetch";
 import { waitForCondition } from "@norskvideo/norsk-studio/lib/shared/util";
 
 async function defaultRuntime(): Promise<RuntimeSystem> {
@@ -23,9 +27,6 @@ async function defaultRuntime(): Promise<RuntimeSystem> {
   return runtime;
 }
 
-// All we're really testing here
-// is that we're spinning up the rtmp node
-// with some valid config and that we haven't made a huge snafu in doing so
 describe("RTMP Output", () => {
   async function testDocument() {
     const runtime = await defaultRuntime();
@@ -53,10 +54,32 @@ describe("RTMP Output", () => {
   }
 
   let norsk: Norsk | undefined = undefined;
+  let app: express.Application;
+  let server: Server;
+  let port: number;
+
+  beforeEach(async () => {
+    app = express();
+    app.use(express.json());
+    server = app.listen(0);
+    port = (server.address() as AddressInfo).port;
+  });
 
   afterEach(async () => {
-    await norsk?.close();
-  })
+    try {
+      if (server) {
+        await new Promise<void>((resolve) => {
+          server?.close(() => resolve());
+        });
+      }
+      if (norsk) {
+        await norsk.close().catch(() => {});
+      }
+      await new Promise(f => setTimeout(f, 1000));
+    } catch (error) {
+      console.error('Error in afterEach cleanup:', error);
+    }
+  });
 
   it("Provides an RTMP output when there is a stream", async () => {
     norsk = await Norsk.connect({ onShutdown: () => { } });
@@ -114,5 +137,116 @@ describe("RTMP Output", () => {
     await waitForCondition(() => sink.streamCount() == 2, 60000, 10)
     expect(sink.streamCount()).equal(2);
   })
-});
 
+  it("should handle initial state correctly", async () => {
+    norsk = await Norsk.connect({ onShutdown: () => { } });
+    const compiled = await testDocument();
+    const result = await go(norsk, compiled, app);
+    const rtmp = result.components["rtmp"] as SimpleSinkWrapper;
+    const input = result.components["input"] as SimpleInputWrapper;
+    
+    const source = await videoAndAudio(norsk, 'source');
+    rtmp.subscribe([new StudioNodeSubscriptionSource(
+      source,
+      testSourceDescription(),
+      { type: "take-first-stream", select: Av }
+    )], { requireOneOfEverything: true });
+
+    const sink = new TraceSink(norsk as Norsk, "sink");
+    await sink.initialised;
+    sink.subscribe([
+      new StudioNodeSubscriptionSource(input, compiled.components['input'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, RtmpInputInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+    ]);
+
+    await waitForAssert(() => sink.streamCount() == 2, () => {
+      expect(sink.streamCount()).equal(2);
+    }, 5000, 10);
+  });
+
+  it("should handle disable and enable cycle correctly", async () => {
+    norsk = await Norsk.connect({ onShutdown: () => { } });
+    const compiled = await testDocument();
+    const result = await go(norsk, compiled, app);
+    const rtmp = result.components["rtmp"] as SimpleSinkWrapper;
+    const input = result.components["input"] as SimpleInputWrapper;
+    
+    const source = await videoAndAudio(norsk, 'source');
+    rtmp.subscribe([new StudioNodeSubscriptionSource(
+      source,
+      testSourceDescription(),
+      { type: "take-first-stream", select: Av }
+    )], { requireOneOfEverything: true });
+
+    const sink = new TraceSink(norsk as Norsk, "sink");
+    await sink.initialised;
+    sink.subscribe([
+      new StudioNodeSubscriptionSource(input, compiled.components['input'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, RtmpInputInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+    ]);
+
+    await waitForAssert(() => sink.streamCount() == 2, () => {
+      expect(sink.streamCount()).equal(2);
+    }, 5000, 10);
+
+    const disableResponse = await fetch(`http://localhost:${port}/${rtmp.id}/disable`, {
+      method: 'POST'
+    });
+    expect(disableResponse.status).to.equal(204);
+
+    await waitForAssert(() => sink.streamCount() == 0, () => {
+      expect(sink.streamCount()).equal(0);
+    }, 5000, 10);
+
+    const enableResponse = await fetch(`http://localhost:${port}/${rtmp.id}/enable`, {
+      method: 'POST'
+    });
+    expect(enableResponse.status).to.equal(204);
+
+    await waitForAssert(() => sink.streamCount() == 2, () => {
+      expect(sink.streamCount()).equal(2);
+    }, 5000, 10);
+  });
+
+  it("should handle invalid API requests appropriately", async () => {
+    norsk = await Norsk.connect({ onShutdown: () => { } });
+    const compiled = await testDocument();
+    const result = await go(norsk, compiled, app);
+    const rtmp = result.components["rtmp"] as SimpleSinkWrapper;
+    const input = result.components["input"] as SimpleInputWrapper;
+    
+    const source = await videoAndAudio(norsk, 'source');
+    rtmp.subscribe([new StudioNodeSubscriptionSource(
+      source,
+      testSourceDescription(),
+      { type: "take-first-stream", select: Av }
+    )], { requireOneOfEverything: true });
+
+    const sink = new TraceSink(norsk as Norsk, "sink");
+    await sink.initialised;
+    sink.subscribe([
+      new StudioNodeSubscriptionSource(input, compiled.components['input'].yaml, { type: 'take-all-streams', select: ["audio", "video"] }, RtmpInputInfo(RegistrationConsts) as unknown as NodeInfo<BaseConfig>)
+    ]);
+
+    await waitForAssert(() => sink.streamCount() == 2, () => {
+      expect(sink.streamCount()).equal(2);
+    }, 5000, 10);
+
+    const alreadyEnabledResponse = await fetch(`http://localhost:${port}/${rtmp.id}/enable`, {
+      method: 'POST'
+    });
+    expect(alreadyEnabledResponse.status).to.equal(400);
+
+    const disableResponse = await fetch(`http://localhost:${port}/${rtmp.id}/disable`, {
+      method: 'POST'
+    });
+    expect(disableResponse.status).to.equal(204);
+
+    await waitForAssert(() => sink.streamCount() == 0, () => {
+      expect(sink.streamCount()).equal(0);
+    }, 5000, 10);
+
+    const alreadyDisabledResponse = await fetch(`http://localhost:${port}/${rtmp.id}/disable`, {
+      method: 'POST'
+    });
+    expect(alreadyDisabledResponse.status).to.equal(400);
+  });
+});

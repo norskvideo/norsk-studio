@@ -1,0 +1,30 @@
+openapi: 3.0.0
+info:
+  title: Rtmp Output Component
+  version: 1.0.0
+
+paths:
+  /enable:
+    post:
+      summary: Enable Rtmp output
+      description: Enables output if currently disabled
+      x-route-type: instance
+      responses:
+        204:
+          description: Output successfully enabled
+        400:
+          description: Output is already enabled
+        500:
+          description: Server error while enabling output
+  /disable:
+    post:
+      summary: Disable Rtmp output
+      description: Disables output if currently enabled
+      x-route-type: instance
+      responses:
+        204:
+          description: Output successfully disabled
+        400:
+          description: Output is already disabled
+        500:
+          description: Server error while disabling output
