@@ -1,6 +1,6 @@
-import { Norsk, SrtOutputSettings as SdkSettings } from '@norskvideo/norsk-sdk';
-import { InstanceRouteInfo, OnCreated, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { Norsk, ReceiveFromAddressAuto, SrtOutputSettings as SdkSettings, SrtOutputNode } from '@norskvideo/norsk-sdk';
+import { InstanceRouteInfo, OnCreated, ServerComponentDefinition, StudioRuntime, StudioNodeSubscriptionSource, CreatedMediaNode } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomSinkNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import type { SocketOptions } from '../shared/srt-types';
 import { OpenAPIV3 } from 'openapi-types';
@@ -9,6 +9,7 @@ import { resolveRefs } from 'json-refs';
 import path from 'path';
 import YAML from 'yaml';
 import { paths } from './types';
+import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 
 export type SrtOutputSettings = Pick<SdkSettings, 'port' | 'host' | 'mode' | 'passphrase' | 'streamId' | 'bufferDelayMs' | 'avDelayMs'> & {
   id: string,
@@ -28,6 +29,107 @@ export type SrtOutputCommand = {
 export type SrtOutputEvent = {
   type: 'output-enabled' | 'output-disabled';
 };
+
+class SrtOutput extends CustomSinkNode {
+  norsk: Norsk;
+  cfg: SrtOutputSettings;
+  srtOutputNode: SrtOutputNode | null = null;
+  enabled: boolean = true;
+  initialised: Promise<void>;
+  runtime: StudioRuntime<SrtOutputState, SrtOutputCommand, SrtOutputEvent>;
+
+  control: ContextPromiseControl = new ContextPromiseControl(this.subscribeImpl.bind(this));
+  
+  currentSources: Map<CreatedMediaNode, StudioNodeSubscriptionSource> = new Map();
+ 
+  static async create(norsk: Norsk, cfg: SrtOutputSettings,  runtime: StudioRuntime<SrtOutputState, SrtOutputCommand, SrtOutputEvent>) {
+    const node = new SrtOutput(cfg, norsk, runtime);
+    await node.initialised;
+    return node;
+  }
+
+  constructor(cfg: SrtOutputSettings, norsk: Norsk,  runtime: StudioRuntime<SrtOutputState, SrtOutputCommand, SrtOutputEvent>) {
+    super(cfg.id);
+    this.cfg = cfg;
+    this.id = cfg.id;
+    this.norsk = norsk;
+    this.runtime = runtime;
+    this.initialised = Promise.resolve();
+  }
+  
+  async enableOutput() {
+    if (!this.enabled) {
+      this.enabled = true;   
+      await this.control.schedule();
+      this.runtime.updates.raiseEvent({ type: 'output-enabled' });
+      debuglog("Output enabled", { id: this.id });
+    }
+  }
+
+  async disableOutput() {
+    if (this.enabled) {
+      this.enabled =false;
+      if (this.srtOutputNode){
+        await this.srtOutputNode.close();
+        this.srtOutputNode = null;
+      }    
+      this.runtime.updates.raiseEvent({
+        type: 'output-disabled'
+      })
+      debuglog("Output disabled", { id: this.id });
+    }
+  }
+
+  override subscribe(sources: StudioNodeSubscriptionSource[], _opts?: SubscriptionOpts): void {
+      this.currentSources = new Map();
+      sources.forEach((s) => {
+        this.currentSources.set(s.source, s);
+      });
+      
+      this.control.setSources(sources);
+  }
+
+  async subscribeImpl(sources: StudioNodeSubscriptionSource[]) {
+    if (!this.enabled) {
+      debuglog("Skipping context handling - output disabled", { id: this.id });
+      return;
+    }
+
+    //for (const [_, source] of this.currentSources) {
+      // if (source) {
+        const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0)?.selectVideo();
+        const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0)?.selectAudio();
+    
+        const subscriptions: ReceiveFromAddressAuto[] = [];
+    
+        if (videoSource && videoSource.length > 0) {
+          subscriptions.push(videoSource[0]);
+        }
+    
+        if (audioSource && audioSource.length > 0) {
+          subscriptions.push(audioSource[0]);
+        }
+
+        if (subscriptions.length > 0) {
+          if (!this.srtOutputNode) {
+            const node = await this.norsk.output.srt({
+              ...this.cfg,
+              ...this.cfg.socketOptions,
+              id: this.cfg.id,
+            });
+            this.srtOutputNode = node;
+          }
+          this.srtOutputNode.subscribe(subscriptions, (ctx) => {
+            return ctx.streams.length === subscriptions.length;
+          })
+        } else {
+          await this.srtOutputNode?.close();
+          this.srtOutputNode = null;
+        }
+      //}
+    //}
+}
+}
 
 type Transmuted<T> = {
   [Key in keyof T]: OpenAPIV3.PathItemObject;
@@ -50,63 +152,10 @@ function post<T>(path: keyof T, paths: Transmuted<T>) {
   }
 }
 
-class SrtOutput extends CustomSinkNode {
-  norsk: Norsk;
-  cfg: SrtOutputSettings;
-  // srtOutputNode: SrtOutputNode = new SrtOutputNode()
-  enabled: boolean = true;
-  initialised: Promise<void>;
-  
-  static async create(norsk: Norsk, cfg: SrtOutputSettings) {
-    const node = new SrtOutput(cfg, norsk);
-    await node.initialised;
-    return node;
-  }
-
-  constructor(cfg: SrtOutputSettings, norsk: Norsk) {
-    super(cfg.id);
-    this.cfg = cfg;
-    this.norsk = norsk;
-    this.initialised = this.initialise();
-  }
-
-  async initialise(): Promise<void> {
-    const node = await this.norsk.output.srt({
-      ...this.cfg,
-      ...this.cfg.socketOptions,
-      id: this.cfg.id,
-    });
-
-    this.setup({ sink: node });
-  }
-
-  async enableOutput() {
-    if (!this.enabled) {
-      this.enabled = true;     
-      await this.initialise();
-      debuglog("Output enabled", { id: this.id });
-    }
-  }
-
-  async disableOutput() {
-    if (this.enabled) {
-      this.enabled = false;
-      await this.close()
-      debuglog("Output disabled", { id: this.id });
-      }
-  }
-}
-
 export default class SrtOutputDefinition implements ServerComponentDefinition<SrtOutputSettings, SrtOutput, SrtOutputState, SrtOutputCommand, SrtOutputEvent> {
   async create(norsk: Norsk, cfg: SrtOutputSettings, cb: OnCreated<SrtOutput>, runtime: StudioRuntime<SrtOutputState, SrtOutputCommand, SrtOutputEvent>) {
-    const node = await SrtOutput.create(norsk, cfg);
+    const node = await SrtOutput.create(norsk, cfg, runtime);
     cb(node);
-    runtime.updates.raiseEvent({
-      type: 'output-enabled'
-    });
-    runtime.updates.update({
-      enabled: true,
-    })
   }
 
   async handleCommand(node: SrtOutput, command: SrtOutputCommand) {

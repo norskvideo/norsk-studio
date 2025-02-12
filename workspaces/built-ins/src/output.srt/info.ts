@@ -4,12 +4,16 @@ import React from "react";
 import srtSocketOptions from '../shared/srt-socket-options';
 import { assertUnreachable } from "@norskvideo/norsk-studio/lib/shared/util";
 
+
+
 export default function(registration: Registration) {
   const {
     defineComponent,
     All,
     validation,
   } = registration;
+  const SummaryView = React.lazy(async () => import('./summary-view'));
+  const InlineView = React.lazy(async () => import('./inline-view'));
   const { Port, Hostname, JitterBuffer, SrtPassphrase, SrtStreamId } = validation;
   const SocketConfiguration = React.lazy(async () => {
     const views = await import('../shared/srt-form-views')
@@ -55,6 +59,8 @@ export default function(registration: Registration) {
         }
         return { ...state };
       },
+      summary: SummaryView,
+      inline: InlineView,
     },
     configForm: {
       form: {
