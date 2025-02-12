@@ -1,4 +1,4 @@
-import { AutoProcessorMediaNode, Norsk, ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, WhepOutputNode } from '@norskvideo/norsk-sdk';
+import { Norsk, ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, WhepOutputNode } from '@norskvideo/norsk-sdk';
 import { CreatedMediaNode, InstanceRouteInfo, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
@@ -45,7 +45,6 @@ export class WhepOutput extends CustomSinkNode {
   context: ContextPromiseControl = new ContextPromiseControl(this.subscribeImpl.bind(this));
 
   currentSources: Map<CreatedMediaNode, StudioNodeSubscriptionSource> = new Map();
-  currentMedia: { node: AutoProcessorMediaNode<string> }[] = [];
 
   initialised: Promise<void>
   enabled: boolean = true;

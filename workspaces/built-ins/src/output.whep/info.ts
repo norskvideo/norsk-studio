@@ -3,7 +3,7 @@ import type Registration from "@norskvideo/norsk-studio/lib/extension/registrati
 
 import { GlobalIceServers } from '@norskvideo/norsk-studio/lib/shared/config'
 import React from "react";
-const SummaryView = React.lazy(async () => import('./summary-view'));
+
 
 
 export default function(R: Registration) {
@@ -13,7 +13,7 @@ export default function(R: Registration) {
     validation: { JitterBuffer },
   } = R;
   const InlineView = React.lazy(async () => import('./inline-view'));
-  
+  const SummaryView = React.lazy(async () => import('./summary-view'));
   return defineComponent<WhepOutputSettings, WhepOutputState, WhepOutputCommand, WhepOutputEvent>({
     identifier: 'output.whep',
     category: 'output',
