@@ -18,6 +18,7 @@ export default function(R: Registration) {
   } = R;
   const SummaryView = React.lazy(async () => import('./summary-view'));
   const FullscreenView = React.lazy(async () => import('./fullscreen'));
+  const InlineView = React.lazy(async () => import('./inline-view'));
 
   const SegmentConfiguration = React.lazy(async () => {
     const views = await import('./form-views')
@@ -111,7 +112,8 @@ export default function(R: Registration) {
         return { ...state };
       },
       summary: SummaryView,
-      fullscreen: FullscreenView
+      fullscreen: FullscreenView,
+      inline: InlineView
     },
     configForm: {
       global: {
