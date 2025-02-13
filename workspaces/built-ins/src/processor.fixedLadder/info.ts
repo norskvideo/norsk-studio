@@ -2,9 +2,12 @@ import type Registration from "@norskvideo/norsk-studio/lib/extension/registrati
 import React, { LazyExoticComponent } from 'react';
 import type { FixedLadderConfig, LadderRungDefinition, LoganLadderRung, Ma35dLadderRung, NvidiaLadderRung, QuadraLadderRung, SoftwareLadderRung } from "./runtime";
 import type { ResolutionName } from "@norskvideo/norsk-studio/lib/extension/common";
-import type { AmdMA35DH264, AmdMA35DHevc, LoganH264, NvidiaH264, QuadraH264, StreamKey, X264Codec } from "@norskvideo/norsk-sdk";
-import { HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
-import type { ConfigForm, CustomEditorProps, FormEntry, FormHint, FormHintSingle, NewForm } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { HardwareAccelerationType, HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
+import type { ConfigForm, CustomEditorProps, FormEntry, FormHint, FormHintSingle, GlobalFormEntry, NewForm } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import { components } from "./types";
+import { StreamKey } from "@norskvideo/norsk-sdk";
+
+type HardwareType = HardwareAccelerationType | "software";
 
 export default function ({
   defineComponent,
@@ -55,7 +58,7 @@ export default function ({
     },
     configForm: {
       global: {
-        hardware: HardwareSelection()
+        hardware: HardwareSelection() as GlobalFormEntry<HardwareType | undefined>
       },
       form: {
         rungs: {
@@ -254,9 +257,12 @@ export function createLoganRung(rung: RungName) {
 }
 
 function createRungImpl({ name, threads, bitrate }: RungConfig): SoftwareLadderRung {
-  const codec: X264Codec = {
+  const codec: components["schemas"]["x264Codec"] = {
     type: "x264",
-    bitrateMode: { value: bitrate, mode: "abr" },
+    bitrateMode: { 
+      value: bitrate, 
+      mode: "abr" 
+    },
     keyFrameIntervalMax: 50,
     keyFrameIntervalMin: 50,
     sceneCut: 0,
@@ -279,7 +285,7 @@ type MA35DRungConfig = {
 }
 
 function createMa35DHevcRungImpl({ name, bitrate }: MA35DRungConfig): Ma35dLadderRung {
-  const codec: AmdMA35DHevc = {
+  const codec: components["schemas"]["ma35dHevcCodec"] = {
     type: "amdMA35D-hevc",
     profile: "main",
     rateControl: { mode: "cbr", bitrate: bitrate },
@@ -294,7 +300,7 @@ function createMa35DHevcRungImpl({ name, bitrate }: MA35DRungConfig): Ma35dLadde
 }
 
 function createMa35DH264RungImpl({ name, bitrate }: MA35DRungConfig): Ma35dLadderRung {
-  const codec: AmdMA35DH264 = {
+  const codec: components["schemas"]["ma35dH264Codec"] = {
     type: "amdMA35D-h264",
     profile: "main",
     rateControl: { mode: "cbr", bitrate: bitrate },
@@ -314,7 +320,7 @@ type QuadraRungConfig = {
 }
 
 function createQuadraRungImpl({ name, bitrate }: QuadraRungConfig): QuadraLadderRung {
-  const codec: QuadraH264 = {
+  const codec: components["schemas"]["quadraH264Codec"] = {
     type: "quadra-h264",
     intraPeriod: 50,
     bitrate
@@ -328,7 +334,7 @@ function createQuadraRungImpl({ name, bitrate }: QuadraRungConfig): QuadraLadder
 }
 
 function createLoganRungImpl({ name, bitrate }: QuadraRungConfig): LoganLadderRung {
-  const codec: LoganH264 = {
+  const codec: components["schemas"]["loganH264Codec"] = {
     type: "logan-h264",
     intraPeriod: 50,
     bitrate
@@ -347,7 +353,7 @@ type NvidiaRungConfig = {
 }
 
 function createNvidiaRungImpl({ name, bitrate }: NvidiaRungConfig): NvidiaLadderRung {
-  const codec: NvidiaH264 = {
+  const codec: components["schemas"]["nvidiaH264Codec"] = {
     type: "nv-h264",
     idrPeriod: 50,
     rateControl: {

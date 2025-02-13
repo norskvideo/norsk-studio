@@ -1,34 +1,25 @@
-import { AmdMA35DH264, AmdMA35DHevc, LoganH264, LoganHevc, Norsk, NvidiaH264, NvidiaHevc, QuadraH264, QuadraHevc, VideoEncodeRung, X264Codec, X265Codec } from '@norskvideo/norsk-sdk';
-
 import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { SimpleProcessorWrapper } from "@norskvideo/norsk-studio/lib/extension/base-nodes";
 import { HardwareAccelerationType } from '@norskvideo/norsk-studio/lib/shared/config';
 import { warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { components } from './types';
+import { Norsk, VideoEncodeRung } from '@norskvideo/norsk-sdk';
 
-export type FixedLadderConfig = {
-  __global: {
-    hardware?: HardwareAccelerationType,
-  }
-  id: string,
-  displayName: string,
-  notes?: string
-  rungs: LadderRungDefinition[]
-}
+export type SoftwareLadderRung = components['schemas']['softwareLadderRung'];
+export type Ma35dLadderRung = components['schemas']['ma35dLadderRung'];
+export type LoganLadderRung = components['schemas']['loganLadderRung'];
+export type NvidiaLadderRung = components['schemas']['nvidiaLadderRung'];
+export type QuadraLadderRung = components['schemas']['quadraLadderRung'];
+export type LadderRungDefinition = components['schemas']['ladderRungDefinition'];
 
-export type SoftwareLadderRung = { codec: X264Codec | X265Codec } & Omit<VideoEncodeRung, "codec" | "name">
-export type Ma35dLadderRung = { codec: AmdMA35DH264 | AmdMA35DHevc } & Omit<VideoEncodeRung, "codec" | "name">
-export type LoganLadderRung = { codec: LoganH264 | LoganHevc } & Omit<VideoEncodeRung, "codec" | "name">
-export type NvidiaLadderRung = { codec: NvidiaH264 | NvidiaHevc } & Omit<VideoEncodeRung, "codec" | "name">
-export type QuadraLadderRung = { codec: QuadraH264 | QuadraHevc } & Omit<VideoEncodeRung, "codec" | "name">
 
-export type LadderRungDefinition = {
-  name: string,
-  software?: SoftwareLadderRung,
-  ma35d?: Ma35dLadderRung,
-  logan?: LoganLadderRung,
-  nvidia?: NvidiaLadderRung,
-  quadra?: QuadraLadderRung
-}
+type HardwareType = Extract<HardwareAccelerationType, "quadra" | "logan" | "nvidia" | "ma35d"> | "software";
+
+export type FixedLadderConfig = Omit<components["schemas"]["fixedLadderConfig"], "__global"> & {
+    __global: {
+        hardware?: HardwareType
+    }
+};
 
 export default class FixedLadderDefinition implements ServerComponentDefinition<FixedLadderConfig, SimpleProcessorWrapper> {
   async create(norsk: Norsk, cfg: FixedLadderConfig, cb: OnCreated<SimpleProcessorWrapper>) {
@@ -46,20 +37,19 @@ export default class FixedLadderDefinition implements ServerComponentDefinition<
   }
 }
 
-// Or whatever
-function createRung(rung: LadderRungDefinition, hardware?: HardwareAccelerationType) {
-  if (hardware) {
-    return createHardwareRung(rung, hardware);
+function createRung(rung: LadderRungDefinition, hardware?: HardwareType) {
+  if (hardware && hardware !== 'software') {
+      return createHardwareRung(rung, hardware);
   } else {
-    return createSoftwareRung(rung);
+      return createSoftwareRung(rung);
   }
 }
 
-function createHardwareRung(rung: LadderRungDefinition, hardware: HardwareAccelerationType): VideoEncodeRung | undefined {
+function createHardwareRung(rung: LadderRungDefinition, hardware: Exclude<HardwareType, "software">): VideoEncodeRung | undefined {
   const actualRung = rung[hardware];
   if (!actualRung) {
-    warninglog("Hardware rung isn't defined, attempting software", { name: rung.name })
-    return createSoftwareRung(rung);
+      warninglog("Hardware rung isn't defined, attempting software", { name: rung.name })
+      return createSoftwareRung(rung);
   }
   return { name: rung.name, ...actualRung };
 }

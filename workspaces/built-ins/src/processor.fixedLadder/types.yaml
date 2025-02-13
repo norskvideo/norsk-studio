@@ -1,0 +1,244 @@
+openapi: 3.0.0
+info:
+  title: Fixed Ladder Encoder Component
+  version: 1.0.0
+
+components:
+  schemas:
+    x264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          const: "x264"
+        bitrateMode:
+          type: object
+          required: ['value', 'mode']
+          properties:
+            value:
+              type: number
+            mode:
+              type: string
+              const: "abr"
+        keyFrameIntervalMax:
+          type: number
+        keyFrameIntervalMin:
+          type: number
+        sceneCut:
+          type: number
+        preset:
+          type: string
+          const: "fast"
+        tune:
+          type: string
+          const: "zerolatency"
+        threads:
+          type: number
+        bframes:
+          type: number
+      required: ['type', 'bitrateMode', 'keyFrameIntervalMax', 'keyFrameIntervalMin', 'sceneCut', 'preset', 'tune', 'threads', 'bframes' ]
+    
+    ma35dH264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['amdMA35D-h264']
+        profile:
+          type: string
+          enum: ['main']
+        rateControl:
+          type: object
+          properties:
+            mode:
+              type: string
+              enum: ['cbr']
+            bitrate:
+              type: number
+          required: ['mode', 'bitrate']
+        gopSize:
+          type: number
+      required: ['type', 'profile', 'rateControl', 'gopSize']
+
+    ma35dHevcCodec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['amdMA35D-hevc']
+        profile:
+          type: string
+          enum: ['main']
+        rateControl:
+          type: object
+          properties:
+            mode:
+              type: string
+              enum: ['cbr']
+            bitrate:
+              type: number
+          required: ['mode', 'bitrate']
+        gopSize:
+          type: number
+      required: ['type', 'profile', 'rateControl', 'gopSize']
+
+    quadraH264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['quadra-h264']
+        intraPeriod:
+          type: number
+        bitrate:
+          type: number
+      required: ['type', 'intraPeriod', 'bitrate']
+
+    loganH264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['logan-h264']
+        intraPeriod:
+          type: number
+        bitrate:
+          type: number
+      required: ['type', 'intraPeriod', 'bitrate']
+
+    nvidiaH264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['nv-h264']
+        idrPeriod:
+          type: number
+        rateControl:
+          type: object
+          properties:
+            mode:
+              type: string
+              enum: ['vbr']
+            averageBitrate:
+              type: number
+          required: ['mode', 'averageBitrate']
+      required: ['type', 'idrPeriod', 'rateControl']
+
+    frameRate:
+      type: object
+      properties:
+        frames:
+          type: number
+        seconds:
+          type: number
+      required: ['frames', 'seconds']
+
+    softwareLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/x264Codec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    ma35dLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/ma35dH264Codec'
+            - $ref: '#/components/schemas/ma35dHevcCodec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    loganLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/loganH264Codec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    nvidiaLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/nvidiaH264Codec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    quadraLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/quadraH264Codec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    ladderRungDefinition:
+      type: object
+      properties:
+        name:
+          type: string
+        software:
+          $ref: '#/components/schemas/softwareLadderRung'
+        ma35d:
+          $ref: '#/components/schemas/ma35dLadderRung'
+        logan:
+          $ref: '#/components/schemas/loganLadderRung'
+        nvidia:
+          $ref: '#/components/schemas/nvidiaLadderRung'
+        quadra:
+          $ref: '#/components/schemas/quadraLadderRung'
+      required: ['name']
+
+    fixedLadderConfig:
+      type: object
+      properties:
+        __global:
+          type: object
+          properties:
+            hardware:
+              type: string
+              enum: ['software', 'ma35d', 'logan', 'nvidia', 'quadra']
+        id:
+          type: string
+        displayName:
+          type: string
+        notes:
+          type: string
+        rungs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ladderRungDefinition'
+      required: ['id', 'displayName', 'rungs']
