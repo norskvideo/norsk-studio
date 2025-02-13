@@ -67,11 +67,21 @@ export default function(R: Registration) {
       },
       form: {
         bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
-        skipTranscode: { help: "Skip transcoding for WebRTC-ready streams", hint: {type: 'boolean', defaultValue: false }},
-        showPreview: { help: "Show video preview", hint: { type: 'boolean', defaultValue: true }},
-        notes: { 
-          help: "Additional notes about this component", 
-          hint: { type: 'text', optional: true } 
+        previewMode: {
+          help: "How to display the video",
+          hint: {
+            type: 'select',
+            options: [
+              { value: 'video_encode', display: 'WebRTC (Re-Encode)' },
+              { value: 'video_passthrough', display: 'WebRTC (Passthrough)' },
+              { value: 'images', display: 'JPEG Only' }
+            ]
+          }
+        },
+        showPreview: { help: "Show video preview", hint: { type: 'boolean', defaultValue: true } },
+        notes: {
+          help: "Additional notes about this component",
+          hint: { type: 'text', optional: true }
         },
       }
     }

@@ -29,7 +29,7 @@ describe("Preview", () => {
         new YamlNodeBuilder<PreviewOutputSettings, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>
           ('preview',
             PreviewOutputInfo(RegistrationConsts),
-            {}
+            { previewMode: 'video_encode' }
           ).reify())
       .reify();
 
