@@ -21,8 +21,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@norskvideo/norsk-sdk": "^1.0.400-2025-02-12-4b0eb382",
-    "@norskvideo/norsk-studio": "^1.20.1-2025-02-12-36614841",
+    "@norskvideo/norsk-sdk": "^1.0.400-2025-02-13-bc158350",
+    "@norskvideo/norsk-studio": "^1.20.1-2025-02-13-d97d699c",
     "@norskvideo/webrtc-client": "^0.1.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
