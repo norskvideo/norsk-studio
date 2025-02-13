@@ -8,20 +8,20 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         x264Codec: {
-            /** @constant */
+            /** @enum {string} */
             type: "x264";
             bitrateMode: {
                 value: number;
-                /** @constant */
-                mode: "abr";
+                /** @enum {string} */
+                mode: "abr" | "cqp" | "crf";
             };
             keyFrameIntervalMax: number;
             keyFrameIntervalMin: number;
             sceneCut: number;
-            /** @constant */
-            preset: "fast";
-            /** @constant */
-            tune: "zerolatency";
+            /** @enum {string} */
+            preset: "ultrafast" | "superfast" | "veryfast" | "faster" | "fast" | "medium" | "slow" | "slower" | "veryslow" | "placebo";
+            /** @enum {string} */
+            tune: "film" | "animation" | "grain" | "stillimage" | "psnr" | "ssim" | "fastdecode" | "zerolatency";
             threads: number;
             bframes: number;
         };
@@ -29,7 +29,7 @@ export interface components {
             /** @enum {string} */
             type: "amdMA35D-h264";
             /** @enum {string} */
-            profile: "main";
+            profile: "baseline" | "main" | "high" | "high10";
             rateControl: {
                 /** @enum {string} */
                 mode: "cbr";
@@ -41,7 +41,7 @@ export interface components {
             /** @enum {string} */
             type: "amdMA35D-hevc";
             /** @enum {string} */
-            profile: "main";
+            profile: "main" | "main10";
             rateControl: {
                 /** @enum {string} */
                 mode: "cbr";
@@ -67,7 +67,7 @@ export interface components {
             idrPeriod: number;
             rateControl: {
                 /** @enum {string} */
-                mode: "vbr";
+                mode: "con_stqp" | "vbr" | "cbr";
                 averageBitrate: number;
             };
         };

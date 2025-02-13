@@ -10,7 +10,7 @@ components:
       properties:
         type:
           type: string
-          const: "x264"
+          enum: ["x264"]
         bitrateMode:
           type: object
           required: ['value', 'mode']
@@ -19,7 +19,7 @@ components:
               type: number
             mode:
               type: string
-              const: "abr"
+              enum: ["abr", "cqp", "crf"]
         keyFrameIntervalMax:
           type: number
         keyFrameIntervalMin:
@@ -28,10 +28,10 @@ components:
           type: number
         preset:
           type: string
-          const: "fast"
+          enum: ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo"]
         tune:
           type: string
-          const: "zerolatency"
+          enum: ["film", "animation", "grain", "stillimage", "psnr", "ssim", "fastdecode", "zerolatency"]
         threads:
           type: number
         bframes:
@@ -46,7 +46,7 @@ components:
           enum: ['amdMA35D-h264']
         profile:
           type: string
-          enum: ['main']
+          enum: ['baseline', 'main', 'high', 'high10']
         rateControl:
           type: object
           properties:
@@ -68,7 +68,7 @@ components:
           enum: ['amdMA35D-hevc']
         profile:
           type: string
-          enum: ['main']
+          enum: ['main', 'main10']
         rateControl:
           type: object
           properties:
@@ -119,7 +119,7 @@ components:
           properties:
             mode:
               type: string
-              enum: ['vbr']
+              enum: ['con_stqp', 'vbr', 'cbr']
             averageBitrate:
               type: number
           required: ['mode', 'averageBitrate']
