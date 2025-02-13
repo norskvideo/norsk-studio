@@ -21,6 +21,8 @@ export default function getNodeInfo(r: Registration, type: string) {
   return InitialisedComponents[type];
 }
 
+import input_decklink from "./input.decklink/info";
+AllComponents.push((r: Registration) => input_decklink(r) as unknown as NodeInfo<BaseConfig>);
 import processor_actionReplay from "./processor.actionReplay/info";
 AllComponents.push((r: Registration) => processor_actionReplay(r) as unknown as NodeInfo<BaseConfig>);
 import processor_audioLevel from "./processor.audioLevel/info";

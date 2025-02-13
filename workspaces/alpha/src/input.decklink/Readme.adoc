@@ -1,0 +1,17 @@
+== Blackmagic DeckLink SDI/HDMI ingest
+This component receives video and audio streams from SDI or HDMI sources using Blackmagic DeckLink cards.
+
+=== Component Configuration
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| port | The receiving port (default: 5001) |  𐄂
+| host | The receiving IP address&#x2F;hostname (default: &quot;127.0.0.1&quot;) |  𐄂
+| sourceName | Source name to identify this by (default: &quot;udp-ts&quot;) |  𐄂
+| interface | Optional interface to bind to |  𐄂
+| timeout | Timeout in milliseconds before determining the input is closed (default: 1000) |  𐄂
+| rtpDecapsulate | Whether to expect the input TS to be encapsulated in RTP via RFC 2250 (default: false) |  ✓
+|===
+
