@@ -8,6 +8,7 @@ import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/li
 import { debuglog, sillylog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { webRtcSettings } from '../shared/webrtcSettings';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
+import { components } from './types';
 
 export type PreviewMode = 'video_passthrough' | 'video_encode' | 'image';
 
@@ -24,10 +25,7 @@ export type PreviewOutputSettings = {
   }
 };
 
-export type PreviewOutputState = {
-  url?: string
-  levels?: { peak: number, rms: number }
-}
+export type PreviewOutputState = components['schemas']['latest_state'];
 
 export type PreviewOutputEvent = {
   type: 'url-published',

@@ -1,0 +1,21 @@
+openapi: 3.0.0
+components:
+  schemas:
+    audio_level:
+      type: object
+      required:
+        - peak
+        - rms
+      properties:
+        peak:
+          type: number
+        rms: 
+          type: number
+    latest_state:
+      type: object
+      properties:
+        url:
+          type: string
+        levels:
+          $ref: '#/components/schemas/audio_level'
+
