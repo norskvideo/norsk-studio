@@ -53,6 +53,9 @@ export default function(R: Registration) {
           case 'audio-levels':
             state.levels = ev.levels;
             break;
+          case 'source-lost':
+            state = {};
+            break;
           default:
             assertUnreachable(evType)
         }

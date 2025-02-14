@@ -38,7 +38,7 @@ export type PreviewOutputEvent = {
     peak: number,
     rms: number
   }
-}
+} | { type: 'source-lost' }
 
 export type PreviewOutputCommand = object;
 
@@ -164,18 +164,20 @@ export class PreviewOutput extends CustomSinkNode {
         break;
       }
       case 'image': {
-        debuglog("Setting up preview node in image mode", { id: this.id });
+        sillylog("Setting up preview node in image mode", { id: this.id });
         if (!videoSource?.[0]) {
-          debuglog("No video source yet, can't do that", { id: this.id });
+          sillylog("No video source yet, can't do that", { id: this.id });
+          this.updates.raiseEvent({ type: 'source-lost' })
           return;
         }
 
         if (!videoStream) {
-          debuglog("No stream in video source yet, can't do that", { id: this.id });
+          sillylog("No stream in video source yet, can't do that", { id: this.id });
+          this.updates.raiseEvent({ type: 'source-lost' })
           return;
         }
 
-        debuglog("Checking video stream type", videoStream.metadata.message.case);
+        sillylog("Checking video stream type", videoStream.metadata.message.case);
         if (videoStream.metadata.message.case != 'video') return;
 
         const fr = videoStream.metadata.message.value.frameRate ?? { frames: 25, seconds: 1 };
@@ -196,8 +198,8 @@ export class PreviewOutput extends CustomSinkNode {
               })
             }
           })
-          this.images.subscribe(videoSource)
         }
+        this.images.subscribe(videoSource)
         break;
       }
     }
@@ -234,7 +236,7 @@ export class PreviewOutput extends CustomSinkNode {
     if (subscriptions.length == 0) {
       await this.whep?.close();
       this.whep = undefined;
-      this.updates.update({})
+      this.updates.raiseEvent({ type: 'source-lost' })
     }
     // I don't know why we do/did this ???
     // Okay, it doesn't look like onPublishStart is anything like what we want (above)
