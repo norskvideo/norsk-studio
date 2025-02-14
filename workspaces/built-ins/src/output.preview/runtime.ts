@@ -2,13 +2,20 @@ import {
   AudioMeasureLevels, AudioMeasureLevelsNode, ImagePreviewOutputNode, Norsk,
   ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, SourceMediaNode, SubscriptionError, WhepOutputNode, selectVideo
 } from '@norskvideo/norsk-sdk';
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-import { CustomSinkNode, SimpleSinkWrapper, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { InstanceRouteInfo, OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomSinkNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
 import { debuglog, sillylog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { webRtcSettings } from '../shared/webrtcSettings';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
-import { components } from './types';
+import { components, paths } from './types';
+import { Request, Response } from 'express';
+import fs from 'fs/promises';
+import YAML from 'yaml';
+import { resolveRefs } from 'json-refs';
+import path from 'path';
+import { OpenAPIV3 } from 'openapi-types';
+import { get } from '../shared/api';
 
 export type PreviewMode = 'video_passthrough' | 'video_encode' | 'image';
 
@@ -40,13 +47,33 @@ export type PreviewOutputEvent = {
 
 export type PreviewOutputCommand = object;
 
-export default class WhepOutputDefinition implements ServerComponentDefinition<PreviewOutputSettings, SimpleSinkWrapper, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent> {
-  async create(norsk: Norsk, cfg: PreviewOutputSettings, cb: OnCreated<SimpleSinkWrapper>, runtime: StudioRuntime<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>) {
+type Transmuted<T> = {
+  [Key in keyof T]: OpenAPIV3.PathItemObject;
+};
+
+export default class WhepOutputDefinition implements ServerComponentDefinition<PreviewOutputSettings, PreviewOutput, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent> {
+  async create(norsk: Norsk, cfg: PreviewOutputSettings, cb: OnCreated<PreviewOutput>, runtime: StudioRuntime<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>) {
     const node = new PreviewOutput(norsk, runtime, cfg);
     await node.initialised;
     cb(node);
   }
+  async instanceRoutes(): Promise<InstanceRouteInfo<PreviewOutputSettings, PreviewOutput, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>[]> {
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+    const paths = resolved.paths as Transmuted<paths>;
+    return [
+      {
+        ...get<paths>('/latest', paths),
+        handler: ({ runtime }) => ((_req: Request, res: Response) => {
+          const latest = runtime.updates.latest();
+          res.json(latest);
+        }),
+      },
+    ];
+  }
 }
+
 
 export class PreviewOutput extends CustomSinkNode {
   initialised: Promise<void>;
