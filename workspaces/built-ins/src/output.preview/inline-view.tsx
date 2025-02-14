@@ -11,12 +11,12 @@ function InlineView({ state, config, raise }: ViewProps<PreviewOutputSettings, P
   const [client, setClient] = useState<WhepClient | null>(null);
 
   const createClient = (url: string) => {
-      const client = new WhepClient({
-        url,
-        container: document.getElementById(`preview-${id}`) ?? undefined,
-      });
-      client.start().catch(console.error);
-      return client;
+    const client = new WhepClient({
+      url,
+      container: document.getElementById(`preview-${id}`) ?? undefined,
+    });
+    client.start().catch(console.error);
+    return client;
   };
 
   const cleanupClient = (client: WhepClient) => {
@@ -31,6 +31,17 @@ function InlineView({ state, config, raise }: ViewProps<PreviewOutputSettings, P
     });
   };
 
+  const [loadedImage, setLoadedImage] = useState<HTMLElement | undefined>(undefined);
+
+  useEffect(() => {
+    const container = document.getElementById(`preview-${id}`) ?? undefined
+    if (!container) return;
+    container.innerHTML = '';
+    if (loadedImage) {
+      container.appendChild(loadedImage);
+    }
+  }, [loadedImage])
+
   useEffect(() => {
     if (!url || !showPreview) {
       if (client) {
@@ -39,12 +50,26 @@ function InlineView({ state, config, raise }: ViewProps<PreviewOutputSettings, P
       }
       return;
     }
+    if (config.previewMode == "image") {
+      const container = document.getElementById(`preview-${id}`) ?? undefined
+      if (!container) return;
 
-    const newClient = createClient(url);
-    setClient(newClient);
+      const img = document.createElement('img')
+      img.width = 420;
+      img.height = 236;
 
-    return () => {
-      cleanupClient(newClient);
+      // By doing this we effectively  remove flickering
+      img.onload = () => {
+        setLoadedImage(img);
+      }
+      img.src = url;
+    } else {
+      const newClient = createClient(url);
+      setClient(newClient);
+
+      return () => {
+        cleanupClient(newClient);
+      }
     }
   }, [state.url, showPreview]);
 
@@ -75,7 +100,7 @@ function InlineView({ state, config, raise }: ViewProps<PreviewOutputSettings, P
 
   return (
     <div className="preview-outer-container">
-       <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-2">
         <input
           type="checkbox"
           id={`video-toggle-${id}`}
@@ -89,17 +114,17 @@ function InlineView({ state, config, raise }: ViewProps<PreviewOutputSettings, P
       </div>
       {showPreview ? (
         <div className="preview-video" id={`preview-${id}`}>
-        <style>
-          {`
+          <style>
+            {`
             #preview-${id} video::-webkit-media-controls-play-button { display: none; },
           `}
-        </style>
-      </div>
+          </style>
+        </div>
       ) : (
         <div className="preview-video bg-black flex items-center justify-center text-white h-full">
           Preview turned off
         </div>
-      )} 
+      )}
       <div className="preview-levels">
         <div
           className={`preview-level clip-${percentage(state.levels)}-preview`}

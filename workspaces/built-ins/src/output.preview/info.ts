@@ -66,11 +66,11 @@ export default function(R: Registration) {
         hardware: HardwareSelection()
       },
       form: {
-        bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
         previewMode: {
           help: "How to display the video",
           hint: {
             type: 'select',
+            defaultValue: 'image',
             options: [
               { value: 'video_encode', display: 'WebRTC (Re-Encode)' },
               { value: 'video_passthrough', display: 'WebRTC (Passthrough)' },
@@ -79,6 +79,7 @@ export default function(R: Registration) {
           }
         },
         showPreview: { help: "Show video preview", hint: { type: 'boolean', defaultValue: true } },
+        bufferDelayMs: { help: "How many milliseconds in the jitter buffer (WebRTC only)", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
         notes: {
           help: "Additional notes about this component",
           hint: { type: 'text', optional: true }

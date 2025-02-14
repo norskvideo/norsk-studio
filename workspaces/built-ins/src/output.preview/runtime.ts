@@ -1,11 +1,11 @@
 import {
   AudioMeasureLevels, AudioMeasureLevelsNode, ImagePreviewOutputNode, Norsk,
-  ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, SourceMediaNode, WhepOutputNode, selectVideo
+  ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, SourceMediaNode, SubscriptionError, WhepOutputNode, selectVideo
 } from '@norskvideo/norsk-sdk';
 import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode, SimpleSinkWrapper, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
-import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { debuglog, sillylog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { webRtcSettings } from '../shared/webrtcSettings';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 
@@ -42,9 +42,6 @@ export type PreviewOutputEvent = {
 
 export type PreviewOutputCommand = object;
 
-// This should really be achieved with an image writer
-// but I had a quick look and I'd need to write rust, erlang, purescript, and typescript
-// to surface this functionality
 export default class WhepOutputDefinition implements ServerComponentDefinition<PreviewOutputSettings, SimpleSinkWrapper, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent> {
   async create(norsk: Norsk, cfg: PreviewOutputSettings, cb: OnCreated<SimpleSinkWrapper>, runtime: StudioRuntime<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>) {
     const node = new PreviewOutput(norsk, runtime, cfg);
@@ -66,6 +63,7 @@ export class PreviewOutput extends CustomSinkNode {
   images?: ImagePreviewOutputNode;
   audioLevels?: AudioMeasureLevelsNode;
   context: ContextPromiseControl = new ContextPromiseControl(this.subscribeImpl.bind(this));
+  currentSources: StudioNodeSubscriptionSource[];
 
   constructor(norsk: Norsk, { updates, shared }: StudioRuntime<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>, cfg: PreviewOutputSettings) {
     super(cfg.id);
@@ -73,6 +71,7 @@ export class PreviewOutput extends CustomSinkNode {
     this.norsk = norsk;
     this.updates = updates;
     this.shared = shared;
+    this.currentSources = [];
     this.initialised = this.initialise();
   }
 
@@ -99,12 +98,22 @@ export class PreviewOutput extends CustomSinkNode {
   }
 
   override subscribe(sources: StudioNodeSubscriptionSource[], _opts?: SubscriptionOpts | undefined): void {
+    this.currentSources.forEach((source) => source.unregisterForContextChange(this));
+    this.currentSources = sources;
+    this.currentSources.forEach((source) => source.registerForContextChange(this));
     this.context.setSources(sources);
+  }
+
+  public async sourceContextChange(_responseCallback: (error?: SubscriptionError) => void): Promise<boolean> {
+    await this.context.schedule();
+    return false;
   }
 
   async subscribeImpl(sources: StudioNodeSubscriptionSource[]) {
     // can probably just have 's.hasMedia("video")'
-    const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0)?.selectVideo();
+    const videoSourceActual = sources.filter((s) => s.streams.select.includes("video")).at(0);
+    const videoStream = videoSourceActual?.filterStreams(videoSourceActual.latestStreams().filter((s) => s.metadata.message.case == "video"))[0];
+    const videoSource = videoSourceActual?.selectVideo();
     const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0)?.selectAudio();
 
 
@@ -119,7 +128,7 @@ export class PreviewOutput extends CustomSinkNode {
 
     switch (this.cfg.previewMode) {
       case 'video_passthrough': {
-        debuglog("Setting up preview node in passthrough mode", { id: this.id });
+        sillylog("Setting up preview node in passthrough mode", { id: this.id });
         this.encoder = undefined;
         const subscriptions: ReceiveFromAddressAuto[] = [];
         if (videoSource?.[0])
@@ -156,15 +165,24 @@ export class PreviewOutput extends CustomSinkNode {
       }
       case 'image': {
         debuglog("Setting up preview node in image mode", { id: this.id });
-        if (!videoSource?.[0])
+        if (!videoSource?.[0]) {
+          debuglog("No video source yet, can't do that", { id: this.id });
           return;
-        const stream = videoSource[0].source.outputStreams[0].message;
-        if (!stream) return
-        if (stream.case != 'video') return;
-        const fr = stream.value.frameRate ?? { frames: 25, seconds: 1 };
+        }
+
+        if (!videoStream) {
+          debuglog("No stream in video source yet, can't do that", { id: this.id });
+          return;
+        }
+
+        debuglog("Checking video stream type", videoStream.metadata.message.case);
+        if (videoStream.metadata.message.case != 'video') return;
+
+        const fr = videoStream.metadata.message.value.frameRate ?? { frames: 25, seconds: 1 };
         // once a second
         const frequency = Math.floor(fr.frames / fr.seconds);
         if (!this.images) {
+          debuglog("Creating image output for preview", { id: this.id, frequency });
           this.images = await this.norsk.output.imagePreview({
             id: `${this.id}-image-preview`,
             frequency,
@@ -178,7 +196,7 @@ export class PreviewOutput extends CustomSinkNode {
               })
             }
           })
-          this.images.subscribe([videoSource[0]])
+          this.images.subscribe(videoSource)
         }
         break;
       }
