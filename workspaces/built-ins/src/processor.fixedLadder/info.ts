@@ -4,14 +4,15 @@ import type { FixedLadderConfig, LadderRungDefinition, LoganLadderRung, Ma35dLad
 import type { ResolutionName } from "@norskvideo/norsk-studio/lib/extension/common";
 import { HardwareAccelerationType, HardwareSelection } from "@norskvideo/norsk-studio/lib/shared/config";
 import type { ConfigForm, CustomEditorProps, FormEntry, FormHint, FormHintSingle, GlobalFormEntry, NewForm } from "@norskvideo/norsk-studio/lib/extension/client-types";
-import { components } from "./types";
-import { StreamKey } from "@norskvideo/norsk-sdk";
+import type { components } from "./types";
+import type { StreamKey, FrameRate } from "@norskvideo/norsk-sdk";
 
 type HardwareType = HardwareAccelerationType | "software";
 
 export default function ({
   defineComponent,
-  Video
+  Video,
+  common: { FrameRates },
 }: Registration) {
   const RungView = React.lazy(async () => import('./rung-view'))
   const CodecEditor = React.lazy(async () => import('./codec-editor'))
@@ -83,7 +84,7 @@ export default function ({
                   }
                 },
                 height: {
-                  help: 'Width in pixels of this rung',
+                  help: 'Height in pixels of this rung',
                   hint: {
                     type: 'numeric',
                     defaultValue: 360,
@@ -134,10 +135,11 @@ export default function ({
 
   // TODO: Unpick these types
   // probably just remove the lazy requirement from our react components
-  function rungEditorForm<Codec>(mode: string): FormEntry<LadderRungDefinition, { width: number, height: number, codec: Codec } | undefined> {
-    const codecHint: FormHintSingle<{ width: number, height: number, codec: Codec }, Codec> = {
+  type CodecPlus<Codec> = { width: number, height: number, frameRate: FrameRate, codec: Codec }
+  function rungEditorForm<Codec>(mode: string): FormEntry<LadderRungDefinition, CodecPlus<Codec> | undefined> {
+    const codecHint: FormHintSingle<CodecPlus<Codec>, Codec> = {
       type: 'custom',
-      component: CodecEditor as LazyExoticComponent<(p: CustomEditorProps<{ width: number, height: number, codec: Codec }, Codec>) => JSX.Element>,
+      component: CodecEditor as LazyExoticComponent<(p: CustomEditorProps<CodecPlus<Codec>, Codec>) => JSX.Element>,
     };
     return {
       help: `Settings to use when encoding using ${mode} mode`,
@@ -154,15 +156,23 @@ export default function ({
             }
           },
           height: {
-            help: 'Width in pixels of this rung',
+            help: 'Height in pixels of this rung',
             hint: {
               type: 'numeric',
               defaultValue: 360,
             }
           },
+          frameRate: {
+            help: 'Frame rate',
+            hint: {
+              type: 'select',
+              defaultValue: { frames: 25, seconds: 1 },
+              options: FrameRates,
+            }
+          },
           codec: {
             help: "Codec settings for this rung",
-            hint: codecHint as FormHint<{ width: number, height: number, codec: Codec }, Codec>
+            hint: codecHint as FormHint<CodecPlus<Codec>, Codec>
           }
         }
       }
@@ -259,9 +269,9 @@ export function createLoganRung(rung: RungName) {
 function createRungImpl({ name, threads, bitrate }: RungConfig): SoftwareLadderRung {
   const codec: components["schemas"]["x264Codec"] = {
     type: "x264",
-    bitrateMode: { 
-      value: bitrate, 
-      mode: "abr" 
+    bitrateMode: {
+      value: bitrate,
+      mode: "abr"
     },
     keyFrameIntervalMax: 50,
     keyFrameIntervalMin: 50,

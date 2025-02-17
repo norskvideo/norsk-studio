@@ -111,7 +111,7 @@ export default function({
           hint:
           {
             type: "select",
-            options: channelLayouts().map((ch) => { return { value: ch as string, display: ch as string } }),
+            options: channelLayouts().map((ch) => { return { value: ch, display: ch as string } }),
           }
         },
         notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },

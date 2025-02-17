@@ -49,6 +49,8 @@ import output_udpTs from "./output.udpTs/info";
 AllComponents.push((r: Registration) => output_udpTs(r) as unknown as NodeInfo<BaseConfig>);
 import output_whep from "./output.whep/info";
 AllComponents.push((r: Registration) => output_whep(r) as unknown as NodeInfo<BaseConfig>);
+import processor_audioEncoder from "./processor.audioEncoder/info";
+AllComponents.push((r: Registration) => processor_audioEncoder(r) as unknown as NodeInfo<BaseConfig>);
 import processor_browserOverlay from "./processor.browserOverlay/info";
 AllComponents.push((r: Registration) => processor_browserOverlay(r) as unknown as NodeInfo<BaseConfig>);
 import processor_cascadingSwitch from "./processor.cascadingSwitch/info";
