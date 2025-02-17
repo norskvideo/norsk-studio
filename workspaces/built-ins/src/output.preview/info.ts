@@ -77,7 +77,7 @@ export default function(R: Registration) {
             options: [
               { value: 'video_encode', display: 'WebRTC (Re-Encode)' },
               { value: 'video_passthrough', display: 'WebRTC (Passthrough)' },
-              { value: 'images', display: 'JPEG Only' }
+              { value: 'image', display: 'JPEG Only' }
             ]
           }
         },

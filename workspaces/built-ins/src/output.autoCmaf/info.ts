@@ -265,6 +265,14 @@ export default function(R: Registration) {
             })
           }
         },
+        multiplePrograms: {
+          help: "Produce multiple multivariants if more than one program is present",
+          hint: {
+            type: 'boolean',
+            optional: true,
+            defaultValue: false
+          },
+        },
         drmProvider: {
           help: "Encrypt with a DRM provider (if configured globally)",
           hint: {
