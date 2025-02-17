@@ -46,6 +46,7 @@ describe("Auto CMAF Output", () => {
                 targetSegmentDuration: 2,
               },
               destinations: [],
+              multiplePrograms: true
             }
           ).reify())
       .reify();
@@ -447,6 +448,7 @@ describe("Auto CMAF Output", () => {
                   targetSegmentDuration: 2,
                 },
                 destinations: [],
+                multiplePrograms: true
               }
             ).reify())
         .reify();
