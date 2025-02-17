@@ -17,12 +17,22 @@ import path from 'path';
 import YAML from 'yaml';
 import { paths } from './types';
 
+export type AutoCmafAkamaiDestinaton = {
+  type: 'akamai',
+  ingest: string,
+  playback: string
+  includeAdInsertions: boolean
+}
 
 export type AutoCmafS3Destination = {
+  type: 's3',
   host: string,
   prefix: string,
   includeAdInsertions: boolean
 }
+
+
+export type AutoCmafDestination = AutoCmafAkamaiDestinaton | AutoCmafS3Destination;
 
 export type AutoCmafConfig = {
   id: string,
@@ -31,7 +41,7 @@ export type AutoCmafConfig = {
   notes?: string,
   sessionId: boolean,
   segments: AutoCmafSegment,
-  s3Destinations: AutoCmafS3Destination[],
+  destinations: AutoCmafDestination[],
   drmProvider?: 'ezdrm' | 'axinom',
   __global: {
     ezdrmConfig?: EzDrmConfig,
@@ -217,7 +227,7 @@ export class AutoCmaf extends CustomSinkNode {
       id: 'local'
     });
 
-    cfg.s3Destinations.forEach((d, i) => {
+    cfg.destinations.filter((d) => d.type == 's3').forEach((d, i) => {
       let sanitisedPrefix = d.prefix;
       if (sanitisedPrefix == "") {
         sanitisedPrefix = "/"
@@ -245,6 +255,22 @@ export class AutoCmaf extends CustomSinkNode {
         partHoldBackSeconds: (cfg.segments.holdBackParts ?? 3) * cfg.segments.targetPartDuration
       })
 
+      if (d.includeAdInsertions) {
+        this.advertDestinations.push(id)
+      }
+    })
+
+    cfg.destinations.filter((d) => d.type == 'akamai').forEach((d, i) => {
+      const id = `akamai-${i}`;
+      const url = new URL(d.ingest);
+      this.destinations.push({
+        id,
+        type: 'generic',
+        host: url.host,
+        port: url.port ? parseInt(url.port, 10) : 80,
+        pathPrefix: url.pathname,
+        retentionPeriodSeconds: cfg.segments.retentionPeriod,
+      })
       if (d.includeAdInsertions) {
         this.advertDestinations.push(id)
       }
