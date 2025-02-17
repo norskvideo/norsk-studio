@@ -268,7 +268,7 @@ export class AutoCmaf extends CustomSinkNode {
         type: 'generic',
         host: url.host,
         port: url.port ? parseInt(url.port, 10) : 80,
-        pathPrefix: url.pathname,
+        pathPrefix: url.pathname.endsWith("/") ? url.pathname : `${url.pathname}/`,
         retentionPeriodSeconds: cfg.segments.retentionPeriod,
       })
       if (d.includeAdInsertions) {

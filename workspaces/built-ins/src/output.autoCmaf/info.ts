@@ -140,6 +140,7 @@ export default function(R: Registration) {
           hint: {
             type: 'form-item',
             view: SegmentConfiguration,
+            envOverride: true,
             form: {
               retentionPeriod: {
                 help: "How many seconds of data to retain for playback in media playlists",
@@ -205,6 +206,7 @@ export default function(R: Registration) {
           help: "Destinations to publish to",
           hint: {
             type: "form-list-pick",
+            envOverride: true,
             defaultValue: [],
             view: Destination,
             form: discriminatedForm<AutoCmafDestination["type"], AutoCmafDestination>({
@@ -235,7 +237,7 @@ export default function(R: Registration) {
                 }
               },
               s3: {
-                display: "S2",
+                display: "S3",
                 form: {
                   host: {
                     help: "The hostname of the s3 bucket to push to",
