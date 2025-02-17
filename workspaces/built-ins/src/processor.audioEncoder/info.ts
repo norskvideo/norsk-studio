@@ -1,5 +1,6 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import type { AudioEncoderConfig } from "./runtime";
+import { discriminatedForm } from "@norskvideo/norsk-studio/lib/extension/client-types";
 import { SampleRate } from "@norskvideo/norsk-sdk";
 import React from "react";
 
@@ -82,13 +83,11 @@ export default function({
         codec: {
           help: "Codec settings for AAC or Opus",
           hint: {
-            type: 'form-variant',
-            variants: [
-              {
+            type: 'form-pick',
+            form: discriminatedForm.kind({
+              aac: {
                 display: "AAC",
-                match: v => v.kind === 'aac',
                 form: {
-                  kind: { help: '"aac"', hint: { type: 'const', defaultValue: 'aac' } },
                   sampleRate: {
                     help: "Sample rate (Hz)",
                     hint: {
@@ -123,17 +122,14 @@ export default function({
                     },
                   },
                 },
-                view: React.lazy(async () => import('./form-views')),
               },
-              {
+              opus: {
                 display: "Opus",
-                match: v => v.kind === 'opus',
                 form: {
-                  kind: { help: '"opus"', hint: { type: 'const', defaultValue: 'opus' } },
                 },
-                view: React.lazy(async () => import('./form-views')),
               },
-            ],
+            }),
+            view: React.lazy(async () => import('./form-views')),
           },
         },
         notes: { help: "Notes about this component", hint: { type: 'text', optional: true } },

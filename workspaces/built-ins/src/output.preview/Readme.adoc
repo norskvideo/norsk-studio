@@ -7,9 +7,9 @@ Preview allows for the real-time preview of media streams. It provides a way to 
 | Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| bufferDelayMs | How many milliseconds in the jitter buffer (default: 500) |  𐄂
-| skipTranscode | Skip transcoding for WebRTC-ready streams (default: false) |  𐄂
+| previewMode | How to display the video (default: &quot;image&quot;) |  𐄂
 | showPreview | Show video preview (default: true) |  𐄂
+| bufferDelayMs | How many milliseconds in the jitter buffer (WebRTC only) (default: 500) |  𐄂
 | notes | Additional notes about this component |  𐄂
 |===
 

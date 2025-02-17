@@ -33,7 +33,7 @@ export default function({
             hint:
             {
               type: "select",
-              options: channelLayouts().map((ch) => { return { value: ch as string, display: ch as string } }),
+              options: channelLayouts().map((ch) => { return { value: ch, display: ch as string } }),
             }
           },
           videoConnection: { help: "SDI or HDMI", hint: { type: 'select', options: [{value: "sdi", display: "SDI"},
