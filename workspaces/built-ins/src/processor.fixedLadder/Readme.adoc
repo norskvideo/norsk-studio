@@ -15,6 +15,7 @@ The Fixed Ladder Encoder is a processor component for encoding a single input vi
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
 | rungs | The rungs in this encode ladder |  𐄂
+| notes | Notes about this component |  𐄂
 |===
 
 

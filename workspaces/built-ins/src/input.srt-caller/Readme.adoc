@@ -13,6 +13,7 @@ This component allows you to receive Secure Reliable Transport (SRT) streams by 
 | passphrase | Optional: Authentication for this SRT input |  𐄂
 | streamId | Optional: StreamId to use when calling the remote listener |  𐄂
 | socketOptions | Socket Options |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 
 

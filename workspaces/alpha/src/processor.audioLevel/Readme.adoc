@@ -8,5 +8,6 @@ Monitors and adjusts the audio levels of an incoming audio stream, providing rea
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
 | defaultGain | The default gain for audio dB (default: 0) |  𐄂
+| notes | Notes about this component |  𐄂
 |===
 

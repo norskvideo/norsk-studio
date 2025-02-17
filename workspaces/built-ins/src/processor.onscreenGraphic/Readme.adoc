@@ -9,5 +9,6 @@ Overlay graphics onto a video
 | displayName | The name shown in the Studio UI of this component | ✓
 | initialGraphic | The initial graphic to render on the video (if any) |  𐄂
 | initialPosition | The initial location at which to render the graphic |  𐄂
+| notes | Notes about this component |  𐄂
 |===
 

@@ -9,5 +9,6 @@ This component tracks and processes latency statistics within a media processing
 | displayName | The name shown in the Studio UI of this component | ✓
 | startNodeId | The node producing data that we want to measure from |  𐄂
 | endNodeId | Destination node |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 

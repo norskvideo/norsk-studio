@@ -13,6 +13,7 @@ This component handles media ingest via the SRT(Secure Reliable Transport) proto
 | socketOptions | Socket Options |  𐄂
 | sourceNames | Either auto assign streams in the order they come in, or restrict connections to those with known stream ids (default: &quot;permissive&quot;) |  𐄂
 | streamIds | List of stream ids to assign to the accepted streams (default: [&quot;camera1&quot;]) |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 
 

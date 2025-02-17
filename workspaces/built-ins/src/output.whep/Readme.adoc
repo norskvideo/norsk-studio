@@ -13,6 +13,8 @@ This component allows us to use WebRTC egress for outputs.
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
 | bufferDelayMs | How many milliseconds in the jitter buffer (default: 500) |  𐄂
+| showPreview | Show video preview (default: true) |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 
 
@@ -25,7 +27,7 @@ This component allows us to use WebRTC egress for outputs.
 |===
 | Option | Description | Required
 | url | URL of the STUN&#x2F;TURN server (with turn:&#x2F;stun: prefix) as accessed by Norsk Studio |  ✓
-| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  ✓
+| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  𐄂
 | username | Optional username |  ✓
 | credential | Optional password |  ✓
 |===

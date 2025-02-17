@@ -9,5 +9,6 @@ Transcribes audio from a video stream into subtitles using AWS&#39;s Transcribe 
 | displayName | The name shown in the Studio UI of this component | ✓
 | language | Source language to transcribe (default: &quot;en-US&quot;) |  𐄂
 | targetLanguage | Target language to translate to (optional). |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 

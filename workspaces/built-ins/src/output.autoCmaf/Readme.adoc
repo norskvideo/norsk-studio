@@ -22,6 +22,7 @@ Some features of this component are:
 | segments | Detailed segment configuration |  𐄂
 | s3Destinations | S3 destinations to publish to (default: []) |  𐄂
 | drmProvider | Encrypt with a DRM provider (if configured globally) |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 
 

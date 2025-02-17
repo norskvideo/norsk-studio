@@ -1,4 +1,4 @@
-== Monetise
+== SCTE35 Inject
 Allows for the monetization of video and audio streams by incorporating ads and handling their lifecycle within the output stream.
 
 === Component Configuration
@@ -7,6 +7,7 @@ Allows for the monetization of video and audio streams by incorporating ads and 
 | Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
+| notes | Notes about this component |  𐄂
 |===
 
 
@@ -18,7 +19,7 @@ Allows for the monetization of video and audio streams by incorporating ads and 
 |===
 | Option | Description | Required
 | url | URL of the STUN&#x2F;TURN server (with turn:&#x2F;stun: prefix) as accessed by Norsk Studio |  ✓
-| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  ✓
+| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  𐄂
 | username | Optional username |  ✓
 | credential | Optional password |  ✓
 |===

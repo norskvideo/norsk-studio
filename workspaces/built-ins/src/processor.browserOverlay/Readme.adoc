@@ -8,5 +8,6 @@ Capture a live URL and overlay onto a video
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
 | url | URL to render on top of the video |  𐄂
+| notes | Notes about this component |  𐄂
 |===
 

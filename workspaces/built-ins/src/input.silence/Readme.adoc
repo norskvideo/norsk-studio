@@ -9,5 +9,6 @@ A component that produces silent audio streams with configurable sample rate and
 | displayName | The name shown in the Studio UI of this component | ✓
 | sampleRate | Samplerate in Hz of the generated audio (default: 48000) |  𐄂
 | channelLayout | Channel layout of the generated audio (default: &quot;stereo&quot;) |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 

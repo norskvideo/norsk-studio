@@ -12,5 +12,6 @@ This component manages multiple A&#x2F;V (audio and video) sources based on prio
 | sampleRate | All audio will be normalised to this sample rate (default: 48000) |  𐄂
 | channelLayout | All audio will be normalised to this channel layout (default: &quot;stereo&quot;) |  𐄂
 | sources | The priority order in which the sources will be chosen when available (default: []) |  𐄂
+| notes | Notes about this component |  𐄂
 |===
 
