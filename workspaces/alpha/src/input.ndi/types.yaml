@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+  title: NDI Ingests
+  version: 1.0.0
+
+paths:
+  # Static paths (available at runtime and design time)
+  /sources:
+    get:
+      summary: Return the currently available NDI sources
+      description: Returns all discovered NDI sources
+      x-route-type: static
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                description: A list of the sources available
+                items:
+                  $ref: "#/components/schemas/ndiSource"
+components:
+  schemas:
+    ndiSource:
+      type: object
+      properties:
+        name:
+          type: string
+          description: NDI Name
+        url:
+          type: string
+          description: NDI Url
+      required:
+        - name
+        - url
+

@@ -23,12 +23,20 @@ export default function getNodeInfo(r: Registration, type: string) {
 
 import input_decklink from "./input.decklink/info";
 AllComponents.push((r: Registration) => input_decklink(r) as unknown as NodeInfo<BaseConfig>);
+import input_mp4file from "./input.mp4file/info";
+AllComponents.push((r: Registration) => input_mp4file(r) as unknown as NodeInfo<BaseConfig>);
+import input_ndi from "./input.ndi/info";
+AllComponents.push((r: Registration) => input_ndi(r) as unknown as NodeInfo<BaseConfig>);
+import output_ndi from "./output.ndi/info";
+AllComponents.push((r: Registration) => output_ndi(r) as unknown as NodeInfo<BaseConfig>);
 import processor_actionReplay from "./processor.actionReplay/info";
 AllComponents.push((r: Registration) => processor_actionReplay(r) as unknown as NodeInfo<BaseConfig>);
 import processor_audioLevel from "./processor.audioLevel/info";
 AllComponents.push((r: Registration) => processor_audioLevel(r) as unknown as NodeInfo<BaseConfig>);
 import processor_audioMixer from "./processor.audioMixer/info";
 AllComponents.push((r: Registration) => processor_audioMixer(r) as unknown as NodeInfo<BaseConfig>);
+import processor_gemini_replay from "./processor.gemini-replay/info";
+AllComponents.push((r: Registration) => processor_gemini_replay(r) as unknown as NodeInfo<BaseConfig>);
 import processor_monetise from "./processor.monetise/info";
 AllComponents.push((r: Registration) => processor_monetise(r) as unknown as NodeInfo<BaseConfig>);
 import processor_whisper_transcribe from "./processor.whisper-transcribe/info";

@@ -1,0 +1,12 @@
+== MP4 File ingest
+This component files from a local MP4 file - note that the file location must be available to the Norsk container using the appropriate volume mapping.
+
+=== Component Configuration
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| fileName | The fileName |  𐄂
+|===
+

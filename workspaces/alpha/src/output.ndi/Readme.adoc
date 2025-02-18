@@ -1,0 +1,14 @@
+== NDI Egest
+This component outputs a video and/or audio streams over NDI.
+
+=== Component Configuration
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| name | The NDI name announced for this output |  𐄂
+| groups | The NDI groups that this output is a member of |  𐄂
+| bufferDelayMs | How many milliseconds in the jitter buffer (default: 0) |  𐄂
+|===
+
