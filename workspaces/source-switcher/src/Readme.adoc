@@ -12,6 +12,7 @@ This component manages multiple A&#x2F;V (audio and video) streams from differen
 | frameRate | All video will be normalised to this frame rate (default: {&quot;frames&quot;:25,&quot;seconds&quot;:1}) |  𐄂
 | sampleRate | All audio will be normalised to this sample rate (default: 48000) |  𐄂
 | channelLayout | All audio will be normalised to this channel layout (default: &quot;stereo&quot;) |  𐄂
+| notes | Notes about this component |  𐄂
 |===
 
 
@@ -23,7 +24,7 @@ This component manages multiple A&#x2F;V (audio and video) streams from differen
 |===
 | Option | Description | Required
 | url | URL of the STUN&#x2F;TURN server (with turn:&#x2F;stun: prefix) as accessed by Norsk Studio |  ✓
-| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  ✓
+| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  𐄂
 | username | Optional username |  ✓
 | credential | Optional password |  ✓
 |===

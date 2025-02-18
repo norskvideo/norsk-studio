@@ -9,5 +9,6 @@ Combines and manages multiple audio streams into a single output stream, providi
 | displayName | The name shown in the Studio UI of this component | ✓
 | defaultGain | The default gain for audio dB (default: 0) |  𐄂
 | channelLayout | Channel layout for audio output |  ✓
+| notes | Notes about this component |  𐄂
 |===
 

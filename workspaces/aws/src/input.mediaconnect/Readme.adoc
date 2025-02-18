@@ -9,5 +9,6 @@ Allows for integration with AWS Elemental MediaConnect, enabling users to ingest
 | displayName | The name shown in the Studio UI of this component | ✓
 | flowArn | The flow to connect to |  ✓
 | outputArn | Output of the flow to be used |  ✓
+| notes | Additional notes about this component |  𐄂
 |===
 

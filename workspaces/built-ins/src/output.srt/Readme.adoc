@@ -15,6 +15,7 @@ This component manages the sending of SRT (Secure Reliable Transport) streams. I
 | passphrase | Optional: Authentication for this SRT output |  𐄂
 | streamId | Optional: StreamId to use when calling a remote listener |  𐄂
 | socketOptions | Socket Options |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 
 

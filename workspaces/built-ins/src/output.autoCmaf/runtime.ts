@@ -17,12 +17,22 @@ import path from 'path';
 import YAML from 'yaml';
 import { paths } from './types';
 
+export type AutoCmafAkamaiDestinaton = {
+  type: 'akamai',
+  ingest: string,
+  playback: string
+  includeAdInsertions: boolean
+}
 
 export type AutoCmafS3Destination = {
+  type: 's3',
   host: string,
   prefix: string,
   includeAdInsertions: boolean
 }
+
+
+export type AutoCmafDestination = AutoCmafAkamaiDestinaton | AutoCmafS3Destination;
 
 export type AutoCmafConfig = {
   id: string,
@@ -31,7 +41,8 @@ export type AutoCmafConfig = {
   notes?: string,
   sessionId: boolean,
   segments: AutoCmafSegment,
-  s3Destinations: AutoCmafS3Destination[],
+  destinations: AutoCmafDestination[],
+  multiplePrograms?: boolean;
   drmProvider?: 'ezdrm' | 'axinom',
   __global: {
     ezdrmConfig?: EzDrmConfig,
@@ -217,7 +228,7 @@ export class AutoCmaf extends CustomSinkNode {
       id: 'local'
     });
 
-    cfg.s3Destinations.forEach((d, i) => {
+    cfg.destinations.filter((d) => d.type == 's3').forEach((d, i) => {
       let sanitisedPrefix = d.prefix;
       if (sanitisedPrefix == "") {
         sanitisedPrefix = "/"
@@ -245,6 +256,22 @@ export class AutoCmaf extends CustomSinkNode {
         partHoldBackSeconds: (cfg.segments.holdBackParts ?? 3) * cfg.segments.targetPartDuration
       })
 
+      if (d.includeAdInsertions) {
+        this.advertDestinations.push(id)
+      }
+    })
+
+    cfg.destinations.filter((d) => d.type == 'akamai').forEach((d, i) => {
+      const id = `akamai-${i}`;
+      const url = new URL(d.ingest);
+      this.destinations.push({
+        id,
+        type: 'generic',
+        host: url.host,
+        port: url.port ? parseInt(url.port, 10) : 80,
+        pathPrefix: url.pathname.endsWith("/") ? url.pathname : `${url.pathname}/`,
+        retentionPeriodSeconds: cfg.segments.retentionPeriod,
+      })
       if (d.includeAdInsertions) {
         this.advertDestinations.push(id)
       }
@@ -363,33 +390,35 @@ export class AutoCmaf extends CustomSinkNode {
         this.defaultSourceName = stream.key.sourceName;
       }
 
-      // Do we need another multivariant?
-      if (!this.currentMultiVariants.find((v) => v.programNumber == stream.key.programNumber && v.sourceName == stream.key.sourceName)) {
-        // Create immediately so we don't double-create later
-        // cos all these streams are potentially being created in parallel once we do any async action
-        const newMv = {
-          programNumber: stream.key.programNumber,
-          sourceName: stream.key.sourceName,
-          node: undefined as (undefined | CmafMultiVariantOutputNode | HlsTsMultiVariantOutputNode),
-        }
-        this.currentMultiVariants.push(newMv);
-        debuglog("Creating program-specific multi-variant in AutoPlaylist", { id: this.id, streamKey: stream.key });
-        if (this.cfg.mode == 'cmaf') {
-          newMv.node = await this.norsk.output.cmafMultiVariant({
-            id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}-cmaf`,
-            //id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
-            playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
-            destinations: this.destinations
-          });
-          this.runtime.report.registerOutput(this.cfg.id, newMv.node.url);
-        } else {
-          newMv.node = await this.norsk.output.cmafMultiVariant({
-            id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}-ts`,
-            //id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
-            playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
-            destinations: this.destinations
-          });
-          this.runtime.report.registerOutput(this.cfg.id, newMv.node.url);
+      if (this.cfg.multiplePrograms) {
+        // Do we need another multivariant?
+        if (!this.currentMultiVariants.find((v) => v.programNumber == stream.key.programNumber && v.sourceName == stream.key.sourceName)) {
+          // Create immediately so we don't double-create later
+          // cos all these streams are potentially being created in parallel once we do any async action
+          const newMv = {
+            programNumber: stream.key.programNumber,
+            sourceName: stream.key.sourceName,
+            node: undefined as (undefined | CmafMultiVariantOutputNode | HlsTsMultiVariantOutputNode),
+          }
+          this.currentMultiVariants.push(newMv);
+          debuglog("Creating program-specific multi-variant in AutoPlaylist", { id: this.id, streamKey: stream.key });
+          if (this.cfg.mode == 'cmaf') {
+            newMv.node = await this.norsk.output.cmafMultiVariant({
+              id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}-cmaf`,
+              //id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
+              playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
+              destinations: this.destinations
+            });
+            this.runtime.report.registerOutput(this.cfg.id, newMv.node.url);
+          } else {
+            newMv.node = await this.norsk.output.cmafMultiVariant({
+              id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}-ts`,
+              //id: `${this.cfg.id}-multivariant-${stream.key.sourceName}-${stream.key.programNumber}`,
+              playlistName: `${this.cfg.name}-${stream.key.sourceName}-${stream.key.programNumber}`,
+              destinations: this.destinations
+            });
+            this.runtime.report.registerOutput(this.cfg.id, newMv.node.url);
+          }
         }
       }
 

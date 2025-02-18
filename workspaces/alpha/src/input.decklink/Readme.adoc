@@ -1,4 +1,4 @@
-== Blackmagic DeckLink SDI/HDMI ingest
+== DeckLink ingest
 This component receives video and audio streams from SDI or HDMI sources using Blackmagic DeckLink cards.
 
 === Component Configuration
@@ -7,8 +7,8 @@ This component receives video and audio streams from SDI or HDMI sources using B
 | Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| cardIndex | The card index on the host |  𐄂
-| channelLayout | The expected channel layout of the SDI/HDMI audio |  𐄂
-| videoConnection | Whether to capture from SDI or HDMI |  𐄂
+| cardIndex | The card index (default: 0) |  𐄂
+| channelLayout | The source channel layout |  ✓
+| videoConnection | SDI or HDMI |  ✓
 |===
 

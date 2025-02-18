@@ -1,7 +1,8 @@
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 import { GlobalEzDrmConfig, GlobalAxinomConfig } from "@norskvideo/norsk-studio/lib/shared/config";
-import type { AutoCmafConfig, CmafOutputCommand, CmafOutputEvent, CmafOutputState } from "./runtime";
+import type { AutoCmafConfig, AutoCmafDestination, CmafOutputCommand, CmafOutputEvent, CmafOutputState } from "./runtime";
 import React from "react";
+import { discriminatedForm } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
 // Accepts as many video and audio streams as you might want
 // It's of note that we probably don't want to accidentally subscribe to
@@ -24,9 +25,9 @@ export default function(R: Registration) {
     const views = await import('./form-views')
     return { default: views.SegmentConfiguration }
   });
-  const S3Destination = React.lazy(async () => {
+  const Destination = React.lazy(async () => {
     const views = await import('./form-views')
-    return { default: views.S3Destination }
+    return { default: views.Destination }
   });
 
   return defineComponent<AutoCmafConfig, CmafOutputState, CmafOutputCommand, CmafOutputEvent>({
@@ -139,6 +140,7 @@ export default function(R: Registration) {
           hint: {
             type: 'form-item',
             view: SegmentConfiguration,
+            envOverride: true,
             form: {
               retentionPeriod: {
                 help: "How many seconds of data to retain for playback in media playlists",
@@ -200,36 +202,76 @@ export default function(R: Registration) {
             }
           }
         },
-        s3Destinations: {
-          help: "S3 destinations to publish to",
+        destinations: {
+          help: "Destinations to publish to",
           hint: {
-            type: "form-list",
+            type: "form-list-pick",
+            envOverride: true,
             defaultValue: [],
-            view: S3Destination,
-            form: {
-              host: {
-                help: "The hostname of the s3 bucket to push to",
-                hint: {
-                  type: "text",
-                  validation: Hostname
+            view: Destination,
+            form: discriminatedForm<AutoCmafDestination["type"], AutoCmafDestination>({
+              akamai: {
+                display: "Akamai",
+                form: {
+                  ingest: {
+                    help: "The complete URL to be pushed to",
+                    hint: {
+                      type: "text",
+                      // validation: ali
+                    }
+                  },
+                  playback: {
+                    help: "The URL from which playback can be accessed",
+                    hint: {
+                      type: "text",
+                      defaultValue: ""
+                    }
+                  },
+                  includeAdInsertions: {
+                    help: "If ad markers are inserted, include them in this publication",
+                    hint: {
+                      type: "boolean",
+                      defaultValue: false
+                    }
+                  }
                 }
               },
-              prefix: {
-                help: "The sub directory of the bucket to place playlists and segments into",
-                hint: {
-                  type: "text",
-                  defaultValue: ""
-                }
-              },
-              includeAdInsertions: {
-                help: "If ad markers are inserted, include them in this publication",
-                hint: {
-                  type: "boolean",
-                  defaultValue: false
+              s3: {
+                display: "S3",
+                form: {
+                  host: {
+                    help: "The hostname of the s3 bucket to push to",
+                    hint: {
+                      type: "text",
+                      validation: Hostname
+                    }
+                  },
+                  prefix: {
+                    help: "The sub directory of the bucket to place playlists and segments into",
+                    hint: {
+                      type: "text",
+                      defaultValue: ""
+                    }
+                  },
+                  includeAdInsertions: {
+                    help: "If ad markers are inserted, include them in this publication",
+                    hint: {
+                      type: "boolean",
+                      defaultValue: false
+                    }
+                  }
                 }
               }
-            }
+            })
           }
+        },
+        multiplePrograms: {
+          help: "Produce multiple multivariants if more than one program is present",
+          hint: {
+            type: 'boolean',
+            optional: true,
+            defaultValue: false
+          },
         },
         drmProvider: {
           help: "Encrypt with a DRM provider (if configured globally)",

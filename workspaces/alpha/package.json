@@ -21,10 +21,9 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@norskvideo/norsk-sdk": "^1.0.400-2025-02-13-c7d14544",
-    "@norskvideo/norsk-studio": "^1.20.1-2025-02-13-2fdf648c",
-    "openapi-types": "^12.1.3",
-    "react-select": "^5.7.0"
+    "@norskvideo/norsk-sdk": "^1.0.401-2025-02-18-45fcabf9",
+    "@norskvideo/norsk-studio": "^1.21.0-2025-02-18-cfd5eeb3",
+    "openapi-types": "^12.1.3"
   },
   "main": "lib/index.js",
   "devDependencies": {

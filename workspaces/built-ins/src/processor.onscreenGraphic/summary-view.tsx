@@ -323,6 +323,12 @@ type LocalPosition = OnscreenGraphicPosition & {
   // Keep exact string values for the inputs, so we do not override the user
   xStr?: string, yStr?: string,
 };
+function fromLocalPosition(pos: LocalPosition): OnscreenGraphicPosition {
+  if (pos.type === 'named') return { type: pos.type, position: pos.position };
+  if (pos.type === 'coordinate') return { type: pos.type, x: pos.x, y: pos.y };
+  if (pos.type === 'percentage') return { type: pos.type, x: pos.x, y: pos.y };
+  assertUnreachable(pos);
+}
 
 function convertPosition(
   givenPosition?: OnscreenGraphicPosition & { xStr?: string, yStr?: string },
@@ -379,7 +385,7 @@ const PositionSelector = ({
 
   const initialPosition = convertPos(givenPosition);
   const [position, setLocalPosition] = useState<LocalPosition>(initialPosition);
-  const setPosition = (v: LocalPosition) => {setLocalPosition(v); onChange(v)};
+  const setPosition = (v: LocalPosition) => {setLocalPosition(v); onChange(fromLocalPosition(v))};
   const [positionUnit, setPositionUnit] = useState<PositionUnit>(position.type === 'coordinate' ? "px" : "%");
 
   const [isDragging, setIsDragging] = useState(false);

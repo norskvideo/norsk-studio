@@ -1,16 +1,37 @@
-import type { AutoCmafS3Destination, AutoCmafSegment } from "./runtime";
+import type { AutoCmafDestination, AutoCmafSegment } from "./runtime";
 
-export function S3Destination(destination: AutoCmafS3Destination) {
-  return <div className="grid grid-flow-row-dense grid-cols-3 text-sm">
-    <div className="col-span-1">Host</div>
-    <div className="col-span-2">{destination.host}</div>
+export function Destination(destination: AutoCmafDestination) {
+  switch (destination.type) {
+    case "s3":
+      return <div className="grid grid-flow-row-dense grid-cols-3 text-sm">
+        <div className="col-span-1">Host</div>
+        <div className="col-span-2">{destination.host}</div>
 
-    <div className="col-span-1">Path</div>
-    <div className="col-span-2">{destination.prefix}</div>
+        <div className="col-span-1">Path</div>
+        <div className="col-span-2">{destination.prefix}</div>
 
-    <div className="col-span-1">Include Ads</div>
-    <div className="col-span-2">{destination.includeAdInsertions ? 'yes' : 'no'}</div>
-  </div >
+        <div className="col-span-1">Include Ads</div>
+        <div className="col-span-2">{destination.includeAdInsertions ? 'yes' : 'no'}</div>
+      </div >
+    case "akamai":
+      return <div className="grid grid-flow-row-dense grid-cols-3 text-sm">
+        <div className="col-span-1">Ingest</div>
+        <div className="col-span-2">{destination.ingest}</div>
+
+        <div className="col-span-1">Playback</div>
+        <div className="col-span-2">{destination.playback}</div>
+
+        <div className="col-span-1">Include Ads</div>
+        <div className="col-span-2">{destination.includeAdInsertions ? 'yes' : 'no'}</div>
+      </div >
+    default: {
+      const _: never = destination;
+      console.log('Unreachable');
+      return <></>
+    }
+
+
+  }
 }
 
 export function SegmentConfiguration(cfg: AutoCmafSegment) {

@@ -10,5 +10,6 @@ This component transcribes audio from a video stream.
 | model | The ggml model path |  ✓
 | translate | Whether to translate the output to English (default: false) |  𐄂
 | language | Source language (otherwise automatic) |  𐄂
+| notes | Notes about this component |  𐄂
 |===
 

@@ -13,5 +13,6 @@ This component receives and processes MPEG Transport Streams (TS) over UDP.
 | interface | Optional interface to bind to |  𐄂
 | timeout | Timeout in milliseconds before determining the input is closed (default: 1000) |  𐄂
 | rtpDecapsulate | Whether to expect the input TS to be encapsulated in RTP via RFC 2250 (default: false) |  ✓
+| notes | Additional notes about this component |  𐄂
 |===
 

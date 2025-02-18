@@ -53,6 +53,9 @@ export default function(R: Registration) {
           case 'audio-levels':
             state.levels = ev.levels;
             break;
+          case 'source-lost':
+            state = {};
+            break;
           default:
             assertUnreachable(evType)
         }
@@ -66,12 +69,23 @@ export default function(R: Registration) {
         hardware: HardwareSelection()
       },
       form: {
-        bufferDelayMs: { help: "How many milliseconds in the jitter buffer", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
-        skipTranscode: { help: "Skip transcoding for WebRTC-ready streams", hint: {type: 'boolean', defaultValue: false }},
-        showPreview: { help: "Show video preview", hint: { type: 'boolean', defaultValue: true }},
-        notes: { 
-          help: "Additional notes about this component", 
-          hint: { type: 'text', optional: true } 
+        previewMode: {
+          help: "How to display the video",
+          hint: {
+            type: 'select',
+            defaultValue: 'image',
+            options: [
+              { value: 'video_encode', display: 'WebRTC (Re-Encode)' },
+              { value: 'video_passthrough', display: 'WebRTC (Passthrough)' },
+              { value: 'image', display: 'JPEG Only' }
+            ]
+          }
+        },
+        showPreview: { help: "Show video preview", hint: { type: 'boolean', defaultValue: true } },
+        bufferDelayMs: { help: "How many milliseconds in the jitter buffer (WebRTC only)", hint: { type: 'numeric', validation: JitterBuffer, defaultValue: 500.0 } },
+        notes: {
+          help: "Additional notes about this component",
+          hint: { type: 'text', optional: true }
         },
       }
     }

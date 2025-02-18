@@ -6,7 +6,7 @@ import * as document from '@norskvideo/norsk-studio/lib/runtime/document';
 import YAML from 'yaml';
 import go, { RunResult } from '@norskvideo/norsk-studio/lib/runtime/execution';
 import { expect } from "chai";
-import { PreviewOutput, PreviewOutputCommand, PreviewOutputEvent, PreviewOutputSettings, PreviewOutputState } from "../output.preview/runtime";
+import { PreviewMode, PreviewOutput, PreviewOutputCommand, PreviewOutputEvent, PreviewOutputSettings, PreviewOutputState } from "../output.preview/runtime";
 import { testSourceDescription, videoAndAudio } from "@norskvideo/norsk-studio/lib/test/_util/sources";
 import PreviewOutputInfo from "../output.preview/info";
 import { Av, RegistrationConsts } from "@norskvideo/norsk-studio/lib/extension/client-types";
@@ -21,159 +21,162 @@ async function defaultRuntime(): Promise<RuntimeSystem> {
   return runtime;
 }
 
-describe("Preview", () => {
-  async function testDocument() {
-    const runtime = await defaultRuntime();
-    const yaml = new YamlBuilder()
-      .addNode(
-        new YamlNodeBuilder<PreviewOutputSettings, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>
-          ('preview',
-            PreviewOutputInfo(RegistrationConsts),
-            {}
-          ).reify())
-      .reify();
+basicSuite("video_passthrough");
+basicSuite("video_encode");
+basicSuite("image");
 
-    const compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
-    return compiled;
-  }
+function basicSuite(mode: PreviewMode) {
+  describe(`Preview ${mode}`, () => {
+    async function testDocument() {
+      const runtime = await defaultRuntime();
+      const yaml = new YamlBuilder()
+        .addNode(
+          new YamlNodeBuilder<PreviewOutputSettings, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>
+            ('preview',
+              PreviewOutputInfo(RegistrationConsts),
+              { previewMode: mode }
+            ).reify())
+        .reify();
 
-  let norsk: Norsk | undefined = undefined;
-  let preview: PreviewOutput = undefined!;
-  let source: SimpleInputWrapper = undefined!;
-  let result: RunResult = undefined!;
-
-  afterEach(async () => {
-    await norsk?.close();
-  })
-
-  beforeEach(async () => {
-    norsk = await Norsk.connect({ onShutdown: () => { } });
-    const compiled = await testDocument();
-    result = await go(norsk, compiled);
-    preview = result.components["preview"] as PreviewOutput;
-  })
-
-  // We'll just look at state...
-  it("With a source", async () => {
-    source = await videoAndAudio(norsk!, 'source');
-    preview.subscribe([new StudioNodeSubscriptionSource(
-      source,
-      testSourceDescription(),
-      { type: "take-all-streams", select: Av }
-    )])
-
-    const latestState = () => {
-      return result?.runtimeState.getNodeState('preview') as (PreviewOutputState | undefined)
+      const compiled = document.load(__filename, runtime, YAML.stringify(yaml), { resolveConfig: true });
+      return compiled;
     }
 
-    await waitForAssert(
-      () => !!(latestState())?.url,
-      () => expect(latestState()?.url).not.undefined,
-      10000.0,
-      10.0
-    )
+    let norsk: Norsk | undefined = undefined;
+    let preview: PreviewOutput = undefined!;
+    let source: SimpleInputWrapper = undefined!;
+    let result: RunResult = undefined!;
 
-    await waitForAssert(
-      () => !!(latestState())?.levels,
-      () => expect(latestState()?.levels).not.undefined,
-      10000.0,
-      10.0
-    )
-  })
+    afterEach(async () => {
+      await norsk?.close();
+    })
 
-  it("Without a source", async () => {
-    const latestState = () => {
-      return result?.runtimeState.getNodeState('preview') as (PreviewOutputState | undefined)
-    }
+    beforeEach(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      const compiled = await testDocument();
+      result = await go(norsk, compiled);
+      preview = result.components["preview"] as PreviewOutput;
+    })
 
-    await waitForAssert(
-      () => !(latestState())?.url,
-      () => expect(latestState()?.url).undefined,
-      10000.0,
-      10.0
-    )
+    // We'll just look at state...
+    it("With a source", async () => {
+      source = await videoAndAudio(norsk!, 'source');
+      preview.subscribe([new StudioNodeSubscriptionSource(
+        source,
+        testSourceDescription(),
+        { type: "take-all-streams", select: Av }
+      )])
 
-    await waitForAssert(
-      () => !(latestState())?.levels,
-      () => expect(latestState()?.levels).undefined,
-      10000.0,
-      10.0
-    )
-  })
+      const latestState = () => {
+        return result?.runtimeState.getNodeState('preview') as (PreviewOutputState | undefined)
+      }
 
-  it("Source goes away", async () => {
-    source = await videoAndAudio(norsk!, 'source');
-    preview.subscribe([new StudioNodeSubscriptionSource(
-      source,
-      testSourceDescription(),
-      { type: "take-all-streams", select: Av }
-    )])
+      await waitForAssert(
+        () => !!(latestState())?.url,
+        () => expect(latestState()?.url).not.undefined,
+        10000.0,
+        10.0
+      )
 
-    const latestState = () => {
-      return result?.runtimeState.getNodeState('preview') as (PreviewOutputState | undefined)
-    }
+      await waitForAssert(
+        () => !!(latestState())?.levels,
+        () => expect(latestState()?.levels).not.undefined,
+        10000.0,
+        10.0
+      )
+    })
 
-    await waitForCondition(() => !!latestState()?.url);
-    await source.close();
-    preview.subscribe([]);
+    it("Without a source", async () => {
+      const latestState = () => {
+        return result?.runtimeState.getNodeState('preview') as (PreviewOutputState | undefined)
+      }
 
-    await waitForAssert(
-      () => !(latestState())?.url,
-      () => expect(latestState()?.url).undefined,
-      10000.0,
-      10.0
-    )
+      await waitForAssert(
+        () => !(latestState())?.url,
+        () => expect(latestState()?.url).undefined,
+        10000.0,
+        10.0
+      )
 
-    await waitForAssert(
-      () => !(latestState())?.levels,
-      () => expect(latestState()?.levels).undefined,
-      10000.0,
-      10.0
-    )
-  })
+      await waitForAssert(
+        () => !(latestState())?.levels,
+        () => expect(latestState()?.levels).undefined,
+        10000.0,
+        10.0
+      )
+    })
 
-  it("Source goes away and comes back", async () => {
-    source = await videoAndAudio(norsk!, 'source');
+    it("Source goes away", async () => {
+      source = await videoAndAudio(norsk!, 'source');
+      preview.subscribe([new StudioNodeSubscriptionSource(
+        source,
+        testSourceDescription(),
+        { type: "take-all-streams", select: Av }
+      )])
 
-    preview.subscribe([new StudioNodeSubscriptionSource(
-      source,
-      testSourceDescription(),
-      { type: "take-all-streams", select: Av }
-    )])
+      const latestState = () => {
+        return result?.runtimeState.getNodeState('preview') as (PreviewOutputState | undefined)
+      }
 
-    const latestState = () => {
-      return result?.runtimeState.getNodeState('preview') as (PreviewOutputState | undefined)
-    }
+      await waitForCondition(() => !!latestState()?.url);
+      await source.close();
+      preview.subscribe([]);
 
-    await waitForCondition(() => !!latestState()?.url, 60000);
-    await source.close();
+      await waitForAssert(
+        () => !(latestState())?.url,
+        () => expect(latestState()?.url).undefined,
+        10000.0,
+        10.0
+      )
 
-    preview.subscribe([]);
+      await waitForAssert(
+        () => !(latestState())?.levels,
+        () => expect(latestState()?.levels).undefined,
+        10000.0,
+        10.0
+      )
+    })
 
-    source = await videoAndAudio(norsk!, 'source');
+    it("Source goes away and comes back", async () => {
+      source = await videoAndAudio(norsk!, 'source');
 
-    preview.subscribe([new StudioNodeSubscriptionSource(
-      source,
-      testSourceDescription(),
-      { type: "take-all-streams", select: Av }
-    )])
+      preview.subscribe([new StudioNodeSubscriptionSource(
+        source,
+        testSourceDescription(),
+        { type: "take-all-streams", select: Av }
+      )])
 
-    await waitForAssert(
-      () => !!(latestState())?.url,
-      () => expect(latestState()?.url).not.undefined,
-      60000.0,
-      10.0
-    )
+      const latestState = () => {
+        return result?.runtimeState.getNodeState('preview') as (PreviewOutputState | undefined)
+      }
 
-    await waitForAssert(
-      () => !!(latestState())?.levels,
-      () => expect(latestState()?.levels).not.undefined,
-      60000.0,
-      10.0
-    )
+      await waitForCondition(() => !!latestState()?.url, 60000);
+      await source.close();
 
-  })
+      preview.subscribe([]);
 
+      source = await videoAndAudio(norsk!, 'source');
 
-});
+      preview.subscribe([new StudioNodeSubscriptionSource(
+        source,
+        testSourceDescription(),
+        { type: "take-all-streams", select: Av }
+      )])
 
+      await waitForAssert(
+        () => !!(latestState())?.url,
+        () => expect(latestState()?.url).not.undefined,
+        60000.0,
+        10.0
+      )
+
+      await waitForAssert(
+        () => !!(latestState())?.levels,
+        () => expect(latestState()?.levels).not.undefined,
+        60000.0,
+        10.0
+      )
+
+    })
+  });
+}

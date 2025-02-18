@@ -10,5 +10,6 @@ Enables the integration with AWS Elemental MediaLive, allowing users to output m
 | channelId | The channel to output to |  ✓
 | inputId | The input of the channel to output to |  ✓
 | destinationIndex | The publish URL to output to (default: 0) |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 

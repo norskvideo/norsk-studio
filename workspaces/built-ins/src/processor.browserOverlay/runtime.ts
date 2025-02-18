@@ -11,6 +11,7 @@ import { resolveRefs } from 'json-refs';
 import YAML from 'yaml';
 import { OpenAPIV3 } from 'openapi-types';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
+import { get, post, Transmuted } from '../shared/api';
 
 export type BrowserOverlayConfig = {
   __global: {
@@ -92,62 +93,30 @@ export default class BrowserOverlayDefinition implements ServerComponentDefiniti
     const root = YAML.parse(types.toString());
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
 
-    type Transmuted<T> = {
-      [Key in keyof T]: OpenAPIV3.PathItemObject;
-    };
     const paths = resolved.paths as Transmuted<paths>;
-
-    const coreInfo = (path: string, op: OpenAPIV3.OperationObject) => {
-      return {
-        url: path,
-        summary: op.summary,
-        description: op.description,
-        requestBody: op.requestBody,
-        responses: op.responses,
-      }
-    }
-
-    const get = (path: keyof paths) => {
-      return {
-        ...coreInfo(path, paths[path]['get']!),
-        method: 'GET' as const,
-      }
-    };
-    const post = (path: keyof paths) => {
-      return {
-        ...coreInfo(path, paths[path]['post']!),
-        method: 'POST' as const,
-      }
-    };
-    // const delete_ = (path: keyof paths) => {
-    //   return {
-    //     ...coreInfo(path, paths[path]['delete']!),
-    //     method: 'DELETE' as const,
-    //   }
-    // };
 
     return [
       {
-        ...get('/url'),
+        ...get('/url', paths),
         handler: ({ runtime }) => (async (_req, res) => {
           res.send(runtime.updates.latest().currentUrl);
         })
       },
       {
-        ...post('/url'),
+        ...post('/url', paths),
         handler: ({ runtime }) => (async (req, res) => {
           runtime.updates.sendCommand({ type: "change-url", url: req.body.url });
           res.status(204).send();
         })
       },
       {
-        ...get('/status'),
+        ...get('/status', paths),
         handler: ({ runtime }) => (async (_req, res) => {
           res.json({ enabled: runtime.updates.latest().enabled })
         })
       },
       {
-        ...post('/enable'),
+        ...post('/enable', paths),
         handler: ({ runtime }) => (async (_req, res) => {
           const latest = runtime.updates.latest();
           if (latest.enabled) {
@@ -160,7 +129,7 @@ export default class BrowserOverlayDefinition implements ServerComponentDefiniti
         })
       },
       {
-        ...post('/disable'),
+        ...post('/disable', paths),
         handler: ({ runtime }) => (async (_req, res) => {
           const latest = runtime.updates.latest();
           if (!latest.enabled) {

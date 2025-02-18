@@ -11,5 +11,6 @@ This component outputs multiple media streams over UDP in TS (Transport Stream) 
 | destinationHost | The IP address&#x2F;Hostname this UDP TS output will send to (default: &quot;127.0.0.1&quot;) |  𐄂
 | bufferDelayMs | How many milliseconds in the jitter buffer (default: 500) |  𐄂
 | interface | Which interface to bind to for publishing (default: &quot;any&quot;) |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 

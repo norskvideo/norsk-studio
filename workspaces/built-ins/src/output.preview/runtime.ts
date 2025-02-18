@@ -1,20 +1,30 @@
 import {
-  AudioMeasureLevels, AudioMeasureLevelsNode, Norsk,
-  ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, SourceMediaNode, WhepOutputNode, selectVideo
+  AudioMeasureLevels, AudioMeasureLevelsNode, ImagePreviewOutputNode, Norsk,
+  ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, SourceMediaNode, SubscriptionError, WhepOutputNode, selectVideo
 } from '@norskvideo/norsk-sdk';
-import { OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
-import { CustomSinkNode, SimpleSinkWrapper, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
+import { InstanceRouteInfo, OnCreated, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime, StudioShared } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CustomSinkNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { HardwareAccelerationType, IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
-import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
+import { debuglog, sillylog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { webRtcSettings } from '../shared/webrtcSettings';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
+import { components, paths } from './types';
+import { Request, Response } from 'express';
+import fs from 'fs/promises';
+import YAML from 'yaml';
+import { resolveRefs } from 'json-refs';
+import path from 'path';
+import { OpenAPIV3 } from 'openapi-types';
+import { get } from '../shared/api';
+
+export type PreviewMode = 'video_passthrough' | 'video_encode' | 'image';
 
 export type PreviewOutputSettings = {
   id: string;
   displayName: string,
   notes?: string,
   bufferDelayMs?: SdkSettings['bufferDelayMs'],
-  skipTranscode?: boolean,
+  previewMode: PreviewMode;
   showPreview?: boolean,
   __global: {
     iceServers: IceServer[],
@@ -22,10 +32,7 @@ export type PreviewOutputSettings = {
   }
 };
 
-export type PreviewOutputState = {
-  url?: string
-  levels?: { peak: number, rms: number }
-}
+export type PreviewOutputState = components['schemas']['latest_state'];
 
 export type PreviewOutputEvent = {
   type: 'url-published',
@@ -36,20 +43,37 @@ export type PreviewOutputEvent = {
     peak: number,
     rms: number
   }
-}
+} | { type: 'source-lost' }
 
 export type PreviewOutputCommand = object;
 
-// This should really be achieved with an image writer
-// but I had a quick look and I'd need to write rust, erlang, purescript, and typescript
-// to surface this functionality
-export default class WhepOutputDefinition implements ServerComponentDefinition<PreviewOutputSettings, SimpleSinkWrapper, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent> {
-  async create(norsk: Norsk, cfg: PreviewOutputSettings, cb: OnCreated<SimpleSinkWrapper>, runtime: StudioRuntime<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>) {
+type Transmuted<T> = {
+  [Key in keyof T]: OpenAPIV3.PathItemObject;
+};
+
+export default class WhepOutputDefinition implements ServerComponentDefinition<PreviewOutputSettings, PreviewOutput, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent> {
+  async create(norsk: Norsk, cfg: PreviewOutputSettings, cb: OnCreated<PreviewOutput>, runtime: StudioRuntime<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>) {
     const node = new PreviewOutput(norsk, runtime, cfg);
     await node.initialised;
     cb(node);
   }
+  async instanceRoutes(): Promise<InstanceRouteInfo<PreviewOutputSettings, PreviewOutput, PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>[]> {
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+    const paths = resolved.paths as Transmuted<paths>;
+    return [
+      {
+        ...get<paths>('/latest', paths),
+        handler: ({ runtime }) => ((_req: Request, res: Response) => {
+          const latest = runtime.updates.latest();
+          res.json(latest);
+        }),
+      },
+    ];
+  }
 }
+
 
 export class PreviewOutput extends CustomSinkNode {
   initialised: Promise<void>;
@@ -61,8 +85,10 @@ export class PreviewOutput extends CustomSinkNode {
   cfg: PreviewOutputSettings;
   encoder?: SourceMediaNode;
   whep?: WhepOutputNode;
+  images?: ImagePreviewOutputNode;
   audioLevels?: AudioMeasureLevelsNode;
   context: ContextPromiseControl = new ContextPromiseControl(this.subscribeImpl.bind(this));
+  currentSources: StudioNodeSubscriptionSource[];
 
   constructor(norsk: Norsk, { updates, shared }: StudioRuntime<PreviewOutputState, PreviewOutputCommand, PreviewOutputEvent>, cfg: PreviewOutputSettings) {
     super(cfg.id);
@@ -70,11 +96,12 @@ export class PreviewOutput extends CustomSinkNode {
     this.norsk = norsk;
     this.updates = updates;
     this.shared = shared;
+    this.currentSources = [];
     this.initialised = this.initialise();
   }
 
   async initialise() {
-    
+
     this.audioLevels = await this.norsk.processor.control.audioMeasureLevels({
       id: `${this.cfg.id}-audiolevels`,
       onData: (levels: AudioMeasureLevels) => {
@@ -96,32 +123,26 @@ export class PreviewOutput extends CustomSinkNode {
   }
 
   override subscribe(sources: StudioNodeSubscriptionSource[], _opts?: SubscriptionOpts | undefined): void {
+    this.currentSources.forEach((source) => source.unregisterForContextChange(this));
+    this.currentSources = sources;
+    this.currentSources.forEach((source) => source.registerForContextChange(this));
     this.context.setSources(sources);
+  }
+
+  public async sourceContextChange(_responseCallback: (error?: SubscriptionError) => void): Promise<boolean> {
+    await this.context.schedule();
+    return false;
   }
 
   async subscribeImpl(sources: StudioNodeSubscriptionSource[]) {
     // can probably just have 's.hasMedia("video")'
-    const videoSource = sources.filter((s) => s.streams.select.includes("video")).at(0)?.selectVideo();
+    const videoSourceActual = sources.filter((s) => s.streams.select.includes("video")).at(0);
+    const videoStream = videoSourceActual?.filterStreams(videoSourceActual.latestStreams().filter((s) => s.metadata.message.case == "video"))[0];
+    const videoSource = videoSourceActual?.selectVideo();
     const audioSource = sources.filter((s) => s.streams.select.includes("audio")).at(0)?.selectAudio();
-   
-    if (videoSource && videoSource.length > 0) {
-      if (!this.encoder && !this.cfg.skipTranscode) {
-        debuglog("Finding preview encode for preview node", this.id);
-        this.encoder = await this.shared.previewEncode(
-          videoSource[0], 
-          this.cfg.__global.hardware,
-          {
-            width: 320,
-            height: 180,
-            preset: 'ultrafast',
-          }
-        );
-        this.registerInput(this.encoder);
-      }
-    } else {
-      this.encoder = undefined;
-    }
 
+
+    // Common in all cases
     if (audioSource) {
       // Audio into levels
       this.audioLevels?.subscribe(audioSource)
@@ -129,27 +150,94 @@ export class PreviewOutput extends CustomSinkNode {
       this.audioLevels?.subscribe([])
     }
 
-    const subscriptions: ReceiveFromAddressAuto[] = [];
 
-    if (this.encoder && !this.cfg.skipTranscode) {
-      subscriptions.push({
-        source: this.encoder,
-        sourceSelector: selectVideo
-      });
-    } else if (videoSource && videoSource.length > 0) {
-      subscriptions.push(videoSource[0]);
-    }
-  
-    if (audioSource && audioSource.length > 0) {
-      subscriptions.push(audioSource[0]);
+    switch (this.cfg.previewMode) {
+      case 'video_passthrough': {
+        sillylog("Setting up preview node in passthrough mode", { id: this.id });
+        this.encoder = undefined;
+        const subscriptions: ReceiveFromAddressAuto[] = [];
+        if (videoSource?.[0])
+          subscriptions.push(videoSource[0]);
+        if (audioSource?.[0])
+          subscriptions.push(audioSource[0]);
+        await this.setupWhep(subscriptions);
+        break;
+      }
+      case 'video_encode': {
+        debuglog("Setting up preview node in encode mode", { id: this.id });
+        const subscriptions: ReceiveFromAddressAuto[] = [];
+        if (!this.encoder && videoSource?.[0]) {
+          debuglog("Fetching encode for preview", { id: this.id, acceleration: this.cfg.__global.hardware });
+          this.encoder = await this.shared.previewEncode(
+            videoSource[0],
+            this.cfg.__global.hardware,
+            {
+              width: 320,
+              height: 180,
+              preset: 'ultrafast',
+            }
+          );
+          this.registerInput(this.encoder);
+          subscriptions.push({
+            source: this.encoder,
+            sourceSelector: selectVideo
+          });
+        }
+        if (audioSource?.[0])
+          subscriptions.push(audioSource[0]);
+        await this.setupWhep(subscriptions);
+        break;
+      }
+      case 'image': {
+        sillylog("Setting up preview node in image mode", { id: this.id });
+        if (!videoSource?.[0]) {
+          sillylog("No video source yet, can't do that", { id: this.id });
+          this.updates.raiseEvent({ type: 'source-lost' })
+          return;
+        }
+
+        if (!videoStream) {
+          sillylog("No stream in video source yet, can't do that", { id: this.id });
+          this.updates.raiseEvent({ type: 'source-lost' })
+          return;
+        }
+
+        sillylog("Checking video stream type", videoStream.metadata.message.case);
+        if (videoStream.metadata.message.case != 'video') return;
+
+        const fr = videoStream.metadata.message.value.frameRate ?? { frames: 25, seconds: 1 };
+        // once a second
+        const frequency = Math.floor(fr.frames / fr.seconds);
+        if (!this.images) {
+          debuglog("Creating image output for preview", { id: this.id, frequency });
+          this.images = await this.norsk.output.imagePreview({
+            id: `${this.id}-image-preview`,
+            frequency,
+            keep: 10,
+            resolution: { width: 320, height: 180 },
+            quality: 80,
+            onImagePublished: (f) => {
+              this.updates.raiseEvent({
+                type: 'url-published',
+                url: this.images?.baseUrl + f
+              })
+            }
+          })
+        }
+        this.images.subscribe(videoSource)
+        break;
+      }
     }
 
+  }
+  async setupWhep(subscriptions: ReceiveFromAddressAuto[]) {
     const whepCfg: SdkSettings = {
       id: `${this.cfg.id}-whep`,
       bufferDelayMs: this.cfg.bufferDelayMs,
       onPublishStart: () => {
         const url = this.whep?.endpointUrl;
         if (url) {
+          debuglog("WHEP Now has an endpoint", { id: this.id, url });
           this.updates.raiseEvent({ type: 'url-published', url })
         }
 
@@ -160,6 +248,7 @@ export class PreviewOutput extends CustomSinkNode {
     if (subscriptions.length > 0) {
       // In theory this can work for audio only or video only workflows
       if (!this.whep) {
+        debuglog("Creating WHEP output for preview", { id: this.id });
         this.whep = await this.norsk.output.whep(whepCfg);
       }
 
@@ -172,10 +261,12 @@ export class PreviewOutput extends CustomSinkNode {
     if (subscriptions.length == 0) {
       await this.whep?.close();
       this.whep = undefined;
-      this.updates.update({})
+      this.updates.raiseEvent({ type: 'source-lost' })
     }
-    if (subscriptions.length > 0 && !audioSource) {
-      this.updates.update({ url: this.whep?.endpointUrl })
+    // I don't know why we do/did this ???
+    // Okay, it doesn't look like onPublishStart is anything like what we want (above)
+    if (this.whep?.endpointUrl && !this.updates.latest().url) {
+      this.updates.raiseEvent({ type: 'url-published', url: this.whep?.endpointUrl })
     }
   }
 }

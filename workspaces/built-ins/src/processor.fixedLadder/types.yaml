@@ -1,0 +1,541 @@
+openapi: 3.0.0
+info:
+  title: Fixed Ladder Encoder Component
+  version: 1.0.0
+
+components:
+  schemas:
+    x264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["x264"]
+        threads:
+          type: number
+        bitrateMode:
+          type: object
+          properties:
+            value:
+              type: number
+            mode:
+              type: string
+              enum: ["abr", "cqp", "crf"]
+          required: ['value', 'mode']
+        profile:
+          type: string
+          enum: ["baseline", "main", "high", "high10", "high422", "high444"]
+        level:
+          type: number
+          enum: [1, 1.1, 1.2, 1.3, 2, 2.1, 2.2, 3, 3.1, 3.2, 4, 4.1, 4.2, 5, 5.1]
+        keyFrameIntervalMin:
+          type: number
+        keyFrameIntervalMax:
+          type: number
+        bframes:
+          type: number
+        tune:
+          type: string
+          enum: ["film", "animation", "grain", "stillimage", "psnr", "ssim", "fastdecode", "zerolatency"]
+        preset:
+          type: string
+          enum: ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo"]
+        frameReference:
+          type: number
+        cabac:
+          type: boolean
+        vbvMaxRate:
+          type: number
+        vbvBufferSize:
+          type: number
+        sceneCut:
+          type: number
+        aud:
+          type: boolean
+        noDeblock:
+          type: boolean
+        nalHrd:
+          type: string
+          enum: ["none", "vbr", "cbr"]
+      required: ['type']
+
+    ma35dH264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['amdMA35D-h264']
+        profile:
+          type: string
+          enum: ['baseline', 'main', 'high', 'high10']
+        level:
+          type: number
+          enum: [1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2]
+        rateControl:
+          oneOf:
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['const-qp']
+                qp:
+                  type: number
+              required: ['mode', 'qp']
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['cbr']
+                bitrate:
+                  type: number
+              required: ['mode', 'bitrate']
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['vbr']
+                bitrate:
+                  type: number
+              required: ['mode', 'bitrate']
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['constrained-vbr']
+                bitrate:
+                  type: number
+                maxBitrate:
+                  type: number
+                bufSize:
+                  type: number
+              required: ['mode', 'bitrate', 'maxBitrate', 'bufSize']
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['content-adaptive']
+                bitrate:
+                  type: number
+                maxBitrate:
+                  type: number
+                bufSize:
+                  type: number
+              required: ['mode', 'bitrate', 'maxBitrate', 'bufSize']
+        lookaheadDepth:
+          type: number
+        gopSize:
+          type: number
+        tempAqGain:
+          type: number
+        spatAqGain:
+          type: number
+        minQp:
+          type: number
+        maxQp:
+          type: number
+        preset:
+          type: string
+          enum: ['fast', 'medium', 'slow']
+        crf:
+          type: number
+        forcedIdr:
+          type: number
+        bf:
+          type: number
+        qpMode:
+          type: string
+          enum: ['relative-load', 'uniform']
+        spatialAq:
+          type: string
+          enum: ['auto', 'disable', 'enable']
+        temporalAq:
+          type: string
+          enum: ['auto', 'disable', 'enable']
+        dynamicGop:
+          type: string
+          enum: ['auto', 'disable', 'enable']
+        tuneMetrics:
+          type: string
+          enum: ['vq', 'psnr', 'ssim', 'vmaf']
+        latencyMs:
+          type: number
+        delayInitialization:
+          type: number
+      required: ['type']
+
+    ma35dHevcCodec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['amdMA35D-hevc']
+        profile:
+          type: string
+          enum: ['main', 'main10']
+        level:
+          type: number
+          enum: [1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2]
+        tier:
+          type: string
+          enum: ['main', 'high']
+        rateControl:
+          oneOf:
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['const-qp']
+                qp:
+                  type: number
+              required: ['mode', 'qp']
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['cbr']
+                bitrate:
+                  type: number
+              required: ['mode', 'bitrate']
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['vbr']
+                bitrate:
+                  type: number
+              required: ['mode', 'bitrate']
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['constrained-vbr']
+                bitrate:
+                  type: number
+                maxBitrate:
+                  type: number
+                bufSize:
+                  type: number
+              required: ['mode', 'bitrate', 'maxBitrate', 'bufSize']
+            - type: object
+              properties:
+                mode:
+                  type: string
+                  enum: ['content-adaptive']
+                bitrate:
+                  type: number
+                maxBitrate:
+                  type: number
+                bufSize:
+                  type: number
+              required: ['mode', 'bitrate', 'maxBitrate', 'bufSize']
+        lookaheadDepth:
+          type: number
+        gopSize:
+          type: number
+        tempAqGain:
+          type: number
+        spatAqGain:
+          type: number
+        minQp:
+          type: number
+        maxQp:
+          type: number
+        preset:
+          type: string
+          enum: ['fast', 'medium', 'slow']
+        crf:
+          type: number
+        forcedIdr:
+          type: number
+        bf:
+          type: number
+        qpMode:
+          type: string
+          enum: ['relative-load', 'uniform']
+        spatialAq:
+          type: string
+          enum: ['auto', 'disable', 'enable']
+        temporalAq:
+          type: string
+          enum: ['auto', 'disable', 'enable']
+        dynamicGop:
+          type: string
+          enum: ['auto', 'disable', 'enable']
+        tuneMetrics:
+          type: string
+          enum: ['vq', 'psnr', 'ssim', 'vmaf']
+        latencyMs:
+          type: number
+        delayInitialization:
+          type: number
+      required: ['type']
+
+    quadraH264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['quadra-h264']
+        extraOpts:
+          type: string
+        enableAud:
+          type: boolean
+        gpuIndex:
+          type: number
+        bitrate:
+          type: number
+        enableVfr:
+          type: boolean
+        crf:
+          type: number
+        gopPresetIndex:
+          type: number
+        intraPeriod:
+          type: number
+        rcEnable:
+          type: boolean
+        intraQp:
+          type: number
+        rcInitDelay:
+          type: number
+        profile:
+          type: string
+          enum: ['baseline', 'main', 'extended', 'high', 'high10']
+        level:
+          type: number
+          enum: [1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2]
+        fillerEnable:
+          type: boolean
+        minQp:
+          type: number
+        maxQp:
+          type: number
+        maxDeltaQp:
+          type: number
+        cuLevelRCEnable:
+          type: boolean
+        lookAheadDepth:
+          type: number
+        vbvBufferSize:
+          type: number
+        vbvMaxRate:
+          type: number
+      required: ['type']
+
+    loganH264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['logan-h264']
+        extraOpts:
+          type: string
+        enableAud:
+          type: boolean
+        gpuIndex:
+          type: number
+        bitrate:
+          type: number
+        flushGop:
+          type: boolean
+        enableVfr:
+          type: boolean
+        crf:
+          type: number
+        cbr:
+          type: boolean
+        gopPresetIndex:
+          type: number
+        intraPeriod:
+          type: number
+        rcEnable:
+          type: boolean
+        intraQp:
+          type: number
+        rcInitDelay:
+          type: number
+        profile:
+          type: string
+          enum: ['baseline', 'main', 'extended', 'high', 'high10']
+        level:
+          type: number
+          enum: [1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2]
+      required: ['type']
+
+    nvidiaH264Codec:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['nv-h264']
+        preset:
+          type: string
+          enum: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7']
+        tuning:
+          type: string
+          enum: ['high_quality', 'low_latency', 'ultra_low_latency', 'lossless']
+        idrPeriod:
+          type: number
+        gopInterval:
+          type: number
+        frameIntervalP:
+          type: number
+        maxNumRefFrames:
+          type: number
+        level:
+          type: number
+          enum: [1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2]
+        profile:
+          type: string
+          enum: ['baseline', 'main', 'high', 'high444']
+        outputAud:
+          type: boolean
+        rateControl:
+          type: object
+          properties:
+            mode:
+              type: string
+              enum: ['con_stqp', 'vbr', 'cbr']
+            averageBitrate:
+              type: number
+            maxBitrate:
+              type: number
+            vbvBufferSize:
+              type: number
+            vbvInitialDelay:
+              type: number
+            enableLookahead:
+              type: boolean
+            strictGopTarget:
+              type: boolean
+            lookaheadDepth:
+              type: number
+            enableTemporalAQ:
+              type: boolean
+            enableSpatialAQ:
+              type: boolean
+            aqStrength:
+              type: number
+          required: ['mode', 'averageBitrate']
+        useBFramesAsRef:
+          type: string
+          enum: ['disabled', 'each', 'middle']
+      required: ['type']
+
+    frameRate:
+      type: object
+      properties:
+        frames:
+          type: number
+        seconds:
+          type: number
+      required: ['frames', 'seconds']
+
+    softwareLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/x264Codec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    ma35dLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/ma35dH264Codec'
+            - $ref: '#/components/schemas/ma35dHevcCodec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    loganLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/loganH264Codec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    nvidiaLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/nvidiaH264Codec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    quadraLadderRung:
+      type: object
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+        codec:
+          oneOf:
+            - $ref: '#/components/schemas/quadraH264Codec'
+        frameRate:
+          $ref: '#/components/schemas/frameRate'
+      required: ['width', 'height', 'codec', 'frameRate']
+
+    ladderRungDefinition:
+      type: object
+      properties:
+        name:
+          type: string
+        software:
+          $ref: '#/components/schemas/softwareLadderRung'
+        ma35d:
+          $ref: '#/components/schemas/ma35dLadderRung'
+        logan:
+          $ref: '#/components/schemas/loganLadderRung'
+        nvidia:
+          $ref: '#/components/schemas/nvidiaLadderRung'
+        quadra:
+          $ref: '#/components/schemas/quadraLadderRung'
+      required: ['name']
+
+    fixedLadderConfig:
+      type: object
+      properties:
+        __global:
+          type: object
+          properties:
+            hardware:
+              type: string
+              enum: ['software', 'ma35d', 'logan', 'nvidia', 'quadra']
+        id:
+          type: string
+        displayName:
+          type: string
+        notes:
+          type: string
+        rungs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ladderRungDefinition'
+      required: ['id', 'displayName', 'rungs']

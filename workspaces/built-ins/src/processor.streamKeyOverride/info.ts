@@ -7,7 +7,7 @@ export default function({
   validation: { Z },
 }: Registration) {
   return defineComponent<StreamKeyOverrideConfig>({
-    identifier: 'processor.StreamKeyOverride',
+    identifier: 'processor.streamKeyOverride',
     category: 'processor',
     name: "Stream Key Override",
     description: "Override stream keys for several streams at once, setting some components of the keys and optionally incrementing stream ID.",

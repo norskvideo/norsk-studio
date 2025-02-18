@@ -15,6 +15,7 @@ This is useful for renaming streams before they go to outputs, or for gathering 
 | programNumber | Override program number |  𐄂
 | streamId | Override stream ID |  𐄂
 | renditionName | Override rendition name |  𐄂
+| notes | Notes about this component |  𐄂
 |===
 
 

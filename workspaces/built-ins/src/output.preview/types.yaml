@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+  title: Preview Component
+  version: 1.0.0
+components:
+  schemas:
+    audio_level:
+      type: object
+      required:
+        - peak
+        - rms
+      properties:
+        peak:
+          type: number
+        rms: 
+          type: number
+    latest_state:
+      type: object
+      properties:
+        url:
+          type: string
+        levels:
+          $ref: '#/components/schemas/audio_level'
+
+paths:
+  /latest:
+    get:
+      summary: Returns the latest preview image location + audio levels
+      x-route-type: instance
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/latest_state"
+                description: The latest available state

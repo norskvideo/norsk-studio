@@ -45,7 +45,8 @@ describe("Auto CMAF Output", () => {
                 targetPartDuration: 0.5,
                 targetSegmentDuration: 2,
               },
-              s3Destinations: [],
+              destinations: [],
+              multiplePrograms: true
             }
           ).reify())
       .reify();
@@ -446,7 +447,8 @@ describe("Auto CMAF Output", () => {
                   targetPartDuration: 0.5,
                   targetSegmentDuration: 2,
                 },
-                s3Destinations: [],
+                destinations: [],
+                multiplePrograms: true
               }
             ).reify())
         .reify();

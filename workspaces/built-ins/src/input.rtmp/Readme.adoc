@@ -11,5 +11,6 @@ A component that listens for RTMP input on the address specified.
 | ssl | Optional: SSL |  𐄂
 | appName | Name of the app (default: &quot;norsk&quot;) |  𐄂
 | streamNames | List of stream names to assign to the accepted streams (default: [&quot;camera1&quot;]) |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 

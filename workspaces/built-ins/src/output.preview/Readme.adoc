@@ -7,7 +7,10 @@ Preview allows for the real-time preview of media streams. It provides a way to 
 | Option | Description | Required
 | id | A unique identifier for the component instance | ✓
 | displayName | The name shown in the Studio UI of this component | ✓
-| bufferDelayMs | How many milliseconds in the jitter buffer (default: 500) |  𐄂
+| previewMode | How to display the video (default: &quot;image&quot;) |  𐄂
+| showPreview | Show video preview (default: true) |  𐄂
+| bufferDelayMs | How many milliseconds in the jitter buffer (WebRTC only) (default: 500) |  𐄂
+| notes | Additional notes about this component |  𐄂
 |===
 
 
@@ -19,7 +22,7 @@ Preview allows for the real-time preview of media streams. It provides a way to 
 |===
 | Option | Description | Required
 | url | URL of the STUN&#x2F;TURN server (with turn:&#x2F;stun: prefix) as accessed by Norsk Studio |  ✓
-| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  ✓
+| reportedUrl | Optional URL of the STUN&#x2F;TURN server as accessed by the client (if different to the above) |  𐄂
 | username | Optional username |  ✓
 | credential | Optional password |  ✓
 |===
