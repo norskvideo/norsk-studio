@@ -34,6 +34,8 @@ export type AutoCmafS3Destination = {
 
 export type AutoCmafDestination = AutoCmafAkamaiDestinaton | AutoCmafS3Destination;
 
+export type InitialState = 'enabled' | 'disabled';
+
 export type AutoCmafConfig = {
   id: string,
   displayName: string,
@@ -42,6 +44,7 @@ export type AutoCmafConfig = {
   sessionId: boolean,
   segments: AutoCmafSegment,
   destinations: AutoCmafDestination[],
+  initialState: InitialState,
   multiplePrograms?: boolean;
   drmProvider?: 'ezdrm' | 'axinom',
   __global: {
@@ -108,11 +111,6 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
   async createImpl(norsk: Norsk, cfg: AutoCmafConfigExtended, cb: OnCreated<AutoCmaf>, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
     const node = await AutoCmaf.create(norsk, cfg, runtime);
     cb(node);
-    const mv = node.mv;
-    if (mv) {
-      runtime.report.registerOutput(cfg.id, mv.url);
-      runtime.updates.raiseEvent({ type: 'url-published', url: mv.url, drmToken: node.crypto?.token });
-    }
   }
 
   async handleCommand(node: AutoCmaf, command: CmafOutputCommand) {
@@ -134,6 +132,16 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
     const paths = resolved.paths as Transmuted<paths>;
 
+    // This probably needs moving to shared, and having a timeout adding to it
+    function waitFor(condition: () => boolean, finish: () => void) {
+      if (condition()) {
+        return finish();
+      }
+      setTimeout(() => {
+        waitFor(condition, finish);
+      }, 10)
+    }
+
     return [
       {
         ...post<paths>('/enable', paths),
@@ -146,7 +154,9 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
             runtime.updates.sendCommand({
               type: 'enable-output'
             });
-            res.sendStatus(204);
+            waitFor(() => runtime.updates.latest().enabled, () => {
+              res.sendStatus(204);
+            })
           } catch (error) {
             console.error('Error in enable handler:', error);
             res.status(500).json({ error: 'Failed to enable output' });
@@ -164,7 +174,9 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
             runtime.updates.sendCommand({
               type: 'disable-output'
             });
-            res.sendStatus(204);
+            waitFor(() => !runtime.updates.latest().enabled, () => {
+              res.sendStatus(204);
+            })
           } catch (error) {
             console.error('Error in disable handler:', error);
             res.status(500).json({ error: 'Failed to disable output' });
@@ -212,6 +224,11 @@ export class AutoCmaf extends CustomSinkNode {
     this.cfg = cfg;
     this.norsk = norsk;
     this.runtime = runtime;
+    this.enabled = cfg.initialState == 'enabled';
+
+    if (!this.enabled) {
+      runtime.updates.raiseEvent({ type: 'output-disabled' })
+    }
 
     if (this.cfg.sessionId) {
       this.sessionId = (Math.random() + 1).toString(36).substring(7);
@@ -291,6 +308,7 @@ export class AutoCmaf extends CustomSinkNode {
         this.crypto = await axinomInit(this.cfg.__global?.axinomConfig);
       }
     }
+
     const mvCryptoSettings = this.crypto ? {
       m3uAdditions: [
         this.crypto.audio.multivariantSignaling,
@@ -318,11 +336,13 @@ export class AutoCmaf extends CustomSinkNode {
       this.setup({ sink: ts });
       this.mv = ts;
     }
-
+    this.runtime.report.registerOutput(this.cfg.id, this.mv.url);
+    this.runtime.updates.raiseEvent({ type: 'url-published', url: this.mv.url, drmToken: this.crypto?.token });
   }
 
   async enableOutput() {
     if (!this.enabled) {
+      debuglog("Enabling output", { id: this.id });
       this.enabled = true;
       await this.control.schedule();
       this.runtime.updates.raiseEvent({ type: 'output-enabled' })
@@ -332,6 +352,7 @@ export class AutoCmaf extends CustomSinkNode {
 
   async disableOutput() {
     if (this.enabled) {
+      debuglog("Disabling output", { id: this.id });
       this.enabled = false;
       for (const media of this.currentMedia) {
         await media.node?.close();
@@ -350,6 +371,7 @@ export class AutoCmaf extends CustomSinkNode {
       debuglog("Skipping context handling - output disabled", { id: this.id });
       return;
     }
+
     // This is where I get to create my nodes based on all the active sources?
     // but also by using our selectors to do that..
     const streams: {
@@ -423,6 +445,8 @@ export class AutoCmaf extends CustomSinkNode {
       }
 
       const streamKeyString = `${stream.key.sourceName}-${stream.key.programNumber}-${stream.key.streamId}-${stream.key.renditionName}`;
+
+      debuglog("Setting up media nodes for key", { id: this.id, key: stream.key, type: stream.metadata.message.case })
 
       switch (stream.metadata.message.case) {
         case undefined:
@@ -604,9 +628,11 @@ export class AutoCmaf extends CustomSinkNode {
       const node = deletion.node;
       this.currentMedia = this.currentMedia.filter((x) =>
         !streamKeysAreEqual(x.key, deletion.key))
+      debuglog("Closing old media node for non-existant key", { id: this.id, key: deletion.key })
       await node?.close();
     }
 
+    debuglog("Waiting for media playlists to be created", { id: this.id, count: creations.length })
     await Promise.all(creations);
 
     const defaultSources = this.currentMedia.flatMap((m) => {
