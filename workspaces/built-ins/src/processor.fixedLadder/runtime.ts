@@ -4,6 +4,11 @@ import { HardwareAccelerationType } from '@norskvideo/norsk-studio/lib/shared/co
 import { warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { components } from './types';
 import { Norsk, VideoEncodeRung } from '@norskvideo/norsk-sdk';
+import path from 'path';
+import fs from 'fs/promises';
+import YAML from 'yaml';
+import { resolveRefs } from 'json-refs';
+import { OpenAPIV3 } from 'openapi-types';
 
 export type SoftwareLadderRung = components['schemas']['softwareLadderRung'];
 export type Ma35dLadderRung = components['schemas']['ma35dLadderRung'];
@@ -16,9 +21,9 @@ export type LadderRungDefinition = components['schemas']['ladderRungDefinition']
 type HardwareType = Extract<HardwareAccelerationType, "quadra" | "logan" | "nvidia" | "ma35d"> | "software";
 
 export type FixedLadderConfig = Omit<components["schemas"]["fixedLadderConfig"], "__global"> & {
-    __global: {
-        hardware?: HardwareType
-    }
+  __global: {
+    hardware?: HardwareType
+  }
 };
 
 export default class FixedLadderDefinition implements ServerComponentDefinition<FixedLadderConfig, SimpleProcessorWrapper> {
@@ -33,23 +38,32 @@ export default class FixedLadderDefinition implements ServerComponentDefinition<
     });
     await wrapper.initialised;
     cb(wrapper);
+  }
 
+
+  async schemas() {
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+    return {
+      config: resolved.components!.schemas!['fixedLadderConfig']
+    }
   }
 }
 
 function createRung(rung: LadderRungDefinition, hardware?: HardwareType) {
   if (hardware && hardware !== 'software') {
-      return createHardwareRung(rung, hardware);
+    return createHardwareRung(rung, hardware);
   } else {
-      return createSoftwareRung(rung);
+    return createSoftwareRung(rung);
   }
 }
 
 function createHardwareRung(rung: LadderRungDefinition, hardware: Exclude<HardwareType, "software">): VideoEncodeRung | undefined {
   const actualRung = rung[hardware];
   if (!actualRung) {
-      warninglog("Hardware rung isn't defined, attempting software", { name: rung.name })
-      return createSoftwareRung(rung);
+    warninglog("Hardware rung isn't defined, attempting software", { name: rung.name })
+    return createSoftwareRung(rung);
   }
   return { name: rung.name, ...actualRung };
 }
