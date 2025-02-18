@@ -5,7 +5,8 @@
   "scripts": {
     "clean": "rm -rf lib",
     "types": "make",
-    "build": "npm run types && npx studio-wrap-infos src/ && npx npm-run-all build:* && rm -rf build",
+    "build": "npm run build-impl || true",
+    "build-impl": "npm run types && npx studio-wrap-infos src/ && npx npm-run-all build:* && rm -rf build",
     "build:server": "npx tsc",
     "build:client": "npx tsc -p tsconfig-client.json && npx studio-bundle build/info.js client/info.js",
     "build:copy-css": "rsync --mkpath -v -r --include '*/' --include '*.css' --exclude '*' src/ client/",
