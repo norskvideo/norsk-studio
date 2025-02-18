@@ -10,66 +10,227 @@ export interface components {
         x264Codec: {
             /** @enum {string} */
             type: "x264";
-            bitrateMode: {
+            threads?: number;
+            bitrateMode?: {
                 value: number;
                 /** @enum {string} */
                 mode: "abr" | "cqp" | "crf";
             };
-            keyFrameIntervalMax: number;
-            keyFrameIntervalMin: number;
-            sceneCut: number;
             /** @enum {string} */
-            preset: "ultrafast" | "superfast" | "veryfast" | "faster" | "fast" | "medium" | "slow" | "slower" | "veryslow" | "placebo";
+            profile?: "baseline" | "main" | "high" | "high10" | "high422" | "high444";
+            /** @enum {number} */
+            level?: 1 | 1.1 | 1.2 | 1.3 | 2 | 2.1 | 2.2 | 3 | 3.1 | 3.2 | 4 | 4.1 | 4.2 | 5 | 5.1;
+            keyFrameIntervalMin?: number;
+            keyFrameIntervalMax?: number;
+            bframes?: number;
             /** @enum {string} */
-            tune: "film" | "animation" | "grain" | "stillimage" | "psnr" | "ssim" | "fastdecode" | "zerolatency";
-            threads: number;
-            bframes: number;
+            tune?: "film" | "animation" | "grain" | "stillimage" | "psnr" | "ssim" | "fastdecode" | "zerolatency";
+            /** @enum {string} */
+            preset?: "ultrafast" | "superfast" | "veryfast" | "faster" | "fast" | "medium" | "slow" | "slower" | "veryslow" | "placebo";
+            frameReference?: number;
+            cabac?: boolean;
+            vbvMaxRate?: number;
+            vbvBufferSize?: number;
+            sceneCut?: number;
+            aud?: boolean;
+            noDeblock?: boolean;
+            /** @enum {string} */
+            nalHrd?: "none" | "vbr" | "cbr";
         };
         ma35dH264Codec: {
             /** @enum {string} */
             type: "amdMA35D-h264";
             /** @enum {string} */
-            profile: "baseline" | "main" | "high" | "high10";
-            rateControl: {
+            profile?: "baseline" | "main" | "high" | "high10";
+            /** @enum {number} */
+            level?: 1 | 2 | 2.1 | 3 | 3.1 | 4 | 4.1 | 5 | 5.1 | 5.2 | 6 | 6.1 | 6.2;
+            rateControl?: {
+                /** @enum {string} */
+                mode: "const-qp";
+                qp: number;
+            } | {
                 /** @enum {string} */
                 mode: "cbr";
                 bitrate: number;
+            } | {
+                /** @enum {string} */
+                mode: "vbr";
+                bitrate: number;
+            } | {
+                /** @enum {string} */
+                mode: "constrained-vbr";
+                bitrate: number;
+                maxBitrate: number;
+                bufSize: number;
+            } | {
+                /** @enum {string} */
+                mode: "content-adaptive";
+                bitrate: number;
+                maxBitrate: number;
+                bufSize: number;
             };
-            gopSize: number;
+            lookaheadDepth?: number;
+            gopSize?: number;
+            tempAqGain?: number;
+            spatAqGain?: number;
+            minQp?: number;
+            maxQp?: number;
+            /** @enum {string} */
+            preset?: "fast" | "medium" | "slow";
+            crf?: number;
+            forcedIdr?: number;
+            bf?: number;
+            /** @enum {string} */
+            qpMode?: "relative-load" | "uniform";
+            /** @enum {string} */
+            spatialAq?: "auto" | "disable" | "enable";
+            /** @enum {string} */
+            temporalAq?: "auto" | "disable" | "enable";
+            /** @enum {string} */
+            dynamicGop?: "auto" | "disable" | "enable";
+            /** @enum {string} */
+            tuneMetrics?: "vq" | "psnr" | "ssim" | "vmaf";
+            latencyMs?: number;
+            delayInitialization?: number;
         };
         ma35dHevcCodec: {
             /** @enum {string} */
             type: "amdMA35D-hevc";
             /** @enum {string} */
-            profile: "main" | "main10";
-            rateControl: {
+            profile?: "main" | "main10";
+            /** @enum {number} */
+            level?: 1 | 2 | 2.1 | 3 | 3.1 | 4 | 4.1 | 5 | 5.1 | 5.2 | 6 | 6.1 | 6.2;
+            /** @enum {string} */
+            tier?: "main" | "high";
+            rateControl?: {
+                /** @enum {string} */
+                mode: "const-qp";
+                qp: number;
+            } | {
                 /** @enum {string} */
                 mode: "cbr";
                 bitrate: number;
+            } | {
+                /** @enum {string} */
+                mode: "vbr";
+                bitrate: number;
+            } | {
+                /** @enum {string} */
+                mode: "constrained-vbr";
+                bitrate: number;
+                maxBitrate: number;
+                bufSize: number;
+            } | {
+                /** @enum {string} */
+                mode: "content-adaptive";
+                bitrate: number;
+                maxBitrate: number;
+                bufSize: number;
             };
-            gopSize: number;
+            lookaheadDepth?: number;
+            gopSize?: number;
+            tempAqGain?: number;
+            spatAqGain?: number;
+            minQp?: number;
+            maxQp?: number;
+            /** @enum {string} */
+            preset?: "fast" | "medium" | "slow";
+            crf?: number;
+            forcedIdr?: number;
+            bf?: number;
+            /** @enum {string} */
+            qpMode?: "relative-load" | "uniform";
+            /** @enum {string} */
+            spatialAq?: "auto" | "disable" | "enable";
+            /** @enum {string} */
+            temporalAq?: "auto" | "disable" | "enable";
+            /** @enum {string} */
+            dynamicGop?: "auto" | "disable" | "enable";
+            /** @enum {string} */
+            tuneMetrics?: "vq" | "psnr" | "ssim" | "vmaf";
+            latencyMs?: number;
+            delayInitialization?: number;
         };
         quadraH264Codec: {
             /** @enum {string} */
             type: "quadra-h264";
-            intraPeriod: number;
-            bitrate: number;
+            extraOpts?: string;
+            enableAud?: boolean;
+            gpuIndex?: number;
+            bitrate?: number;
+            enableVfr?: boolean;
+            crf?: number;
+            gopPresetIndex?: number;
+            intraPeriod?: number;
+            rcEnable?: boolean;
+            intraQp?: number;
+            rcInitDelay?: number;
+            /** @enum {string} */
+            profile?: "baseline" | "main" | "extended" | "high" | "high10";
+            /** @enum {number} */
+            level?: 1 | 2 | 2.1 | 3 | 3.1 | 4 | 4.1 | 5 | 5.1 | 5.2 | 6 | 6.1 | 6.2;
+            fillerEnable?: boolean;
+            minQp?: number;
+            maxQp?: number;
+            maxDeltaQp?: number;
+            cuLevelRCEnable?: boolean;
+            lookAheadDepth?: number;
+            vbvBufferSize?: number;
+            vbvMaxRate?: number;
         };
         loganH264Codec: {
             /** @enum {string} */
             type: "logan-h264";
-            intraPeriod: number;
-            bitrate: number;
+            extraOpts?: string;
+            enableAud?: boolean;
+            gpuIndex?: number;
+            bitrate?: number;
+            flushGop?: boolean;
+            enableVfr?: boolean;
+            crf?: number;
+            cbr?: boolean;
+            gopPresetIndex?: number;
+            intraPeriod?: number;
+            rcEnable?: boolean;
+            intraQp?: number;
+            rcInitDelay?: number;
+            /** @enum {string} */
+            profile?: "baseline" | "main" | "extended" | "high" | "high10";
+            /** @enum {number} */
+            level?: 1 | 2 | 2.1 | 3 | 3.1 | 4 | 4.1 | 5 | 5.1 | 5.2 | 6 | 6.1 | 6.2;
         };
         nvidiaH264Codec: {
             /** @enum {string} */
             type: "nv-h264";
-            idrPeriod: number;
-            rateControl: {
+            /** @enum {string} */
+            preset?: "p1" | "p2" | "p3" | "p4" | "p5" | "p6" | "p7";
+            /** @enum {string} */
+            tuning?: "high_quality" | "low_latency" | "ultra_low_latency" | "lossless";
+            idrPeriod?: number;
+            gopInterval?: number;
+            frameIntervalP?: number;
+            maxNumRefFrames?: number;
+            /** @enum {number} */
+            level?: 1 | 2 | 2.1 | 3 | 3.1 | 4 | 4.1 | 5 | 5.1 | 5.2 | 6 | 6.1 | 6.2;
+            /** @enum {string} */
+            profile?: "baseline" | "main" | "high" | "high444";
+            outputAud?: boolean;
+            rateControl?: {
                 /** @enum {string} */
                 mode: "con_stqp" | "vbr" | "cbr";
                 averageBitrate: number;
+                maxBitrate?: number;
+                vbvBufferSize?: number;
+                vbvInitialDelay?: number;
+                enableLookahead?: boolean;
+                strictGopTarget?: boolean;
+                lookaheadDepth?: number;
+                enableTemporalAQ?: boolean;
+                enableSpatialAQ?: boolean;
+                aqStrength?: number;
             };
+            /** @enum {string} */
+            useBFramesAsRef?: "disabled" | "each" | "middle";
         };
         frameRate: {
             frames: number;
