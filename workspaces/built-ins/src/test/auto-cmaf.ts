@@ -30,7 +30,7 @@ async function defaultRuntime(): Promise<RuntimeSystem> {
 }
 
 describe("Auto CMAF Output", () => {
-  async function sharedSetup(norsk: Norsk, sources: CreatedMediaNode[], mode: 'cmaf' | 'ts') {
+  async function sharedSetup(norsk: Norsk, sources: CreatedMediaNode[], mode: 'cmaf' | 'ts', cfg?: Partial<AutoCmafConfig>) {
     const runtime = await defaultRuntime();
     const yaml = new YamlBuilder()
       .addNode(
@@ -46,7 +46,9 @@ describe("Auto CMAF Output", () => {
                 targetSegmentDuration: 2,
               },
               destinations: [],
-              multiplePrograms: true
+              multiplePrograms: true,
+              initialState: 'enabled',
+              ...cfg
             }
           ).reify())
       .reify();
@@ -148,6 +150,32 @@ describe("Auto CMAF Output", () => {
         expect(finalManifest.variants).length(1);
         expect(finalManifest.variants[0]?.audio).length(1);
       }
+    })
+  });
+
+  describeTest("Starting up disabled", (mode) => () => {
+    let norsk: Norsk | undefined = undefined;
+    let result: RunResult | undefined = undefined;
+
+    afterEach(async () => {
+      await norsk?.close();
+    })
+
+    beforeEach(async () => {
+      norsk = await Norsk.connect({ onShutdown: () => { } });
+      const source = await videoAndAudio(norsk, 'source');
+      result = await sharedSetup(norsk, [source], mode, { initialState: 'disabled' });
+    })
+
+    it("Doesn't spin anything up", async () => {
+      const mv = result?.registeredOutputs.find((s) => s.url?.endsWith("default.m3u8"));
+      const disabledResponse = await fetch(mv!.url!);
+      expect(disabledResponse.status).to.not.equal(200);
+    })
+
+    it("Has the disabled state", async () => {
+      const cmaf = result!.components["cmaf"] as AutoCmaf;
+      expect(cmaf.runtime.updates.latest().enabled).to.be.false;
     })
   });
 
@@ -448,7 +476,8 @@ describe("Auto CMAF Output", () => {
                   targetSegmentDuration: 2,
                 },
                 destinations: [],
-                multiplePrograms: true
+                multiplePrograms: true,
+                initialState: 'enabled'
               }
             ).reify())
         .reify();

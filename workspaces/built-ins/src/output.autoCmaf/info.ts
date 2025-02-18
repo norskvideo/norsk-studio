@@ -265,6 +265,23 @@ export default function(R: Registration) {
             })
           }
         },
+        initialState: {
+          help: "The publishing state of this endpoint by default on start-up",
+          hint: {
+            type: 'select',
+            defaultValue: 'enabled',
+            options: [
+              {
+                display: "Enabled",
+                value: 'enabled',
+              },
+              {
+                display: "Disabled",
+                value: 'disabled',
+              },
+            ],
+          },
+        },
         multiplePrograms: {
           help: "Produce multiple multivariants if more than one program is present",
           hint: {
