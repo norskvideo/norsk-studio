@@ -206,7 +206,7 @@ export class AutoCmaf extends CustomSinkNode {
       holdBackSeconds: (cfg.segments.holdBackSegments ?? 3) * cfg.segments.targetSegmentDuration,
       partHoldBackSeconds: (cfg.segments.holdBackParts ?? 3) * cfg.segments.targetPartDuration,
       sessionId: this.sessionId,
-      id: 'local'
+      id: `local-${this.id}`
     });
 
     cfg.destinations.filter((d) => d.type == 's3').forEach((d, i) => {
@@ -221,7 +221,7 @@ export class AutoCmaf extends CustomSinkNode {
           sanitisedPrefix = sanitisedPrefix + "/";
       }
 
-      const id = `s3-${i}`;
+      const id = `s3-${i}-${this.id}`;
       this.destinations.push({
         id,
         type: 's3',
@@ -243,7 +243,7 @@ export class AutoCmaf extends CustomSinkNode {
     })
 
     cfg.destinations.filter((d) => d.type == 'akamai').forEach((d, i) => {
-      const id = `akamai-${i}`;
+      const id = `akamai-${i}-${this.id}`;
       const url = new URL(d.ingest);
       this.destinations.push({
         id,
