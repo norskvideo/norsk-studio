@@ -107,7 +107,8 @@ jobs:
         fi
 
     - name: Commit latest
-      if: ${{ always() && steps.changes.outputs.changes_exist && inputs.new-version == 'nightly' }}
+      if: ${{ steps.changes.outputs.changes_exist && inputs.new-version == 'nightly' }}
+      continue-on-error: true
       run: |
         git add workspaces/*/package.json
         git add package-lock.json
