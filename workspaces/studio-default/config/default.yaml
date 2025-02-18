@@ -6,7 +6,6 @@ server:
     - '@norskvideo/norsk-studio-built-ins'
     - '@norskvideo/norsk-studio-source-switcher'
     - '@norskvideo/norsk-studio-aws'
-    - '@norskvideo/norsk-studio-alpha'
   developer_mode: true
 
 norsk:
