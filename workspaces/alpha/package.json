@@ -23,7 +23,8 @@
   "dependencies": {
     "@norskvideo/norsk-sdk": "^1.0.401-2025-02-18-45fcabf9",
     "@norskvideo/norsk-studio": "^1.21.0-2025-02-18-cfd5eeb3",
-    "openapi-types": "^12.1.3"
+    "openapi-types": "^12.1.3",
+    "react-select": "^5.7.0"
   },
   "main": "lib/index.js",
   "devDependencies": {

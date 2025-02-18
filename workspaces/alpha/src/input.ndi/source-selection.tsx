@@ -77,7 +77,7 @@ function SourceSelection(props: SourceSelectionProps) {
         setInputValue(newValue);
         props.onChanged(newValue);
       }}
-      onCreateOption={(newInput) => {
+      onCreateOption={(newInput: string) => {
         const newOption = { value: newInput, label: newInput };
         setSources((prev) => [...prev, newOption]);
         setInputValue(newInput);
