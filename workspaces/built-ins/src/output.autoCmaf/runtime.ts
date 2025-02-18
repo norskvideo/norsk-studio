@@ -1,10 +1,9 @@
 import { AdMarker, AutoProcessorMediaNode, CmafAudioOutputNode, CmafDestinationSettings, CmafMultiVariantOutputNode, CmafVideoOutputNode, HlsTsAudioOutputNode, HlsTsMultiVariantOutputNode, HlsTsVideoOutputNode, Norsk, Scte35InsertCommand, SourceMediaNode, StreamKey, StreamMetadata, selectExactKey, selectPlaylist, streamKeysAreEqual } from '@norskvideo/norsk-sdk';
 
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
-import { CreatedMediaNode, InstanceRouteInfo, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, InstanceRouteInfo, OnCreated, ServerComponentDefinition, ServerComponentSchemas, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { debuglog, infolog } from '@norskvideo/norsk-studio/lib/server/logging';
-import { AxinomConfig, EzDrmConfig } from '@norskvideo/norsk-studio/lib/shared/config';
 import { CryptoDetails } from '../shared/drm/cpix';
 import { ezdrmInit } from '../shared/drm/ezdrm';
 import { axinomInit } from '../shared/drm/axinom';
@@ -15,62 +14,17 @@ import fs from 'fs/promises';
 import { resolveRefs } from 'json-refs';
 import path from 'path';
 import YAML from 'yaml';
-import { paths } from './types';
+import { paths, components } from './types';
 
-export type AutoCmafAkamaiDestinaton = {
-  type: 'akamai',
-  ingest: string,
-  playback: string
-  includeAdInsertions: boolean
-}
-
-export type AutoCmafS3Destination = {
-  type: 's3',
-  host: string,
-  prefix: string,
-  includeAdInsertions: boolean
-}
-
-
+export type AutoCmafAkamaiDestinaton = components['schemas']['AutoCmafAkamaiDestination'];
+export type AutoCmafS3Destination = components['schemas']['AutoCmafS3Destination'];
 export type AutoCmafDestination = AutoCmafAkamaiDestinaton | AutoCmafS3Destination;
 
-export type InitialState = 'enabled' | 'disabled';
-
-export type AutoCmafConfig = {
-  id: string,
-  displayName: string,
-  name: string,
-  notes?: string,
-  sessionId: boolean,
-  segments: AutoCmafSegment,
-  destinations: AutoCmafDestination[],
-  initialState: InitialState,
-  multiplePrograms?: boolean;
-  drmProvider?: 'ezdrm' | 'axinom',
-  __global: {
-    ezdrmConfig?: EzDrmConfig,
-    axinomConfig?: AxinomConfig,
-  },
-}
-
-type AutoCmafConfigExtended = {
-  mode: 'ts' | 'cmaf'
-} & AutoCmafConfig
-
-export type AutoCmafSegment = {
-  retentionPeriod: number,
-  defaultSegmentCount?: number,
-  targetSegmentDuration: number,
-  targetPartDuration: number,
-  holdBackSegments?: number,
-  holdBackParts?: number
-}
-
-export type CmafOutputState = {
-  url?: string,
-  drmToken?: string,
-  enabled: boolean,
-};
+export type InitialState = components['schemas']['InitialState'];
+export type AutoCmafConfig = components['schemas']['AutoCmafConfig'];
+export type AutoCmafConfigExtended = components['schemas']['AutoCmafConfigExtended'];
+export type AutoCmafSegment = components['schemas']['AutoCmafSegment'];
+export type CmafOutputState = components['schemas']['CmafOutputState'];
 
 export type CmafOutputEvent = {
   type: 'url-published' | 'output-enabled' | 'output-disabled',
@@ -184,6 +138,16 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
         }
       }
     ];
+  }
+
+  async schemas(): Promise<ServerComponentSchemas> {
+    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
+    const root = YAML.parse(types.toString());
+    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
+    return {
+      config: resolved.components!.schemas!['AutoCmafConfig'],
+      state: resolved.components!.schemas!['CmafOutputState']
+    }
   }
 }
 

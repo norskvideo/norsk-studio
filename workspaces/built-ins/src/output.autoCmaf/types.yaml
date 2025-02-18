@@ -26,3 +26,157 @@ paths:
           description: Output is already disabled
         500:
           description: Server error while disabling output
+
+components:
+  schemas:
+    AutoCmafAkamaiDestination:
+      type: object
+      required:
+        - type
+        - ingest
+        - playback
+        - includeAdInsertions
+      properties:
+        type:
+          type: string
+          enum: [akamai]
+        ingest:
+          type: string
+        playback:
+          type: string
+        includeAdInsertions:
+          type: boolean
+
+    AutoCmafS3Destination:
+      type: object
+      required:
+        - type
+        - host
+        - prefix
+        - includeAdInsertions
+      properties:
+        type:
+          type: string
+          enum: [s3]
+        host:
+          type: string
+        prefix:
+          type: string
+        includeAdInsertions:
+          type: boolean
+
+    AutoCmafDestination:
+      oneOf:
+        - $ref: '#/components/schemas/AutoCmafAkamaiDestination'
+        - $ref: '#/components/schemas/AutoCmafS3Destination'
+
+    InitialState:
+      type: string
+      enum: [enabled, disabled]
+
+    AutoCmafSegment:
+      type: object
+      required:
+        - retentionPeriod
+        - targetSegmentDuration
+        - targetPartDuration
+      properties:
+        retentionPeriod:
+          type: number
+        defaultSegmentCount:
+          type: number
+        targetSegmentDuration:
+          type: number
+        targetPartDuration:
+          type: number
+        holdBackSegments:
+          type: number
+        holdBackParts:
+          type: number
+
+    EzDrmConfig:
+      type: object
+      properties:
+        token:
+          type: string
+        pX:
+          type: string
+
+    AxinomConfig:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        managementKey:
+          type: string
+        comKeyId:
+          type: string
+        comKey:
+          type: string
+
+    AutoCmafConfig:
+      type: object
+      required:
+        - id
+        - displayName
+        - name
+        - sessionId
+        - segments
+        - destinations
+        - initialState
+        - __global
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        name:
+          type: string
+        sessionId:
+          type: boolean
+        segments:
+          $ref: '#/components/schemas/AutoCmafSegment'
+        destinations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AutoCmafDestination'
+        initialState:
+          $ref: '#/components/schemas/InitialState'
+        multiplePrograms:
+          type: boolean
+        drmProvider:
+          type: string
+          enum: [ezdrm, axinom]
+        notes:
+          type: string
+        __global:
+          type: object
+          properties:
+            ezdrmConfig:
+              $ref: '#/components/schemas/EzDrmConfig'
+            axinomConfig:
+              $ref: '#/components/schemas/AxinomConfig'
+          additionalProperties: false
+
+    AutoCmafConfigExtended:
+      allOf:
+        - $ref: '#/components/schemas/AutoCmafConfig'
+        - type: object
+          required:
+            - mode
+          properties:
+            mode:
+              type: string
+              enum: [ts, cmaf]
+
+    CmafOutputState:
+      type: object
+      required:
+        - enabled
+      properties:
+        url:
+          type: string
+        drmToken:
+          type: string
+        enabled:
+          type: boolean

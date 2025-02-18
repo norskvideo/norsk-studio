@@ -109,7 +109,69 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        AutoCmafAkamaiDestination: {
+            /** @enum {string} */
+            type: "akamai";
+            ingest: string;
+            playback: string;
+            includeAdInsertions: boolean;
+        };
+        AutoCmafS3Destination: {
+            /** @enum {string} */
+            type: "s3";
+            host: string;
+            prefix: string;
+            includeAdInsertions: boolean;
+        };
+        AutoCmafDestination: components["schemas"]["AutoCmafAkamaiDestination"] | components["schemas"]["AutoCmafS3Destination"];
+        /** @enum {string} */
+        InitialState: "enabled" | "disabled";
+        AutoCmafSegment: {
+            retentionPeriod: number;
+            defaultSegmentCount?: number;
+            targetSegmentDuration: number;
+            targetPartDuration: number;
+            holdBackSegments?: number;
+            holdBackParts?: number;
+        };
+        EzDrmConfig: {
+            token?: string;
+            pX?: string;
+        };
+        AxinomConfig: {
+            tenantId?: string;
+            managementKey?: string;
+            comKeyId?: string;
+            comKey?: string;
+        };
+        AutoCmafConfig: {
+            id: string;
+            displayName: string;
+            name: string;
+            sessionId: boolean;
+            segments: components["schemas"]["AutoCmafSegment"];
+            destinations: components["schemas"]["AutoCmafDestination"][];
+            initialState: components["schemas"]["InitialState"];
+            multiplePrograms?: boolean;
+            /** @enum {string} */
+            drmProvider?: "ezdrm" | "axinom";
+            notes?: string;
+            __global: {
+                ezdrmConfig?: components["schemas"]["EzDrmConfig"];
+                axinomConfig?: components["schemas"]["AxinomConfig"];
+            };
+        };
+        AutoCmafConfigExtended: components["schemas"]["AutoCmafConfig"] & {
+            /** @enum {string} */
+            mode: "ts" | "cmaf";
+        };
+        CmafOutputState: {
+            url?: string;
+            drmToken?: string;
+            enabled: boolean;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
