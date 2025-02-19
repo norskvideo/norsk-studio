@@ -25,7 +25,7 @@
     "@aws-sdk/client-s3": "^3.614.0",
     "@aws-sdk/client-translate": "^3.535.0",
     "@norskvideo/norsk-sdk": "^1.0.401-2025-02-18-18d5b17e",
-    "@norskvideo/norsk-studio": "^1.21.0-2025-02-18-14c6c518",
+    "@norskvideo/norsk-studio": "^1.21.0-2025-02-19-46b73b3f",
     "openapi-types": "^12.1.3"
   },
   "main": "lib/index.js",
