@@ -25,7 +25,7 @@
     "@aws-sdk/client-mediapackage": "^3.499.0",
     "@aws-sdk/client-translate": "^3.535.0",
     "@norskvideo/norsk-sdk": "^1.0.401-2025-02-18-18d5b17e",
-    "@norskvideo/norsk-studio": "^1.26.0-2025-02-19-8152c23b",
+    "@norskvideo/norsk-studio": "^1.26.0-2025-02-20-59a0c088",
     "@norskvideo/webrtc-client": "^0.1.2",
     "express": "^4.18.2",
     "express-ws": "^5.0.2",
