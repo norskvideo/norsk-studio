@@ -46,7 +46,7 @@ export default class FixedLadderDefinition implements ServerComponentDefinition<
     const root = YAML.parse(types.toString());
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
     return {
-      config: resolved.components!.schemas!['fixedLadderConfig']
+      config: resolved.components!.schemas!['fixedLadderConfig'] as OpenAPIV3.SchemaObject
     }
   }
 }

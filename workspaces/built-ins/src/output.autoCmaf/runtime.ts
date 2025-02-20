@@ -145,8 +145,8 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
     const root = YAML.parse(types.toString());
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
     return {
-      config: resolved.components!.schemas!['AutoCmafConfig'],
-      state: resolved.components!.schemas!['CmafOutputState']
+      config: resolved.components!.schemas!['AutoCmafConfig'] as OpenAPIV3.SchemaObject,
+      state: resolved.components!.schemas!['CmafOutputState'] as OpenAPIV3.SchemaObject
     }
   }
 }
