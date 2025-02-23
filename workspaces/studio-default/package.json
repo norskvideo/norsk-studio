@@ -11,8 +11,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@norskvideo/norsk-sdk": "^1.0.401-2025-02-22-9426a203",
-    "@norskvideo/norsk-studio": "^1.26.0-2025-02-22-5d0ebeec",
+    "@norskvideo/norsk-sdk": "^1.0.401-2025-02-23-9426a203",
+    "@norskvideo/norsk-studio": "^1.26.0-2025-02-23-2b9154a5",
     "@norskvideo/norsk-studio-built-ins": "^1.0.0",
     "@norskvideo/norsk-studio-source-switcher": "^1.0.0",
     "openapi-types": "^12.1.3"
