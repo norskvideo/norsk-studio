@@ -1,0 +1,33 @@
+== Audio Encoder
+Explicit audio encode.
+
+=== Component Configuration
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| id | A unique identifier for the component instance | ✓
+| displayName | The name shown in the Studio UI of this component | ✓
+| renditionName | Name of this rendition of encoded audio |  ✓
+| channelLayout | Channel layout (default: &quot;stereo&quot;) |  𐄂
+| bitrate | Bitrate (bits per second) (default: 96000) |  𐄂
+| codec | Codec settings for AAC or Opus |  ✓
+| notes | Notes about this component |  𐄂
+|===
+
+
+==== Codec (AAC)
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| kind | &quot;aac&quot; |  ✓
+| sampleRate | Sample rate (Hz) (default: 48000) |  𐄂
+| profile | AAC profile (default: &quot;main&quot;) |  𐄂
+|===
+
+==== Codec (Opus)
+[cols="2,6,^1",options="header"]
+|===
+| Option | Description | Required
+| kind | &quot;opus&quot; |  ✓
+|===
+

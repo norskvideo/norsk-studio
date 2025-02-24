@@ -61,5 +61,7 @@ import processor_onscreenGraphic from "./processor.onscreenGraphic/info";
 AllComponents.push((r: Registration) => processor_onscreenGraphic(r) as unknown as NodeInfo<BaseConfig>);
 import processor_streamKeyOverride from "./processor.streamKeyOverride/info";
 AllComponents.push((r: Registration) => processor_streamKeyOverride(r) as unknown as NodeInfo<BaseConfig>);
+import processor_videoDecoder from "./processor.videoDecoder/info";
+AllComponents.push((r: Registration) => processor_videoDecoder(r) as unknown as NodeInfo<BaseConfig>);
 import util_stats_latency from "./util.stats.latency/info";
 AllComponents.push((r: Registration) => util_stats_latency(r) as unknown as NodeInfo<BaseConfig>);
