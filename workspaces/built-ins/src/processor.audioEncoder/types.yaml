@@ -1,0 +1,103 @@
+openapi: 3.0.0
+info:
+  title: Audio Encoder Component
+  version: 1.0.0
+
+components:
+  schemas:
+    channelLayout:
+      type: string
+      enum: 
+        - mono
+        - stereo
+        - surround
+        - "4.0"
+        - "5.0"
+        - "5.1"
+        - "7.1"
+        - "5.1.4"
+        - "7.1.4"
+      description: Audio channel configuration
+
+    sampleRate:
+      type: number
+      enum: 
+        - 8000
+        - 11025
+        - 12000
+        - 16000
+        - 22050
+        - 24000
+        - 32000
+        - 44100
+        - 48000
+        - 64000
+        - 88200
+        - 96000
+      description: Audio sample rate in Hz
+
+    aacProfile:
+      type: string
+      enum:
+        - main
+        - lc
+        - high
+      description: AAC encoding profile
+
+    aac:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: ['aac']
+        profile:
+          $ref: '#/components/schemas/aacProfile'
+        sampleRate:
+          $ref: '#/components/schemas/sampleRate'
+      required: ['kind', 'profile', 'sampleRate']
+
+    opus:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: ['opus']
+      required: ['kind']
+
+    codec:
+      oneOf:
+        - $ref: '#/components/schemas/aac'
+        - $ref: '#/components/schemas/opus'
+      discriminator:
+        propertyName: kind
+
+    audioEncoderConfig:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the component
+        displayName:
+          type: string
+          description: Human-readable name for the component
+        notes:
+          type: string
+          description: Optional notes about the component configuration
+        renditionName:
+          type: string
+          description: Name of this rendition of encoded audio
+        channelLayout:
+          $ref: '#/components/schemas/channelLayout'
+        bitrate:
+          type: number
+          minimum: 4000
+          description: Bitrate in bits per second
+        codec:
+          $ref: '#/components/schemas/codec'
+      required:
+        - id
+        - displayName
+        - renditionName
+        - channelLayout
+        - bitrate
+        - codec
