@@ -3,10 +3,7 @@ import { OnCreated, ServerComponentDefinition } from '@norskvideo/norsk-studio/l
 import { SimpleSinkWrapper } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { components } from './types';
 import path from 'path';
-import fs from 'fs/promises';
-import YAML from 'yaml';
-import { resolveRefs } from 'json-refs';
-import { OpenAPIV3 } from 'openapi-types';
+import { schemaFromTypes } from '../shared/schemas';
 
 export type TwitchOutputSettings = components['schemas']['twitchOutputSettings'];
 
@@ -21,12 +18,9 @@ export default class TwitchOutputDefinition implements ServerComponentDefinition
     cb(wrapper);
   }
 
-   async schemas() {
-        const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
-        const root = YAML.parse(types.toString());
-        const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
-        return {
-          config: resolved.components!.schemas!['twitchOutputSettings']
-        }
-      }
+  async schemas() {
+    return schemaFromTypes(path.join(__dirname, 'types.yaml'),
+      { config: 'twitchOutputSettings' }
+    )
+  }
 }

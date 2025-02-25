@@ -15,6 +15,7 @@ import { resolveRefs } from 'json-refs';
 import path from 'path';
 import YAML from 'yaml';
 import { paths, components } from './types';
+import { schemaFromTypes } from '../shared/schemas';
 
 export type AutoCmafAkamaiDestinaton = components['schemas']['AutoCmafAkamaiDestination'];
 export type AutoCmafS3Destination = components['schemas']['AutoCmafS3Destination'];
@@ -141,13 +142,9 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
   }
 
   async schemas(): Promise<ServerComponentSchemas> {
-    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
-    const root = YAML.parse(types.toString());
-    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
-    return {
-      config: resolved.components!.schemas!['AutoCmafConfig'] as OpenAPIV3.SchemaObject,
-      state: resolved.components!.schemas!['CmafOutputState'] as OpenAPIV3.SchemaObject
-    }
+    return schemaFromTypes(path.join(__dirname, 'types.yaml'),
+      { config: 'AutoCmafConfig', state: 'CmafOutputState' }
+    )
   }
 }
 
