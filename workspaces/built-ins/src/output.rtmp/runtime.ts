@@ -11,6 +11,7 @@ import path from 'path';
 import YAML from 'yaml';
 import { paths } from './types';
 import { post, Transmuted } from '../shared/api';
+import { BaseConfig } from '@norskvideo/norsk-studio/lib/extension/client-types';
 
 
 export type RtmpOutputSettings = {
@@ -41,7 +42,12 @@ export type RtmpOutputCommand = {
 
 export default class RtmpOutputDefinition implements ServerComponentDefinition<RtmpOutputSettings, RtmpOutput, RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent> {
   async create(norsk: Norsk, cfg: RtmpOutputSettings, cb: OnCreated<RtmpOutput>, runtime: StudioRuntime<RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>) {
-    const node = new RtmpOutput(norsk, runtime, cfg)
+    const node = new RtmpOutput(norsk, runtime, cfg, async () => ({
+      url: cfg.url,
+      bufferDelayMs: cfg.bufferDelayMs,
+      avDelayMs: cfg.avDelayMs,
+      retryConnectionTimeout: cfg.retryConnectionTimeout,
+    }))
     await node.initialised;
     cb(node);
   }
@@ -108,23 +114,27 @@ function assertUnreachable(_: never): never {
   throw new Error("Didn't expect to get here");
 }
 
-class RtmpOutput implements CreatedMediaNode {
+export class RtmpOutput implements CreatedMediaNode {
   initialised: Promise<void>;
   norsk: Norsk;
   runtime: StudioRuntime<RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>;
 
-  cfg: RtmpOutputSettings;
+  cfg: BaseConfig;
   rtmp?: RtmpOutputNode;
   enabled: boolean = true;
   control: ContextPromiseControl = new ContextPromiseControl(this.subscribeImpl.bind(this));
   relatedMediaNodes: RelatedMediaNodes = new RelatedMediaNodes();
   id: string;
+  fn: () => Promise<SdkSettings>;
 
   currentSources: Map<CreatedMediaNode, StudioNodeSubscriptionSource> = new Map();
 
-  constructor(norsk: Norsk, runtime: StudioRuntime<RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>, cfg: RtmpOutputSettings) {
+  constructor(norsk: Norsk, runtime: StudioRuntime<RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>,
+    cfg: BaseConfig,
+    fn: () => Promise<SdkSettings>) {
     this.id = cfg.id;
     this.cfg = cfg;
+    this.fn = fn;
     this.norsk = norsk;
     this.runtime = runtime;
     this.initialised = Promise.resolve();
@@ -183,12 +193,9 @@ class RtmpOutput implements CreatedMediaNode {
 
     if (subscriptions.length > 0) {
       if (!this.rtmp) {
+        const settings = await this.fn();
         const rtmpCfg: SdkSettings = {
           id: this.cfg.id,
-          url: this.cfg.url,
-          bufferDelayMs: this.cfg.bufferDelayMs,
-          avDelayMs: this.cfg.avDelayMs,
-          retryConnectionTimeout: this.cfg.retryConnectionTimeout,
           onPublishStart: () => {
             this.runtime.updates.clearAlert('connection-error');
             this.runtime.updates.raiseEvent({ type: "rtmp-server-connected-and-publishing" })
@@ -202,7 +209,8 @@ class RtmpOutput implements CreatedMediaNode {
               default:
                 assertUnreachable(reason)
             }
-          }
+          },
+          ...settings
         }
         this.rtmp = await this.norsk.output.rtmp(rtmpCfg);
       }

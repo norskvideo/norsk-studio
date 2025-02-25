@@ -1,7 +1,7 @@
 import type { TwitchOutputSettings } from "./runtime";
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 
-export default function ({
+export default function({
   defineComponent,
   All,
   validation: { Z },
@@ -13,7 +13,7 @@ export default function ({
     description: "Stream directly to Twitch using RTMP",
     subscription: {
       accepts: {
-        type: 'multi-stream',
+        type: 'single-stream',
         media: All
       },
     },

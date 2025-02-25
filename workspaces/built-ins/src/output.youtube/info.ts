@@ -13,7 +13,7 @@ export default function({
     description: "Stream directly to YouTube Live using RTMP",
     subscription: {
       accepts: {
-        type: 'multi-stream',
+        type: 'single-stream',
         media: All
       },
     },
@@ -23,19 +23,19 @@ export default function({
     },
     configForm: {
       form: {
-        streamKey: { 
-          help: "YouTube Stream Key", 
-          hint: { 
-            type: 'text', 
+        streamKey: {
+          help: "YouTube Stream Key",
+          hint: {
+            type: 'text',
             validation: Z.string().min(1),
           }
         },
-        notes: { 
-          help: "Additional notes about this component", 
-          hint: { 
-            type: 'text', 
-            optional: true 
-          } 
+        notes: {
+          help: "Additional notes about this component",
+          hint: {
+            type: 'text',
+            optional: true
+          }
         },
       }
     }

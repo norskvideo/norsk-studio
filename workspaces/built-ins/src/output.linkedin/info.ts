@@ -13,7 +13,7 @@ export default function({
     description: "Stream directly to LinkedIn Live using RTMP",
     subscription: {
       accepts: {
-        type: 'multi-stream',
+        type: 'single-stream',
         media: All
       },
     },
