@@ -1,6 +1,7 @@
-import { RtmpOutputSettings, RtmpOutputState } from "./runtime";
+import type { BaseConfig } from "@norskvideo/norsk-studio/lib/extension/client-types";
+import type { RtmpOutputState } from "./runtime";
 
-function InlineView({ state, config }: { state: RtmpOutputState, config: RtmpOutputSettings }) {
+function InlineView({ state, config }: { state: RtmpOutputState, config: BaseConfig }) {
   if (!state.enabled) {
     return <div className="disabled text-gray-500 dark:text-gray-400">Output disabled</div>
   }

@@ -1,14 +1,14 @@
 import type {
-  RtmpOutputSettings,
   RtmpOutputCommand,
   RtmpOutputState,
 } from "./runtime";
-import { ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
+
+import type { BaseConfig, ViewProps } from "@norskvideo/norsk-studio/lib/extension/client-types";
 
 function SummaryView({
   state,
   sendCommand,
-}: ViewProps<RtmpOutputSettings, RtmpOutputState, RtmpOutputCommand>) {
+}: ViewProps<BaseConfig, RtmpOutputState, RtmpOutputCommand>) {
 
   const handleEnableOutput = (): void => {
     void enableOutput();
@@ -35,9 +35,8 @@ function SummaryView({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
           <span
-            className={`inline-block w-2 h-2 rounded-full ${
-              state.enabled ? "bg-blue-500" : "bg-red-500"
-            }`}
+            className={`inline-block w-2 h-2 rounded-full ${state.enabled ? "bg-blue-500" : "bg-red-500"
+              }`}
           ></span>
           <span className="text-sm">
             Status: {state.enabled ? "Enabled" : "Disabled"}

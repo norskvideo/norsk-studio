@@ -1,26 +1,13 @@
+import { defineRtmpOutputComponent } from "../output.rtmp/info";
 import type { TwitchOutputSettings } from "./runtime";
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 
-export default function({
-  defineComponent,
-  All,
-  validation: { Z },
-}: Registration) {
-  return defineComponent<TwitchOutputSettings>({
+export default function(r: Registration) {
+  const { validation: { Z } } = r;
+  return defineRtmpOutputComponent<TwitchOutputSettings>(r, {
     identifier: 'output.twitch',
-    category: 'output',
     name: "Twitch Live",
     description: "Stream directly to Twitch using RTMP",
-    subscription: {
-      accepts: {
-        type: 'single-stream',
-        media: All
-      },
-    },
-    display: (_desc) => {
-      return {
-      }
-    },
     configForm: {
       form: {
         streamKey: {

@@ -1,26 +1,13 @@
+import { defineRtmpOutputComponent } from "../output.rtmp/info";
 import type { YoutubeOutputSettings } from "./runtime";
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 
-export default function({
-  defineComponent,
-  All,
-  validation: { Z },
-}: Registration) {
-  return defineComponent<YoutubeOutputSettings>({
+export default function(r: Registration) {
+  const { validation: { Z } } = r;
+  return defineRtmpOutputComponent<YoutubeOutputSettings>(r, {
     identifier: 'output.youtube',
-    category: 'output',
     name: "YouTube Live",
     description: "Stream directly to YouTube Live using RTMP",
-    subscription: {
-      accepts: {
-        type: 'single-stream',
-        media: All
-      },
-    },
-    display: () => {
-      return {
-      }
-    },
     configForm: {
       form: {
         streamKey: {

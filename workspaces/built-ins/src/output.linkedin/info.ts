@@ -1,26 +1,13 @@
+import { defineRtmpOutputComponent } from "../output.rtmp/info";
 import type { LinkedInOutputSettings } from "./runtime";
 import type Registration from "@norskvideo/norsk-studio/lib/extension/registration";
 
-export default function({
-  defineComponent,
-  All,
-  validation: { Z },
-}: Registration) {
-  return defineComponent<LinkedInOutputSettings>({
+export default function(r: Registration) {
+  const { validation: { Z } } = r;
+  return defineRtmpOutputComponent<LinkedInOutputSettings>(r, {
     identifier: 'output.LinkedIn',
-    category: 'output',
     name: "LinkedIn Live",
     description: "Stream directly to LinkedIn Live using RTMP",
-    subscription: {
-      accepts: {
-        type: 'single-stream',
-        media: All
-      },
-    },
-    display: () => {
-      return {
-      }
-    },
     configForm: {
       form: {
         streamUrl: {

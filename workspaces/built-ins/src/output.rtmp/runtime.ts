@@ -13,7 +13,6 @@ import { paths } from './types';
 import { post, Transmuted } from '../shared/api';
 import { BaseConfig } from '@norskvideo/norsk-studio/lib/extension/client-types';
 
-
 export type RtmpOutputSettings = {
   id: string;
   displayName: string,
@@ -40,14 +39,12 @@ export type RtmpOutputCommand = {
   type: "enable-output" | "disable-output"
 }
 
-export default class RtmpOutputDefinition implements ServerComponentDefinition<RtmpOutputSettings, RtmpOutput, RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent> {
-  async create(norsk: Norsk, cfg: RtmpOutputSettings, cb: OnCreated<RtmpOutput>, runtime: StudioRuntime<RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>) {
-    const node = new RtmpOutput(norsk, runtime, cfg, async () => ({
-      url: cfg.url,
-      bufferDelayMs: cfg.bufferDelayMs,
-      avDelayMs: cfg.avDelayMs,
-      retryConnectionTimeout: cfg.retryConnectionTimeout,
-    }))
+
+export abstract class BaseRtmpOutputDefinition<Settings extends BaseConfig> implements ServerComponentDefinition<Settings, RtmpOutput, RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent> {
+  abstract getConfig(input: Settings): Promise<SdkSettings>;
+
+  async create(norsk: Norsk, cfg: Settings, cb: OnCreated<RtmpOutput>, runtime: StudioRuntime<RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>) {
+    const node = new RtmpOutput(norsk, runtime, cfg, async () => this.getConfig(cfg))
     await node.initialised;
     cb(node);
   }
@@ -63,7 +60,7 @@ export default class RtmpOutputDefinition implements ServerComponentDefinition<R
     }
   }
 
-  async instanceRoutes(): Promise<InstanceRouteInfo<RtmpOutputSettings, RtmpOutput, RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>[]> {
+  async instanceRoutes(): Promise<InstanceRouteInfo<Settings, RtmpOutput, RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>[]> {
     const types = await fs.readFile(path.join(__dirname, 'types.yaml'));
     const root = YAML.parse(types.toString());
     const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
@@ -112,6 +109,17 @@ export default class RtmpOutputDefinition implements ServerComponentDefinition<R
 
 function assertUnreachable(_: never): never {
   throw new Error("Didn't expect to get here");
+}
+
+export default class RtmpOutputDefinition extends BaseRtmpOutputDefinition<RtmpOutputSettings> {
+  async getConfig(cfg: RtmpOutputSettings) {
+    return {
+      url: cfg.url,
+      bufferDelayMs: cfg.bufferDelayMs,
+      avDelayMs: cfg.avDelayMs,
+      retryConnectionTimeout: cfg.retryConnectionTimeout,
+    }
+  }
 }
 
 export class RtmpOutput implements CreatedMediaNode {
