@@ -1,7 +1,7 @@
 import { AdMarker, AutoProcessorMediaNode, CmafAudioOutputNode, CmafDestinationSettings, CmafMultiVariantOutputNode, CmafVideoOutputNode, HlsTsAudioOutputNode, HlsTsMultiVariantOutputNode, HlsTsVideoOutputNode, Norsk, Scte35InsertCommand, SourceMediaNode, StreamKey, StreamMetadata, selectExactKey, selectPlaylist, streamKeysAreEqual } from '@norskvideo/norsk-sdk';
 
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
-import { CreatedMediaNode, InstanceRouteInfo, OnCreated, ServerComponentDefinition, ServerComponentSchemas, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, InstanceRouteArgs, InstanceRouteInfo, OnCreated, ServerComponentDefinition, ServerComponentSchemas, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { debuglog, infolog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { CryptoDetails } from '../shared/drm/cpix';
@@ -9,13 +9,10 @@ import { ezdrmInit } from '../shared/drm/ezdrm';
 import { axinomInit } from '../shared/drm/axinom';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 
-import { OpenAPIV3 } from 'openapi-types';
-import fs from 'fs/promises';
-import { resolveRefs } from 'json-refs';
 import path from 'path';
-import YAML from 'yaml';
 import { paths, components } from './types';
 import { schemaFromTypes } from '../shared/schemas';
+import { defineApi } from '@norskvideo/norsk-studio/lib/server/api';
 
 export type AutoCmafAkamaiDestinaton = components['schemas']['AutoCmafAkamaiDestination'];
 export type AutoCmafS3Destination = components['schemas']['AutoCmafS3Destination'];
@@ -36,27 +33,6 @@ export type CmafOutputEvent = {
 export type CmafOutputCommand = {
   type: 'enable-output' | 'disable-output',
 }
-
-type Transmuted<T> = {
-  [Key in keyof T]: OpenAPIV3.PathItemObject;
-};
-function coreInfo<T>(path: keyof T, op: OpenAPIV3.OperationObject) {
-  return {
-    url: path,
-    summary: op.summary,
-    description: op.description,
-    requestBody: op.requestBody,
-    responses: op.responses,
-  }
-}
-
-function post<T>(path: keyof T, paths: Transmuted<T>) {
-  return {
-    ...coreInfo(path, paths[path]['post']!),
-    method: 'POST' as const,
-  }
-}
-
 
 export default class AutoCmafDefinition implements ServerComponentDefinition<AutoCmafConfig, AutoCmaf, CmafOutputState, CmafOutputCommand, CmafOutputEvent> {
   async create(norsk: Norsk, cfg: AutoCmafConfig, cb: OnCreated<AutoCmaf>, runtime: StudioRuntime<CmafOutputState, CmafOutputCommand, CmafOutputEvent>) {
@@ -82,11 +58,6 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
   }
 
   async instanceRoutes(): Promise<InstanceRouteInfo<AutoCmafConfig, AutoCmaf, CmafOutputState, CmafOutputCommand, CmafOutputEvent>[]> {
-    const types = await fs.readFile(path.join(__dirname, 'types.yaml'));
-    const root = YAML.parse(types.toString());
-    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
-    const paths = resolved.paths as Transmuted<paths>;
-
     // This probably needs moving to shared, and having a timeout adding to it
     function waitFor(condition: () => boolean, finish: () => void) {
       if (condition()) {
@@ -97,48 +68,48 @@ export default class AutoCmafDefinition implements ServerComponentDefinition<Aut
       }, 10)
     }
 
-    return [
+    return defineApi<paths, InstanceRouteArgs<AutoCmafConfig, AutoCmaf, CmafOutputState, CmafOutputCommand, CmafOutputEvent>>(
+      path.join(__dirname, 'types.yaml'),
       {
-        ...post<paths>('/enable', paths),
-        handler: ({ runtime }) => async (_req, res) => {
-          try {
-            const state = runtime.updates.latest();
-            if (state.enabled) {
-              return res.status(400).json({ error: 'Output is already enabled' });
+        '/enable': {
+          post: ({ runtime }) => async (_req, res) => {
+            try {
+              const state = runtime.updates.latest();
+              if (state.enabled) {
+                return res.status(400).json({ error: 'Output is already enabled' });
+              }
+              runtime.updates.sendCommand({
+                type: 'enable-output'
+              });
+              waitFor(() => runtime.updates.latest().enabled, () => {
+                res.sendStatus(204);
+              })
+            } catch (error) {
+              console.error('Error in enable handler:', error);
+              res.status(500).json({ error: 'Failed to enable output' });
             }
-            runtime.updates.sendCommand({
-              type: 'enable-output'
-            });
-            waitFor(() => runtime.updates.latest().enabled, () => {
-              res.sendStatus(204);
-            })
-          } catch (error) {
-            console.error('Error in enable handler:', error);
-            res.status(500).json({ error: 'Failed to enable output' });
+          }
+        },
+        '/disable': {
+          post: ({ runtime }) => async (_req, res) => {
+            try {
+              const state = runtime.updates.latest();
+              if (!state.enabled) {
+                return res.status(400).json({ error: 'Output is already disabled' });
+              }
+              runtime.updates.sendCommand({
+                type: 'disable-output'
+              });
+              waitFor(() => !runtime.updates.latest().enabled, () => {
+                res.sendStatus(204);
+              })
+            } catch (error) {
+              console.error('Error in disable handler:', error);
+              res.status(500).json({ error: 'Failed to disable output' });
+            }
           }
         }
-      },
-      {
-        ...post<paths>('/disable', paths),
-        handler: ({ runtime }) => async (_req, res) => {
-          try {
-            const state = runtime.updates.latest();
-            if (!state.enabled) {
-              return res.status(400).json({ error: 'Output is already disabled' });
-            }
-            runtime.updates.sendCommand({
-              type: 'disable-output'
-            });
-            waitFor(() => !runtime.updates.latest().enabled, () => {
-              res.sendStatus(204);
-            })
-          } catch (error) {
-            console.error('Error in disable handler:', error);
-            res.status(500).json({ error: 'Failed to disable output' });
-          }
-        }
-      }
-    ];
+      })
   }
 
   async schemas(): Promise<ServerComponentSchemas> {

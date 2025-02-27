@@ -1,16 +1,13 @@
 import { Norsk, ReceiveFromAddressAuto, WhepOutputSettings as SdkSettings, WhepOutputNode } from '@norskvideo/norsk-sdk';
-import { CreatedMediaNode, InstanceRouteInfo, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, InstanceRouteArgs, OnCreated, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { CustomSinkNode, SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { IceServer } from '@norskvideo/norsk-studio/lib/shared/config';
 import { webRtcSettings } from '../shared/webrtcSettings';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
-import { resolveRefs } from 'json-refs';
-import { OpenAPIV3 } from 'openapi-types';
-import fs from 'fs/promises';
 import path from 'path';
-import YAML from 'yaml';
 import { paths } from './types';
+import { defineApi } from '@norskvideo/norsk-studio/lib/server/api';
 
 export type WhepOutputSettings = {
   id: string;
@@ -68,7 +65,7 @@ export class WhepOutput extends CustomSinkNode {
     sources.forEach((s) => {
       this.currentSources.set(s.source, s);
     });
-    
+
     this.context.setSources(sources);
   }
 
@@ -130,7 +127,7 @@ export class WhepOutput extends CustomSinkNode {
   async disableOutput() {
     if (this.enabled) {
       this.enabled = false;
-      
+
       if (this.whep) {
         await this.whep.close();
         this.whep = undefined;
@@ -139,26 +136,6 @@ export class WhepOutput extends CustomSinkNode {
       this.runtime.updates.raiseEvent({ type: 'output-disabled' });
       debuglog("Output disabled", { id: this.id });
     }
-  }
-}
-
-type Transmuted<T> = {
-  [Key in keyof T]: OpenAPIV3.PathItemObject;
-};
-function coreInfo<T>(path: keyof T, op: OpenAPIV3.OperationObject) {
-  return {
-    url: path,
-    summary: op.summary,
-    description: op.description,
-    requestBody: op.requestBody,
-    responses: op.responses,
-  }
-}
-
-function post<T>(path: keyof T, paths: Transmuted<T>) {
-  return {
-    ...coreInfo(path, paths[path]['post']!),
-    method: 'POST' as const,
   }
 }
 
@@ -181,49 +158,45 @@ export default class WhepOutputDefinition implements ServerComponentDefinition<W
     }
   }
 
-  async instanceRoutes(): Promise<InstanceRouteInfo<WhepOutputSettings, WhepOutput, WhepOutputState, WhepOutputCommand, WhepOutputEvent>[]> {
-    const types = await fs.readFile(path.join(__dirname, 'types.yaml'));
-    const root = YAML.parse(types.toString());
-    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
-    const paths = resolved.paths as Transmuted<paths>;
+  async instanceRoutes() {
+    return defineApi<paths, InstanceRouteArgs<WhepOutputSettings, WhepOutput, WhepOutputState, WhepOutputCommand, WhepOutputEvent>>(
+      path.join(__dirname, 'types.yaml'),
+      {
+        '/enable': {
+          post: ({ runtime }) => async (_req, res) => {
+            try {
+              const state = runtime.updates.latest();
+              if (state.enabled) {
+                return res.status(400).json({ error: 'Output is already enabled' });
+              }
+              runtime.updates.sendCommand({
+                type: 'enable-output'
+              });
+              res.sendStatus(204);
+            } catch (error) {
+              console.error('Error in enable handler:', error);
+              res.status(500).json({ error: 'Failed to enable output' });
+            }
+          }
 
-    return [
-      {
-        ...post<paths>('/enable', paths),
-        handler: ({ runtime }) => async (_req, res) => {
-          try {
-            const state = runtime.updates.latest();
-            if (state.enabled) {
-              return res.status(400).json({ error: 'Output is already enabled' });
+        },
+        '/disable': {
+          post: ({ runtime }) => async (_req, res) => {
+            try {
+              const state = runtime.updates.latest();
+              if (!state.enabled) {
+                return res.status(400).json({ error: 'Output is already disabled' });
+              }
+              runtime.updates.sendCommand({
+                type: 'disable-output'
+              });
+              res.sendStatus(204);
+            } catch (error) {
+              console.error('Error in disable handler:', error);
+              res.status(500).json({ error: 'Failed to disable output' });
             }
-            runtime.updates.sendCommand({
-              type: 'enable-output'
-            });
-            res.sendStatus(204);
-          } catch (error) {
-            console.error('Error in enable handler:', error);
-            res.status(500).json({ error: 'Failed to enable output' });
           }
         }
-      },
-      {
-        ...post<paths>('/disable', paths),
-        handler: ({ runtime }) => async (_req, res) => {
-          try {
-            const state = runtime.updates.latest();
-            if (!state.enabled) {
-              return res.status(400).json({ error: 'Output is already disabled' });
-            }
-            runtime.updates.sendCommand({
-              type: 'disable-output'
-            });
-            res.sendStatus(204);
-          } catch (error) {
-            console.error('Error in disable handler:', error);
-            res.status(500).json({ error: 'Failed to disable output' });
-          }
-        }
-      }
-    ];
+      });
   }
 }

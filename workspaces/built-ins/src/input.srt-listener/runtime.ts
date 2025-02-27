@@ -1,14 +1,11 @@
 import { Norsk, SrtInputSettings as SdkSettings, SrtInputNode } from '@norskvideo/norsk-sdk';
 import { SocketOptions } from '../shared/srt-types';
-import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, InstanceRouteArgs, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog, errorlog, infolog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
-import { OpenAPIV3 } from 'openapi-types';
-import fs from 'fs/promises';
-import { resolveRefs } from 'json-refs';
 import path from 'path';
-import YAML from 'yaml';
 import { paths } from './types';
+import { defineApi } from '@norskvideo/norsk-studio/lib/server/api';
 
 export type SrtInputSettings = Pick<SdkSettings
   , 'port'
@@ -189,26 +186,6 @@ export class SrtInput implements CreatedMediaNode {
   }
 }
 
-type Transmuted<T> = {
-  [Key in keyof T]: OpenAPIV3.PathItemObject;
-};
-function coreInfo<T>(path: keyof T, op: OpenAPIV3.OperationObject) {
-  return {
-    url: path,
-    summary: op.summary,
-    description: op.description,
-    requestBody: op.requestBody,
-    responses: op.responses,
-  }
-}
-
-function post<T>(path: keyof T, paths: Transmuted<T>) {
-  return {
-    ...coreInfo(path, paths[path]['post']!),
-    method: 'POST' as const,
-  }
-}
-
 export default class SrtInputDefinition implements ServerComponentDefinition<SrtInputSettings, SrtInput, SrtInputState, SrtInputCommand> {
   async create(norsk: Norsk, cfg: SrtInputSettings, cb: OnCreated<SrtInput>, runtime: StudioRuntime<SrtInputState, SrtInputCommand, SrtInputEvent>) {
     const node = await SrtInput.create(norsk, cfg, runtime.updates);
@@ -232,78 +209,73 @@ export default class SrtInputDefinition implements ServerComponentDefinition<Srt
     }
   }
 
-  async instanceRoutes(): Promise<InstanceRouteInfo<SrtInputSettings, SrtInput, SrtInputState, SrtInputCommand>[]> {
-    const types = await fs.readFile(path.join(__dirname, 'types.yaml'));
-    const root = YAML.parse(types.toString());
-    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
-    const paths = resolved.paths as Transmuted<paths>;
-
-    return [
+  async instanceRoutes() {
+    return defineApi<paths, InstanceRouteArgs<SrtInputSettings, SrtInput, SrtInputState, SrtInputCommand>>(
+      path.join(__dirname, 'types.yaml'),
       {
-        ...post<paths>('/disconnect', paths),
-        handler: ({ runtime }) => async (req, res) => {
-          try {
-            const { streamId } = req.body;
-            if (!streamId) {
-              return res.status(400).json({ error: 'Stream name is required' });
-            }
 
-            const state = runtime.updates.latest();
-            infolog("Current state during disconnect:", state);
+        '/disconnect': {
+          post: ({ runtime }) => async (req, res) => {
+            try {
+              const { streamId } = req.body;
+              if (!streamId) {
+                return res.status(400).json({ error: 'Stream name is required' });
+              }
 
-            if (!state.connectedStreams.includes(streamId)) {
-              return res.status(404).json({ error: 'Stream not found or not connected' });
+              const state = runtime.updates.latest();
+              infolog("Current state during disconnect:", state);
+
+              if (!state.connectedStreams.includes(streamId)) {
+                return res.status(404).json({ error: 'Stream not found or not connected' });
+              }
+              runtime.updates.sendCommand({
+                type: 'reset-source',
+                streamId
+              })
+              res.status(204).send();
+            } catch (error) {
+              errorlog('Error in disconnect handler:', error);
+              res.status(500).json({ error: 'Failed to disconnect stream' });
             }
-            runtime.updates.sendCommand({
-              type: 'reset-source',
-              streamId
-            })
-            res.status(204).send();
-          } catch (error) {
-            errorlog('Error in disconnect handler:', error);
-            res.status(500).json({ error: 'Failed to disconnect stream' });
+          }
+        },
+        '/enable': {
+          post: ({ runtime }) => async (req, res) => {
+            try {
+              const { streamId } = req.body;
+              if (!streamId) {
+                return res.status(400).json({ error: 'Stream name is required' });
+              }
+
+              runtime.updates.sendCommand({
+                type: 'enable-source',
+                streamId
+              })
+              res.status(204).send();
+            } catch (error) {
+              console.error('Error in disconnect handler:', error);
+              res.status(500).json({ error: 'Failed to disconnect stream' });
+            }
+          }
+        },
+        '/disable': {
+          post: ({ runtime }) => async (req, res) => {
+            try {
+              const { streamId } = req.body;
+              if (!streamId) {
+                return res.status(400).json({ error: 'Stream name is required' });
+              }
+              runtime.updates.sendCommand({
+                type: 'disable-source',
+                streamId
+              })
+              res.status(204).send();
+            } catch (error) {
+              console.error('Error in disconnect handler:', error);
+              res.status(500).json({ error: 'Failed to disconnect stream' });
+            }
           }
         }
-      },
-      {
-        ...post<paths>('/enable', paths),
-        handler: ({ runtime }) => async (req, res) => {
-          try {
-            const { streamId } = req.body;
-            if (!streamId) {
-              return res.status(400).json({ error: 'Stream name is required' });
-            }
-
-            runtime.updates.sendCommand({
-              type: 'enable-source',
-              streamId
-            })
-            res.status(204).send();
-          } catch (error) {
-            console.error('Error in disconnect handler:', error);
-            res.status(500).json({ error: 'Failed to disconnect stream' });
-          }
-        }
-      },
-      {
-        ...post<paths>('/disable', paths),
-        handler: ({ runtime }) => async (req, res) => {
-          try {
-            const { streamId } = req.body;
-            if (!streamId) {
-              return res.status(400).json({ error: 'Stream name is required' });
-            }
-            runtime.updates.sendCommand({
-              type: 'disable-source',
-              streamId
-            })
-            res.status(204).send();
-          } catch (error) {
-            console.error('Error in disconnect handler:', error);
-            res.status(500).json({ error: 'Failed to disconnect stream' });
-          }
-        }
-      }
-    ];
+      });
   }
 }

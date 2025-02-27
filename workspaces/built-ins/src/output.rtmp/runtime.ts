@@ -1,17 +1,13 @@
 import { Norsk, ReceiveFromAddressAuto, RtmpConnectionFailureReason, RtmpOutputNode, RtmpOutputSettings as SdkSettings } from '@norskvideo/norsk-sdk';
 
-import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, InstanceRouteArgs, InstanceRouteInfo, OnCreated, RelatedMediaNodes, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { SubscriptionOpts } from '@norskvideo/norsk-studio/lib/extension/base-nodes';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
-import { resolveRefs } from 'json-refs';
-import { OpenAPIV3 } from 'openapi-types';
-import fs from 'fs/promises';
 import path from 'path';
-import YAML from 'yaml';
 import { paths } from './types';
-import { post, Transmuted } from '../shared/api';
 import { BaseConfig } from '@norskvideo/norsk-studio/lib/extension/client-types';
+import { defineApi } from '@norskvideo/norsk-studio/lib/server/api';
 
 export type RtmpOutputSettings = {
   id: string;
@@ -61,15 +57,9 @@ export abstract class BaseRtmpOutputDefinition<Settings extends BaseConfig> impl
   }
 
   async instanceRoutes(): Promise<InstanceRouteInfo<Settings, RtmpOutput, RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>[]> {
-    const types = await fs.readFile(path.join(__dirname, 'types.yaml'));
-    const root = YAML.parse(types.toString());
-    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
-    const paths = resolved.paths as Transmuted<paths>;
-
-    return [
-      {
-        ...post<paths>('/enable', paths),
-        handler: ({ runtime }) => async (_req, res) => {
+    return defineApi<paths, InstanceRouteArgs<Settings, RtmpOutput, RtmpOutputState, RtmpOutputCommand, RtmpOutputEvent>>(path.join(__dirname, 'types.yaml'), {
+      "/enable": {
+        post: ({ runtime }) => (_req, res) => {
           try {
             const state = runtime.updates.latest();
             if (state.enabled) {
@@ -85,9 +75,8 @@ export abstract class BaseRtmpOutputDefinition<Settings extends BaseConfig> impl
           }
         }
       },
-      {
-        ...post<paths>('/disable', paths),
-        handler: ({ runtime }) => async (_req, res) => {
+      "/disable": {
+        post: ({ runtime }) => async (_req, res) => {
           try {
             const state = runtime.updates.latest();
             if (!state.enabled) {
@@ -103,7 +92,7 @@ export abstract class BaseRtmpOutputDefinition<Settings extends BaseConfig> impl
           }
         }
       }
-    ];
+    });
   }
 }
 

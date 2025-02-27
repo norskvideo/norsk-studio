@@ -1,17 +1,13 @@
 import { BrowserInputNode, ComposePart, Norsk, VideoComposeDefaults, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
 
-import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, InstanceRouteArgs, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { ContextPromiseControl } from '@norskvideo/norsk-studio/lib/runtime/util';
 import { paths } from './types';
-import fs from 'fs/promises';
 import path from 'path';
-import { resolveRefs } from 'json-refs';
-import YAML from 'yaml';
-import { OpenAPIV3 } from 'openapi-types';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
-import { get, post, Transmuted } from '../shared/api';
+import { defineApi } from '@norskvideo/norsk-studio/lib/server/api';
 
 export type BrowserOverlayConfig = {
   __global: {
@@ -88,60 +84,52 @@ export default class BrowserOverlayDefinition implements ServerComponentDefiniti
     }
   }
 
-  async instanceRoutes(): Promise<InstanceRouteInfo<BrowserOverlayConfig, BrowserOverlay, BrowserOverlayState, BrowserOverlayCommand, BrowserOverlayEvent>[]> {
-    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
-    const root = YAML.parse(types.toString());
-    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
-
-    const paths = resolved.paths as Transmuted<paths>;
-
-    return [
+  async instanceRoutes() {
+    return defineApi<paths, InstanceRouteArgs<BrowserOverlayConfig, BrowserOverlay, BrowserOverlayState, BrowserOverlayCommand, BrowserOverlayEvent>>(
+      path.join(__dirname, 'types.yaml'),
       {
-        ...get('/url', paths),
-        handler: ({ runtime }) => (async (_req, res) => {
-          res.send(runtime.updates.latest().currentUrl);
-        })
-      },
-      {
-        ...post('/url', paths),
-        handler: ({ runtime }) => (async (req, res) => {
-          runtime.updates.sendCommand({ type: "change-url", url: req.body.url });
-          res.status(204).send();
-        })
-      },
-      {
-        ...get('/status', paths),
-        handler: ({ runtime }) => (async (_req, res) => {
-          res.json({ enabled: runtime.updates.latest().enabled })
-        })
-      },
-      {
-        ...post('/enable', paths),
-        handler: ({ runtime }) => (async (_req, res) => {
-          const latest = runtime.updates.latest();
-          if (latest.enabled) {
-            res.status(309).json({ error: "Browser overlay already enabled" });
-          }
-          else {
-            runtime.updates.sendCommand({ type: "enable" });
+        '/url': {
+          get: ({ runtime }) => (async (_req, res) => {
+            res.send(runtime.updates.latest().currentUrl);
+          }),
+          post: ({ runtime }) => (async (req, res) => {
+            runtime.updates.sendCommand({ type: "change-url", url: req.body.url });
             res.status(204).send();
-          }
-        })
-      },
-      {
-        ...post('/disable', paths),
-        handler: ({ runtime }) => (async (_req, res) => {
-          const latest = runtime.updates.latest();
-          if (!latest.enabled) {
-            res.status(309).json({ error: "Browser overlay already disabled" });
-          }
-          else {
-            runtime.updates.sendCommand({ type: "disable" });
-            res.status(204).send();
-          }
-        })
-      },
-    ]
+          })
+        },
+        '/status': {
+          get: ({ runtime }) => (async (_req, res) => {
+            res.json({ enabled: runtime.updates.latest().enabled })
+          })
+        },
+        '/enable': {
+          post: ({ runtime }) => (async (_req, res) => {
+            const latest = runtime.updates.latest();
+            if (latest.enabled) {
+              res.status(309).json({ error: "Browser overlay already enabled" });
+            }
+            else {
+              runtime.updates.sendCommand({ type: "enable" });
+              res.status(204).send();
+            }
+          })
+
+        },
+        '/disable': {
+          post: ({ runtime }) => (async (_req, res) => {
+            const latest = runtime.updates.latest();
+            if (!latest.enabled) {
+              res.status(309).json({ error: "Browser overlay already disabled" });
+            }
+            else {
+              runtime.updates.sendCommand({ type: "disable" });
+              res.status(204).send();
+            }
+          })
+
+        }
+      }
+    );
   }
 }
 

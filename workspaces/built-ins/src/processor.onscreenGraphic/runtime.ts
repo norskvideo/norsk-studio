@@ -1,5 +1,5 @@
 import { ComposePart, FileImageInputNode, Norsk, SourceMediaNode, VideoComposeDefaults, VideoComposeNode, VideoStreamMetadata, videoToPin } from '@norskvideo/norsk-sdk';
-import { CreatedMediaNode, InstanceRouteInfo, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StaticRouteInfo, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
+import { CreatedMediaNode, InstanceRouteArgs, InstanceRouteInfo, OnCreated, RelatedMediaNodes, RuntimeUpdates, ServerComponentDefinition, StaticRouteInfo, StudioNodeSubscriptionSource, StudioRuntime } from '@norskvideo/norsk-studio/lib/extension/runtime-types';
 import { debuglog, warninglog } from '@norskvideo/norsk-studio/lib/server/logging';
 import { HardwareAccelerationType, contractHardwareAcceleration } from '@norskvideo/norsk-studio/lib/shared/config';
 import { assertUnreachable } from '@norskvideo/norsk-studio/lib/shared/util';
@@ -10,11 +10,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import multer from 'multer';
 import { components, paths } from './types';
-
-import { resolveRefs } from 'json-refs';
-import YAML from 'yaml';
-import { OpenAPIV3 } from 'openapi-types';
-import { delete_, get, post, Transmuted } from '../shared/api';
+import { defineApi } from '@norskvideo/norsk-studio/lib/server/api';
 
 export type OnscreenGraphicPosition = CoordinatePosition | PercentagePosition | NamedPosition;
 export type CoordinatePosition = components['schemas']['coordinatePosition'];
@@ -155,7 +151,7 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
       }
     });
 
-    const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const fileFilter = (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
       void checkFileExists(file, cb);
     };
 
@@ -173,23 +169,15 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
     };
 
     const upload = multer({ storage, fileFilter });
-    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
-    const root = YAML.parse(types.toString());
-    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
 
-    const paths = resolved.paths as Transmuted<paths>;
 
-    return [
-      {
-        ...get<paths>('/graphics', paths),
-        handler: (_) => (async (_req: Request, res: Response) => {
+    return defineApi<paths, void>(path.join(__dirname, 'types.yaml'), {
+      '/graphics': {
+        get: (_) => (async (_req: Request, res: Response) => {
           const images = await getGraphics();
           res.json(images);
-        })
-      },
-      {
-        ...post<paths>('/graphics', paths),
-        handler: () => async (req, res) => {
+        }),
+        post: () => async (req, res) => {
           const uploader = upload.single('file');
           uploader(req, res, (err) => {
             if (err) {
@@ -201,11 +189,10 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
             }
             res.status(204).send();
           });
-        },
+        }
       },
-      {
-        ...delete_<paths>('/graphic', paths),
-        handler: () => (async (req, res) => {
+      "/graphic": {
+        delete: () => async (req, res) => {
           const filename = req.body.filename;
           const filePath = path.join(graphicsDir(), filename);
           try {
@@ -220,95 +207,85 @@ export default class OnscreenGraphicDefinition implements ServerComponentDefinit
               res.status(500).json({ error: 'Failed to delete graphic' });
             }
           }
-        }),
+        }
       }
-    ]
+    })
   }
 
   async instanceRoutes(): Promise<InstanceRouteInfo<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>[]> {
-    const types = await fs.readFile(path.join(__dirname, 'types.yaml'))
-    const root = YAML.parse(types.toString());
-    const resolved = await resolveRefs(root, {}).then((r) => r.resolved as OpenAPIV3.Document);
-    const paths = resolved.paths as Transmuted<paths>;
-
-    return [
+    return defineApi<paths, InstanceRouteArgs<OnscreenGraphicConfig, OnscreenGraphic, OnscreenGraphicState, OnscreenGraphicCommand, OnscreenGraphicEvent>>(
+      path.join(__dirname, 'types.yaml'),
       {
-        ...get<paths>('/active-graphic', paths),
-        handler: ({ runtime }) => ((_req: Request, res: Response) => {
-          const latest = runtime.updates.latest();
-          if (latest.activeGraphic?.file && latest.activeGraphic?.position) {
-            res.json({
-              graphic: latest.activeGraphic.file,
-              position: latest.activeGraphic.position
-            });
-          }
-          else {
-            res.status(204).send();
-          }
-        }),
-      },
-      {
-        ...post<paths>('/active-graphic', paths),
-        handler: ({ runtime }) => (async (req, res) => {
-          if ((req.body.graphic || req.body.position)) {
-            if (req.body.position) {
-              const position = req.body.position;
+        '/active-graphic': {
+          get: ({ runtime }) => (_req: Request, res: Response) => {
+            const latest = runtime.updates.latest();
+            if (latest.activeGraphic?.file && latest.activeGraphic?.position) {
+              res.json({
+                graphic: latest.activeGraphic.file,
+                position: latest.activeGraphic.position
+              });
+            }
+            else {
+              res.status(204).send();
+            }
+          },
+          post: ({ runtime }) => async (req, res) => {
+            if ((req.body.graphic || req.body.position)) {
+              if (req.body.position) {
+                const position = req.body.position;
 
-              // Validate position based on type
-              if (position.type === 'coordinate') {
-                if (typeof position.x !== 'number' || typeof position.y !== 'number' ||
-                  position.x < 0 || position.y < 0) {
+                // Validate position based on type
+                if (position.type === 'coordinate') {
+                  if (typeof position.x !== 'number' || typeof position.y !== 'number' ||
+                    position.x < 0 || position.y < 0) {
+                    res.status(400).json({
+                      error: "Bad position",
+                      details: "Coordinate position must have non-negative x and y values"
+                    });
+                    return;
+                  }
+                } else if (position.type === 'named') {
+                  if (!['topleft', 'topright', 'bottomleft', 'bottomright', 'center'].includes(position.position)) {
+                    res.status(400).json({
+                      error: "Bad position",
+                      details: "Named position must be one of: topleft, topright, bottomleft, bottomright, center"
+                    });
+                    return;
+                  }
+                } else {
                   res.status(400).json({
                     error: "Bad position",
-                    details: "Coordinate position must have non-negative x and y values"
+                    details: "Position must specify either type 'coordinate' or 'named'"
                   });
                   return;
                 }
-              } else if (position.type === 'named') {
-                if (!['topleft', 'topright', 'bottomleft', 'bottomright', 'center'].includes(position.position)) {
-                  res.status(400).json({
-                    error: "Bad position",
-                    details: "Named position must be one of: topleft, topright, bottomleft, bottomright, center"
-                  });
-                  return;
-                }
-              } else {
+              }
+
+              const images = await getGraphics();
+              if (!images.includes(req.body.graphic)) {
                 res.status(400).json({
-                  error: "Bad position",
-                  details: "Position must specify either type 'coordinate' or 'named'"
+                  error: "Unknown graphic",
+                  details: req.body.graphic,
                 });
                 return;
               }
             }
 
-            const images = await getGraphics();
-            if (!images.includes(req.body.graphic)) {
-              res.status(400).json({
-                error: "Unknown graphic",
-                details: req.body.graphic,
-              });
-              return;
-            }
+            runtime.updates.sendCommand({
+              type: 'change-graphic',
+              file: req.body.graphic,
+              position: req.body.position
+            })
+            res.status(204).send();
+          },
+          delete: ({ runtime }) => async (_req, res) => {
+            runtime.updates.sendCommand({
+              type: 'change-graphic'
+            })
+            res.status(204).send();
           }
-
-          runtime.updates.sendCommand({
-            type: 'change-graphic',
-            file: req.body.graphic,
-            position: req.body.position
-          })
-          res.status(204).send();
-        }),
-      },
-      {
-        ...delete_<paths>('/active-graphic', paths),
-        handler: ({ runtime }) => (async (_req, res) => {
-          runtime.updates.sendCommand({
-            type: 'change-graphic'
-          })
-          res.status(204).send();
-        }),
-      },
-    ]
+        }
+      });
   }
 }
 
